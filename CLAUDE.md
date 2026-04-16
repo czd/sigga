@@ -17,6 +17,8 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 - `docs/spec.md` — complete technical spec: stack, Convex schema, auth strategy, i18n strategy, per-view UI design, Convex function contracts, **real seed data** (medications, contacts, entitlements gathered from the family chat — not placeholders).
 - `docs/implementation-plan.md` — phase-by-phase build plan (Phases 0–17), each with files to create, exit criteria, and gotchas.
 
+**When the repo diverges from the plan, the plan wins by default.** If you find existing code/config that contradicts `docs/spec.md` or `docs/implementation-plan.md`, do not recommend keeping the divergent state to "reduce churn" — surface it to the user and align with the plan unless the user explicitly overrides. (Doc errors themselves go to `docs-sync`.)
+
 ## Current Repo State
 
 **Fresh `create-next-app` scaffold — Phase 0 of the implementation plan is not yet started.** The final project structure described in the spec (`src/app/[locale]/...`, `convex/`, `messages/`, `proxy.ts`, etc.) does not exist yet. What's here now:
@@ -27,7 +29,7 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 
 ## Stack
 
-- **Next.js 16** (App Router, Turbopack default). **Breaking**: `middleware.ts` → `proxy.ts` with export named `proxy`; `next lint` removed (use Biome or ESLint directly); parallel route slots require explicit `default.tsx`; `skipMiddlewareUrlNormalize` → `skipProxyUrlNormalize`. See `@AGENTS.md` — consult `node_modules/next/dist/docs/` before writing Next-specific code.
+- **Next.js 16** (App Router, Turbopack default). **Breaking**: `middleware.ts` → `proxy.ts`, which must live at `src/proxy.ts` when `app/` is under `src/` (project root only when `app/` is at root); use `export default` — wrapped middlewares like `convexAuthNextjsMiddleware` and next-intl's `createMiddleware` require it, and a named `proxy` export with a wrapper throws `TypeError: adapterFn is not a function` at request time. `next lint` removed (use Biome or ESLint directly); parallel route slots require explicit `default.tsx`; `skipMiddlewareUrlNormalize` → `skipProxyUrlNormalize`. See `@AGENTS.md` — consult `node_modules/next/dist/docs/` before writing Next-specific code.
 - **Convex** — backend, DB, real-time subscriptions, file storage, scheduled functions. Single source of truth for data.
 - **Convex Auth** (`@convex-dev/auth`) with Google OAuth. Whitelist enforced server-side via `ALLOWED_EMAILS` env var — no invite system.
 - **next-intl** for i18n. `is` default (no prefix), `en` at `/en/...`. Auth redirect + locale routing both live in `proxy.ts`.
@@ -53,7 +55,7 @@ npx convex env set <KEY> "<value>"
 ## Architecture Notes (once built out)
 
 - **Routing**: `src/app/[locale]/{page,dagbok,timar,upplysingr,login}/page.tsx`. Four tabs correspond to the four top-level routes; bottom nav is fixed and always visible.
-- **`proxy.ts` is load-bearing**: it combines next-intl locale routing with Convex Auth redirect-to-login. The two concerns must not conflict — adapt `convexAuthNextjsMiddleware` and rename the export to `proxy`.
+- **`src/proxy.ts` is load-bearing**: it combines next-intl locale routing with Convex Auth redirect-to-login. The two concerns must not conflict — adapt `convexAuthNextjsMiddleware` and `export default` the wrapped middleware.
 - **Convex function naming**: `[table].[action]` (e.g., `appointments.volunteerToDrive`, `logEntries.add`). Every mutation calls `ctx.auth.getUserIdentity()` and throws `ConvexError("Ekki innskráður")` if null. No roles in v1 — any authenticated family member can do anything, except log-entry editing which checks `authorId === currentUser`.
 - **Real-time by default**: all reads are Convex `useQuery` subscriptions. Two tabs open → mutation in one appears in the other without refresh. E2E tests explicitly cover this.
 - **File uploads**: `generateUploadUrl` mutation → client POSTs file → client gets `storageId` → `save` mutation records metadata. Deletes must remove both the row and the underlying blob.

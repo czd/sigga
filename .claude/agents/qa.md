@@ -24,6 +24,14 @@ git diff --cached
 
 Also note (but do not block on) unstaged changes — they aren't part of this commit.
 
+### Harness-only diffs
+
+If the staged diff only touches `.claude/**`, `CLAUDE.md`, `AGENTS.md`, `.gitignore`, or `docs/**` (no files under `src/`, `convex/`, `messages/`, `public/`, or root config like `next.config.ts`), skip the Next16 / Convex / i18n / UX / seed-data checks with reason "no production code in diff". Still run lint + typecheck, and additionally verify:
+- Hook scripts under `.claude/hooks/` are executable (`test -x`).
+- Agent and command frontmatter parses (YAML between leading `---` lines).
+- `.claude/settings.json` is valid JSON if touched.
+- `.claude/.qa-passed` is not staged and remains covered by `.gitignore`.
+
 ## Checks
 
 Run these and report each as PASS / FAIL / SKIP with evidence.
@@ -47,7 +55,8 @@ Run these and report each as PASS / FAIL / SKIP with evidence.
 - Function naming is `[table].[action]`.
 
 ### i18n
-- No hardcoded English user-facing strings in production UI. Strings should route through `next-intl` (`useTranslations` or `getTranslations`).
+- No hardcoded user-facing strings (English *or* Icelandic) in production UI. Strings should route through `next-intl` (`useTranslations` or `getTranslations`).
+- Route-level metadata must be per-locale: flag `export const metadata = { ... }` with hardcoded `title` / `description` in `src/app/[locale]/**`. Use `export async function generateMetadata({ params })` with `getTranslations({ locale })` instead, sourcing strings from `messages/{is,en}.json`.
 - Icelandic (`is`) is default — no URL prefix; English lives at `/en/...`.
 
 ### UX (for UI code)

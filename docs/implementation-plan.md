@@ -61,7 +61,7 @@ Branch `phase-0-scaffold`. Code scaffold and Convex deployment complete. Vercel 
 - `tsconfig.json` — path alias points at `src/`
 - `src/app/{layout.tsx,page.tsx,globals.css,favicon.ico}` — moved from `app/`
 - `eslint.config.mjs` — removed
-- `proxy.ts` — not created yet; added in Phases 1 & 2
+- `src/proxy.ts` — not created yet; added in Phases 1 & 2
 - `src/app/[locale]/default.tsx` — added in Phase 2 with i18n routing
 
 ### Exit criteria
@@ -109,13 +109,13 @@ Branch `phase-0-scaffold`. Code scaffold and Convex deployment complete. Vercel 
    - Rejection message display for non-whitelisted emails
    - This is the only page accessible without auth
 
-8. Wire `proxy.ts` to redirect unauthenticated users to `/[locale]/login`.
+8. Wire `src/proxy.ts` to redirect unauthenticated users to `/[locale]/login`.
 
 ### Important gotcha
 
 Convex Auth docs reference `middleware.ts`. For Next.js 16:
 - File must be `proxy.ts`, and if `app/` lives under `src/`, the proxy must be at `src/proxy.ts` (not project root). Next.js resolves it at the same level as `app/`.
-- Export as `export default` OR as a named `proxy` export — both work per Next.js 16 docs.
+- MUST use `export default`, not a named `proxy` export. Turbopack's server bundle resolves via `middlewareModule.default || middlewareModule`; a named-only export works for trivial unwrapped bodies but fails at request time when wrapped by `convexAuthNextjsMiddleware` (or `createMiddleware` from next-intl) with `TypeError: adapterFn is not a function`.
 - Use `convexAuthNextjsMiddleware` — its `NextMiddleware` return type is compatible with Next.js 16's proxy convention.
 
 ### Files to create/modify
@@ -139,7 +139,7 @@ Code complete. Env vars set: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `JWT_PRIVAT
 
 - [x] `/login` renders with "Skrá inn með Google" button
 - [x] Unauthenticated visitors → redirected to `/login`
-- [x] `proxy.ts` wired via `convexAuthNextjsMiddleware` (Next.js 16 compatible)
+- [x] `src/proxy.ts` wired via `convexAuthNextjsMiddleware` (Next.js 16 compatible, default export)
 - [x] `convex/users.ts` `me` query returns the authenticated user
 - [ ] Can sign in with a whitelisted Google account → lands on `/` with "Halló {name}" (browser test, pending)
 - [ ] Non-whitelisted account → sees Icelandic rejection message "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic." (browser test, pending)
@@ -167,12 +167,24 @@ Code complete. Env vars set: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `JWT_PRIVAT
 
 6. Call `setRequestLocale(locale)` in all layouts and pages (required for static rendering).
 
-7. Merge i18n routing into `proxy.ts` alongside the auth redirect from Phase 1. This is the trickiest integration point — both auth and locale concerns live in the same file.
+7. Merge i18n routing into `src/proxy.ts` alongside the auth redirect from Phase 1. This is the trickiest integration point — both auth and locale concerns live in the same file.
 
 ### Next.js 16 specifics for next-intl
 
 - In `next.config.ts`: use `skipProxyUrlNormalize` (NOT `skipMiddlewareUrlNormalize`)
-- `proxy.ts` function export MUST be named `proxy`
+- `src/proxy.ts` MUST `export default` its middleware function. A named `export const proxy` works for trivial unwrapped bodies, but every real proxy in this project is wrapped by `createMiddleware` (next-intl) or `convexAuthNextjsMiddleware`, and Turbopack resolves the server bundle via `middlewareModule.default || middlewareModule` — a named-only export throws `TypeError: adapterFn is not a function` at request time.
+- Route-level metadata must be per-locale. Do NOT use `export const metadata = { ... }` in `src/app/[locale]/layout.tsx` — that ships the Icelandic (default) description to `/en/...` visitors too. Use `generateMetadata` with `getTranslations`:
+
+  ```ts
+  import { getTranslations } from "next-intl/server";
+  export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "app" });
+    return { title: t("name"), description: t("tagline") };
+  }
+  ```
+
+  `messages/{is,en}.json` must carry `app.name` and `app.tagline` for this to resolve.
 
 ### Key translation namespaces (from spec)
 
@@ -190,8 +202,8 @@ Fill out the rest as each view is built.
 - `messages/en.json`
 - `src/i18n/routing.ts`
 - `src/i18n/request.ts`
-- `src/app/[locale]/layout.tsx` — add `NextIntlClientProvider`
-- `proxy.ts` — combine auth + locale routing
+- `src/app/[locale]/layout.tsx` — add `NextIntlClientProvider`; locale-aware metadata via `generateMetadata` (not a static `metadata` export)
+- `src/proxy.ts` — combine auth + locale routing (default-exported)
 - `next.config.ts` — add `skipProxyUrlNormalize`
 
 ### Exit criteria
@@ -199,6 +211,7 @@ Fill out the rest as each view is built.
 - Login page renders in Icelandic by default
 - `/en/login` renders in English
 - All UI strings come from translation files — nothing hardcoded
+- Root metadata (title + description) is locale-aware via `generateMetadata`, not a static `metadata` export
 
 ---
 

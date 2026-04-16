@@ -23,11 +23,11 @@
 
 | Layer | Technology | Notes |
 |-------|-----------|-------|
-| Framework | Next.js 16 (App Router) | `proxy.ts` replaces deprecated `middleware.ts`. Turbopack is default bundler. `next lint` removed — use Biome or ESLint directly. All parallel route slots require explicit `default.js`. |
+| Framework | Next.js 16 (App Router) | `proxy.ts` replaces deprecated `middleware.ts`; because `app/` is under `src/`, the proxy file lives at `src/proxy.ts` and must `export default` (not a named `proxy` export). Turbopack is default bundler. `next lint` removed — use Biome or ESLint directly. All parallel route slots require explicit `default.js`. |
 | Language | TypeScript (strict) | |
 | Backend / DB | Convex | Real-time subscriptions, file storage, scheduled functions. Hobby tier (free). |
 | Auth | Convex Auth (`@convex-dev/auth`) | Google OAuth provider. Whitelist family email addresses server-side. |
-| i18n | `next-intl` | Confirmed Next.js 16 compatible. Uses `proxy.ts` for locale routing. Default locale `is` (Icelandic), secondary `en`. No locale prefix for default. |
+| i18n | `next-intl` | Confirmed Next.js 16 compatible. Uses `src/proxy.ts` for locale routing. Default locale `is` (Icelandic), secondary `en`. No locale prefix for default. |
 | UI | shadcn/ui + Tailwind CSS 4 | Mobile-first. Large tap targets. High contrast. |
 | Package manager | Bun | |
 | Hosting | Vercel | Auto-domain for v1. Default `.vercel.app` URL. |
@@ -43,7 +43,6 @@ sigga/
 ├── bun.lock
 ├── biome.json                    # Linting (next lint removed in Next.js 16)
 ├── next.config.ts
-├── proxy.ts                      # Was middleware.ts. Handles locale routing via next-intl.
 ├── convex/
 │   ├── _generated/
 │   ├── schema.ts
@@ -61,6 +60,7 @@ sigga/
 │   ├── is.json                   # Icelandic translations (primary)
 │   └── en.json                   # English translations (secondary)
 ├── src/
+│   ├── proxy.ts                  # Was middleware.ts. Handles auth redirect + locale routing via next-intl. Must live next to `app/`, i.e. in `src/` (not project root) because `app/` is under `src/`.
 │   ├── i18n/
 │   │   ├── routing.ts            # next-intl routing config
 │   │   └── request.ts            # next-intl request config
@@ -249,8 +249,8 @@ export default defineSchema({
 **Implementation notes:**
 - Follow the Convex Auth Google OAuth guide: https://labs.convex.dev/auth/config/oauth/google
 - Set env vars: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `SITE_URL`, `ALLOWED_EMAILS`
-- The `proxy.ts` file should check auth state and redirect unauthenticated users to `/login`. Use `convexAuthNextjsMiddleware` adapted for Next.js 16's `proxy` convention (rename the export from `middleware` to `proxy`).
-- Important: Convex Auth's Next.js support references `middleware.ts` in docs — rename to `proxy.ts` and rename the function export accordingly.
+- The `src/proxy.ts` file should check auth state and redirect unauthenticated users to `/login`. Use `convexAuthNextjsMiddleware` adapted for Next.js 16's `proxy` convention and `export default` the result.
+- Important: Convex Auth's Next.js support references `middleware.ts` in docs — rename to `src/proxy.ts` and use `export default` for the function. A named `export const proxy` works only for trivial unwrapped proxy bodies; when the export is produced by a wrapper like `convexAuthNextjsMiddleware` or `createMiddleware` from next-intl, Next.js 16 / Turbopack resolves the server bundle via `middlewareModule.default || middlewareModule` and a named-only export throws `TypeError: adapterFn is not a function` at request time. Always default-export.
 
 **Google Cloud Console setup:**
 - Create OAuth 2.0 client credentials
@@ -319,12 +319,15 @@ messages/
 
 **proxy.ts integration:**
 ```typescript
-// proxy.ts
+// src/proxy.ts
 import createMiddleware from "next-intl/middleware";
-import { routing } from "./src/i18n/routing";
+import { routing } from "./i18n/routing";
 
-// Renamed from "middleware" to "proxy" for Next.js 16
-export const proxy = createMiddleware(routing);
+// Renamed from "middleware" to "proxy" for Next.js 16. MUST be the default export —
+// Turbopack's server bundle resolves via `middlewareModule.default || middlewareModule`,
+// so a named `export const proxy` throws `TypeError: adapterFn is not a function` when
+// wrapped by `createMiddleware` / `convexAuthNextjsMiddleware`.
+export default createMiddleware(routing);
 
 export const config = {
   matcher: ["/((?!api|trpc|_next|_vercel|convex|.*\\..*).*)" ]
@@ -332,7 +335,7 @@ export const config = {
 ```
 
 **Important Next.js 16 notes for next-intl:**
-- The `proxy.ts` file replaces `middleware.ts`. The function export MUST be named `proxy`, not `middleware`.
+- The `proxy.ts` file replaces `middleware.ts` and, because `app/` lives under `src/`, must be at `src/proxy.ts`. The file MUST `export default` its middleware function — a named `export const proxy` fails at request time when the body is wrapped by `createMiddleware` or `convexAuthNextjsMiddleware` (Turbopack: `TypeError: adapterFn is not a function`).
 - `skipMiddlewareUrlNormalize` is now `skipProxyUrlNormalize` in `next.config.ts`.
 - All parallel route slots require explicit `default.tsx` files.
 - Call `setRequestLocale(locale)` in layouts and pages for static rendering support.
@@ -922,7 +925,7 @@ These are explicitly deferred. Do not build them now.
 Suggested build sequence for Claude Code:
 
 1. **Scaffold:** `create-next-app` with bun, add Convex, set up project structure
-2. **Auth:** Convex Auth + Google OAuth + whitelist + proxy.ts redirect
+2. **Auth:** Convex Auth + Google OAuth + whitelist + `src/proxy.ts` redirect (default export)
 3. **i18n:** next-intl setup with `is`/`en`, translation files, locale layout
 4. **Schema + seed:** Deploy Convex schema, write seed function
 5. **Bottom nav + layout shell:** The chrome that wraps everything
