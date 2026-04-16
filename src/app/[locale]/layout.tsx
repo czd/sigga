@@ -1,4 +1,5 @@
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { notFound } from "next/navigation";
@@ -50,6 +51,7 @@ export default async function LocaleLayout({
 					<NextIntlClientProvider>
 						<ConvexClientProvider>{children}</ConvexClientProvider>
 					</NextIntlClientProvider>
+					<Analytics />
 				</body>
 			</html>
 		</ConvexAuthNextjsServerProvider>
