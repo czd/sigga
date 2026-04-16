@@ -8,45 +8,70 @@ This document is the build plan. Work through the phases in order — each phase
 
 ## Phase 0: Scaffold & Tooling
 
+### Status (2026-04-16)
+
+Branch `phase-0-scaffold`. Code scaffold complete. Convex login + Vercel link still pending — both require user action.
+
 ### What to do
 
-1. Create the Next.js 16 app with Bun:
-   ```bash
-   bunx create-next-app@latest sigga --typescript --tailwind --app --turbopack
-   cd sigga
-   ```
+1. ~~Create the Next.js 16 app with Bun~~ — already done pre-Phase-0 via `create-next-app`. The scaffold did NOT create `middleware.ts`, so no rename was needed.
 
-2. Initialize Convex:
+2. Move the app directory into `src/`:
+   ```bash
+   git mv app src/app
+   ```
+   Update `tsconfig.json` paths from `"@/*": ["./*"]` to `"@/*": ["./src/*"]`.
+   (The `[locale]` segment is added in Phase 2, not here.)
+
+3. Install Convex and initialize it:
    ```bash
    bun add convex
-   npx convex init
+   npx convex init   # requires Convex account login — user action
    ```
+   This writes `CONVEX_DEPLOYMENT` and `NEXT_PUBLIC_CONVEX_URL` to `.env.local` and creates the `convex/` directory.
 
-3. Set up Biome for linting (`next lint` is removed in Next.js 16):
+4. Replace ESLint with Biome (the scaffold came with ESLint, which was accidental — Biome is the intended tool):
    ```bash
+   bun remove eslint eslint-config-next
+   rm eslint.config.mjs
    bun add -D @biomejs/biome
-   npx @biomejs/biome init
+   bunx @biomejs/biome init
+   bunx biome check --write   # one-time reformat to Biome style (tabs, double quotes)
+   ```
+   Update `package.json` scripts: `"lint": "biome check"`, add `"lint:fix": "biome check --write"` and `"format": "biome format --write"`.
+   Update `biome.json` to enable the Tailwind/CSS-modules parser:
+   ```json
+   "css": { "parser": { "cssModules": true, "tailwindDirectives": true } }
    ```
 
-4. Rename `middleware.ts` → `proxy.ts` if the scaffold creates one. In Next.js 16, the export must be named `proxy`, not `middleware`.
+5. Parallel route `default.tsx` files — N/A until Phase 4 adds parallel routes. Noted here for tracking.
 
-5. Add all parallel route slots with `default.tsx` files (Next.js 16 requirement).
+6. Verify:
+   - `bun run lint` → 0 errors
+   - `bunx tsc --noEmit` → 0 errors
+   - `bun run build` → success
+   - `bun dev` → HTTP 200 on `http://localhost:3000/`
 
-6. Verify the project structure matches the spec's tree under `sigga/`.
-
-7. Push to GitHub. Connect to Vercel. Verify the blank app deploys.
+7. Push `phase-0-scaffold` to GitHub. Connect to Vercel. **Deferred** until end of Phase 1 — no value shipping a blank app immediately before auth lands.
 
 ### Files to create/modify
 
-- `biome.json`
-- `proxy.ts` (empty for now — will be filled in Phases 1 & 2)
-- `src/app/[locale]/default.tsx` (required by Next.js 16)
+- `biome.json` — added, Tailwind directives enabled
+- `package.json` — scripts updated; `@biomejs/biome` and `convex` added; `eslint*` removed
+- `tsconfig.json` — path alias points at `src/`
+- `src/app/{layout.tsx,page.tsx,globals.css,favicon.ico}` — moved from `app/`
+- `eslint.config.mjs` — removed
+- `proxy.ts` — not created yet; added in Phases 1 & 2
+- `src/app/[locale]/default.tsx` — added in Phase 2 with i18n routing
 
 ### Exit criteria
 
-- `bun dev` starts without errors
-- `npx convex dev` connects to a Convex project
-- Blank app is deployed on Vercel
+- [x] `bun dev` starts and serves HTTP 200
+- [x] `bun run lint` (Biome) passes
+- [x] `bunx tsc --noEmit` passes
+- [x] `bun run build` passes
+- [ ] `npx convex dev` connects — pending user login
+- [ ] Vercel deploy — deferred to end of Phase 1
 
 ---
 
