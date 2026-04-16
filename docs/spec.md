@@ -162,12 +162,14 @@ export default defineSchema({
     .index("by_status", ["status"]),
 
   // Dagbók — log entries (append-only, editable)
+  // Default Convex ordering is by `_creationTime` ascending — no explicit index needed.
+  // Convex auto-appends `_creationTime` to every index and rejects an explicit `by_creation` index at deploy.
   logEntries: defineTable({
     content: v.string(),
     authorId: v.id("users"),
     relatedAppointmentId: v.optional(v.id("appointments")),
     editedAt: v.optional(v.number()),  // set on edit, null on creation
-  }).index("by_creation", ["_creationTime"]),
+  }),
 
   // Lyf — medications
   medications: defineTable({
@@ -339,6 +341,21 @@ export const config = {
 - `skipMiddlewareUrlNormalize` is now `skipProxyUrlNormalize` in `next.config.ts`.
 - All parallel route slots require explicit `default.tsx` files.
 - Call `setRequestLocale(locale)` in layouts and pages for static rendering support.
+- **Per-locale metadata.** Do NOT use `export const metadata = { ... }` in `src/app/[locale]/layout.tsx` — that ships the Icelandic (default) description to `/en/...` visitors too. Use `generateMetadata` with `getTranslations` so each locale gets its own title and description:
+
+  ```ts
+  import { getTranslations } from "next-intl/server";
+
+  export async function generateMetadata({
+    params,
+  }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: "app" });
+    return { title: t("name"), description: t("tagline") };
+  }
+  ```
+
+  `messages/{is,en}.json` must carry `app.name` and `app.tagline` for this to resolve.
 
 ---
 
@@ -358,7 +375,7 @@ export const config = {
 ### Aesthetic Direction
 
 - **Tone:** Warm, soft, Scandinavian-minimal. Think "cozy cabin, not cold hospital."
-- **Color palette:** Warm neutrals (cream/off-white backgrounds), a muted teal or sage as the primary accent, soft amber/gold for warnings/attention, gentle red for emergencies/deletions. Avoid harsh blues or clinical whites.
+- **Color palette:** Warm neutrals (cream/off-white backgrounds), a muted teal or sage as the primary accent, soft amber/gold for warnings/attention, gentle red for emergencies/deletions. Avoid harsh blues or clinical whites. Tokens are declared inline in `src/app/globals.css` via Tailwind v4's `@theme inline { --color-... }` block — there is no `tailwind.config.ts` (Tailwind v4 reads design tokens from CSS).
 - **Typography:** Clean and highly readable. Generous font size (base 16px minimum, prefer 18px for body on mobile). Consider a humanist sans-serif that renders well in Icelandic (special characters: ð, þ, æ, ö, etc.).
 - **Borders and cards:** Soft rounded corners (12-16px). Light shadows. Cards for grouped content.
 - **Icons:** Lucide icons. Simple, recognizable. Paired with text labels always (no icon-only buttons for primary actions).

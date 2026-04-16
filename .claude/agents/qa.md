@@ -65,6 +65,15 @@ Run these and report each as PASS / FAIL / SKIP with evidence.
 - Body text ≥ 18px on mobile (`text-lg` or larger, or explicit 18px).
 - Icelandic special characters (ð, þ, æ, ö) should render in any strings introduced.
 
+#### Visual verification of authenticated routes
+
+The agent cannot complete Google OAuth from a headless shell, so any route behind the auth proxy (everything except `/login` and the redirect itself) **cannot be visually verified by QA**. For changes to authenticated UI:
+
+- Verify structurally: source matches spec, lint/typecheck/build pass, the route compiles, the proxy still 307s unauthenticated requests to `/login`.
+- Mark visual checks (palette rendering at 375×812, BottomNav active state, Icelandic glyph rendering, tap-target sizing in the live DOM) as SKIP with reason "auth-gated; user-verifies post-merge".
+- Do NOT mark these as PASS based on source inspection alone — that violates the evidence-before-claims rule.
+- Call out in the QA report which exit-criteria items the user needs to eyeball.
+
 ### Seed data
 - Seed data in `convex/seed.ts` is **real** (from the family chat), not placeholder. Do not let obvious placeholder text ("Lorem ipsum", "TODO", "example@example.com") slip through.
 

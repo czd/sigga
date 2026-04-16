@@ -230,7 +230,7 @@ Fill out the rest as each view is built.
      - WhiteEyes augndropa — 2 dropar, á morgnana
      - Retina Clear — 1 hylki, á morgnana
      - Andhormónalyf (sprauta) — á 2ja vikna fresti (exact drug name unknown — ask at next Brjóstamiðstöð visit)
-   - **~18 contacts** across emergency, medical, municipal categories (all with real phone numbers, addresses, notes)
+   - **~14 contacts** across emergency (3), medical (3), and municipal (8) categories, all with real phone numbers, addresses, notes. The `family` and `other` schema categories exist but have no seed entries yet — they fill in once family phone numbers are gathered (see Open Items).
    - **2 known entitlements** (certificates from Brjóstamiðstöð — heimahjúkrun is marked BRÝNT/urgent) + **9 researched entitlements** from SÍ/Kópavogur/Heilsugæslan
 
 4. Handle the `updatedBy`/`createdBy` fields in seed data — these require a user ID. Options:
@@ -248,7 +248,7 @@ Fill out the rest as each view is built.
 ### Exit criteria
 
 - Convex dashboard shows all tables with correct indexes
-- Seed data is loaded: 5 medications, ~18 contacts, 11 entitlements all present
+- Seed data is loaded: 5 medications, 14 contacts (3 emergency + 3 medical + 8 municipal; family/other added later when phone numbers arrive), 11 entitlements all present
 - Data matches the spec exactly (including Icelandic text, phone numbers, notes)
 
 ---
@@ -261,7 +261,7 @@ Fill out the rest as each view is built.
    - `ConvexProvider` wrapping everything
    - `NextIntlClientProvider` for translations
    - `AuthGate` component — redirects to login if not authenticated
-   - Import the warm color palette via Tailwind config
+   - The warm color palette is declared inline in `src/app/globals.css` via `@theme inline { --color-... }` (Tailwind v4 idiom — no JS config file). The layout just imports `globals.css` once.
 
 2. Build `BottomNav.tsx` — fixed bottom, 4 tabs:
    | Icon (Lucide) | Label | Route |
@@ -277,13 +277,28 @@ Fill out the rest as each view is built.
    - Active tab: filled icon + accent color. Inactive: outline + muted.
    - Text labels always visible — **no icon-only navigation**
 
-4. Set up the design system / Tailwind config:
+4. Set up the design system inline in `src/app/globals.css` using Tailwind v4's `@theme inline { ... }` block (no `tailwind.config.ts` — Tailwind v4 reads tokens from CSS). Tokens to declare as `--color-*`, `--font-*`, `--radius-*`:
    - **Backgrounds:** Warm cream/off-white (not clinical white)
    - **Primary accent:** Muted teal or sage
    - **Warning/attention:** Soft amber/gold
    - **Emergency/delete:** Gentle red
    - **Borders/cards:** Rounded corners 12–16px, light shadows
    - **Typography:** Humanist sans-serif that renders Icelandic characters well (ð, þ, æ, ö)
+
+   Example shape (the actual file under `src/app/globals.css` is the source of truth):
+   ```css
+   @import "tailwindcss";
+
+   @theme inline {
+     --color-background: #faf6ef;
+     --color-foreground: #2c2520;
+     --color-accent: #4a8278;
+     --color-warning: #c08838;
+     --color-danger: #b85a5a;
+     --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+     --radius-card: 1rem;
+   }
+   ```
 
 5. Build header component: "Sigga" as app title, user avatar + name top-right, sign-out in dropdown.
 
@@ -298,7 +313,7 @@ Fill out the rest as each view is built.
 - `src/app/[locale]/upplysingr/page.tsx` (empty shell)
 - `src/components/nav/BottomNav.tsx`
 - `src/components/shared/UserAvatar.tsx`
-- `tailwind.config.ts` — custom colors, font sizes
+- `src/app/globals.css` — design tokens via `@theme inline` (Tailwind v4 — no JS config file)
 - `src/lib/convex.ts` — ConvexProvider setup
 
 ### Exit criteria
@@ -503,7 +518,7 @@ Reverse-chronological care journal. Keep the entry form dead simple — text box
 
 ### Exit criteria
 
-- All seeded contacts display in correct groups
+- All seeded contacts display in correct groups (Neyð, Læknar og heilsugæsla, Sveitarfélag og þjónusta — Fjölskylda and Annað sections render empty until those entries are added)
 - Tapping a phone number initiates a call on mobile
 - Tapping email opens mail client
 - Can add/edit/remove contacts
