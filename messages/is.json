@@ -9,7 +9,15 @@
 		"loading": "Hleð...",
 		"lastUpdated": "Síðast uppfært",
 		"by": "af",
-		"comingSoon": "Kemur fljótlega"
+		"comingSoon": "Kemur fljótlega",
+		"readMore": "Lesa meira",
+		"edited": "Breytt",
+		"today": "Í dag",
+		"yesterday": "Í gær",
+		"daysAgo": "Fyrir {count} dögum",
+		"minutesAgo": "Fyrir {count} mín.",
+		"hoursAgo": "Fyrir {count} klst.",
+		"justNow": "Rétt í þessu"
 	},
 	"app": {
 		"name": "Sigga",
@@ -22,7 +30,24 @@
 		"info": "Upplýsingar"
 	},
 	"dashboard": {
-		"title": "Í dag"
+		"title": "Í dag",
+		"nextAppointments": {
+			"title": "Næstu tímar",
+			"empty": "Engir tímar á næstunni",
+			"noDriver": "Enginn skutlar",
+			"volunteer": "Ég get!",
+			"youAreDriving": "Þú keyrir",
+			"driver": "Skutlari"
+		},
+		"recentLog": {
+			"title": "Nýjustu færslur",
+			"empty": "Engar færslur í dagbók ennþá",
+			"write": "Skrifa í dagbók"
+		},
+		"quickActions": {
+			"newAppointment": "Nýr tími",
+			"writeLog": "Skrifa í dagbók"
+		}
 	},
 	"dagbok": {
 		"title": "Dagbók"

@@ -9,7 +9,15 @@
 		"loading": "Loading...",
 		"lastUpdated": "Last updated",
 		"by": "by",
-		"comingSoon": "Coming soon"
+		"comingSoon": "Coming soon",
+		"readMore": "Read more",
+		"edited": "Edited",
+		"today": "Today",
+		"yesterday": "Yesterday",
+		"daysAgo": "{count} days ago",
+		"minutesAgo": "{count} min ago",
+		"hoursAgo": "{count} h ago",
+		"justNow": "Just now"
 	},
 	"app": {
 		"name": "Sigga",
@@ -22,7 +30,24 @@
 		"info": "Info"
 	},
 	"dashboard": {
-		"title": "Today"
+		"title": "Today",
+		"nextAppointments": {
+			"title": "Upcoming appointments",
+			"empty": "No upcoming appointments",
+			"noDriver": "No driver yet",
+			"volunteer": "I can!",
+			"youAreDriving": "You are driving",
+			"driver": "Driver"
+		},
+		"recentLog": {
+			"title": "Recent log entries",
+			"empty": "No log entries yet",
+			"write": "Write in the log"
+		},
+		"quickActions": {
+			"newAppointment": "New appointment",
+			"writeLog": "Write in the log"
+		}
 	},
 	"dagbok": {
 		"title": "Log"

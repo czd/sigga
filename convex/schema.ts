@@ -22,7 +22,7 @@ export default defineSchema({
 		updatedBy: v.id("users"),
 	})
 		.index("by_startTime", ["startTime"])
-		.index("by_status", ["status"]),
+		.index("by_status_and_startTime", ["status", "startTime"]),
 
 	logEntries: defineTable({
 		content: v.string(),

@@ -3,6 +3,9 @@
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/../convex/_generated/api";
+import { NextAppointments } from "@/components/dashboard/NextAppointments";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { RecentLog } from "@/components/dashboard/RecentLog";
 
 export default function DashboardPage() {
 	const t = useTranslations();
@@ -20,9 +23,9 @@ export default function DashboardPage() {
 					</p>
 				) : null}
 			</header>
-			<section className="rounded-2xl border border-border bg-card p-6 text-card-foreground">
-				<p className="text-muted-foreground">{t("common.comingSoon")}</p>
-			</section>
+			<NextAppointments />
+			<RecentLog />
+			<QuickActions />
 		</div>
 	);
 }
