@@ -1,0 +1,32 @@
+{
+	"common": {
+		"save": "Vista",
+		"cancel": "Hætta við",
+		"edit": "Breyta",
+		"delete": "Eyða",
+		"add": "Bæta við",
+		"back": "Til baka",
+		"loading": "Hleð...",
+		"lastUpdated": "Síðast uppfært",
+		"by": "af"
+	},
+	"app": {
+		"name": "Sigga",
+		"tagline": "Fjölskyldusamráð um umönnun Siggu"
+	},
+	"nav": {
+		"dashboard": "Í dag",
+		"log": "Dagbók",
+		"appointments": "Tímar",
+		"info": "Upplýsingar"
+	},
+	"auth": {
+		"signIn": "Skrá inn",
+		"signInWithGoogle": "Skrá inn með Google",
+		"signOut": "Skrá út",
+		"notAllowed": "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic.",
+		"greetingWithName": "Halló {name}",
+		"notSignedIn": "Ekki innskráður",
+		"signInFailed": "Innskráning tókst ekki. Reyndu aftur."
+	}
+}

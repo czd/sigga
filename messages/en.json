@@ -1,0 +1,32 @@
+{
+	"common": {
+		"save": "Save",
+		"cancel": "Cancel",
+		"edit": "Edit",
+		"delete": "Delete",
+		"add": "Add",
+		"back": "Back",
+		"loading": "Loading...",
+		"lastUpdated": "Last updated",
+		"by": "by"
+	},
+	"app": {
+		"name": "Sigga",
+		"tagline": "Family coordination for Sigga's care"
+	},
+	"nav": {
+		"dashboard": "Today",
+		"log": "Log",
+		"appointments": "Appointments",
+		"info": "Info"
+	},
+	"auth": {
+		"signIn": "Sign in",
+		"signInWithGoogle": "Sign in with Google",
+		"signOut": "Sign out",
+		"notAllowed": "This email does not have access. Contact Nic.",
+		"greetingWithName": "Hello {name}",
+		"notSignedIn": "Not signed in",
+		"signInFailed": "Sign-in failed. Try again."
+	}
+}
