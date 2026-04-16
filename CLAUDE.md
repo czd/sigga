@@ -32,7 +32,7 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 - **Convex Auth** (`@convex-dev/auth`) with Google OAuth. Whitelist enforced server-side via `ALLOWED_EMAILS` env var — no invite system.
 - **next-intl** for i18n. `is` default (no prefix), `en` at `/en/...`. Auth redirect + locale routing both live in `proxy.ts`.
 - **shadcn/ui + Tailwind CSS 4**, mobile-first. 48px min tap targets (56px+ preferred), 18px min body text, warm palette (cream backgrounds, sage/teal accent), Lucide icons always paired with text labels.
-- **Bun** package manager. **Vercel** hosting.
+- **Bun** package manager. **Vercel** hosting — deploys are triggered by pushing to `main` on GitHub. **Never run `vercel deploy`, `vercel --prod`, or any Vercel MCP deploy tool from local.** The `main` branch on GitHub is the source of truth for what's in production; preview deployments for other branches happen automatically.
 - **Vitest** for unit/integration, **Playwright** for e2e at 375×812 viewport.
 
 ## Commands
