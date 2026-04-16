@@ -344,17 +344,17 @@ The landing page answers: "What's happening with amma right now?"
 3. **RecentLog card:**
    - Latest 3 log entries
    - Each: date (relative), author avatar + name, content truncated to ~3 lines with "Lesa meira"
-   - "Skrifa í dagbók" button at bottom → opens quick-add form
+   - "Skrifa í dagbók" button at bottom → navigates to `/dagbok` (Phase 5 ships a Link; the in-place quick-add form is **deferred to Phase 6**, which builds the Dagbók full view with its bottom-sheet entry form)
 
 4. **QuickActions row:**
    - "Nýr tími" → navigates to appointment creation
-   - "Skrifa í dagbók" → opens log entry form (bottom sheet)
+   - "Skrifa í dagbók" → navigates to `/dagbok` (**deferred**: Phase 6 adds the bottom-sheet form; Phase 5 ships navigation-only links as placeholders)
 
 5. All data via Convex `useQuery` — real-time by default.
 
 ### Files to create/modify
 
-- `convex/appointments.ts` — `list`, `get`, `create`, `update`, `remove`, `volunteerToDrive`
+- `convex/appointments.ts` — `list`, `upcoming`, `get`, `create`, `update`, `remove`, `volunteerToDrive`
 - `convex/logEntries.ts` — `list`, `recent`, `add`, `update`
 - `src/app/[locale]/page.tsx` — Dashboard view
 - `src/components/dashboard/NextAppointments.tsx`
@@ -368,6 +368,25 @@ The landing page answers: "What's happening with amma right now?"
 - Real-time: open two tabs, add data in one, it appears in the other without refresh
 - Quick actions navigate correctly
 - Relative dates display in Icelandic
+
+### Status (2026-04-17)
+
+Code complete (commit 1be5a4b). All implementation tasks done:
+
+- [x] `convex/appointments.ts` — `list`, `upcoming`, `get`, `create`, `update`, `remove`, `volunteerToDrive` shipped. `upcoming` uses `.withIndex("by_status_and_startTime", q => q.eq("status","upcoming").gte("startTime", now))` for efficient dashboard queries; the schema index was updated from `by_status` to the composite `by_status_and_startTime` (prefix subsumes the old single-field index).
+- [x] `convex/logEntries.ts` — `list`, `recent`, `add`, `update` shipped. `update` enforces `authorId === currentUser`.
+- [x] `NextAppointments.tsx`, `RecentLog.tsx`, `QuickActions.tsx` components shipped.
+- [x] `src/components/shared/EmptyState.tsx` shipped.
+- [x] Icelandic relative-date helper (`src/lib/formatDate.ts`) — justNow / minutesAgo / hoursAgo / today / yesterday / daysAgo / absolute.
+- [x] Translation keys added under `dashboard.*` and `common.*` in `messages/is.json` + `messages/en.json`.
+- [x] "Skrifa í dagbók" buttons in RecentLog and QuickActions ship as `<Link href="/dagbok">` (form deferred to Phase 6).
+
+The following exit-criteria items require user browser verification post-deploy (the agent cannot complete Google OAuth to reach authenticated routes):
+
+- [ ] Warm palette renders correctly at 375×812 (cream background, teal accent) — visual check
+- [ ] Relative dates display in Icelandic in the browser (e.g., "í dag", "í gær", "fyrir 2 dögum")
+- [ ] Real-time two-tab update — open dashboard in two tabs, add a log entry in one, confirm it appears in the other without refresh
+- [ ] Volunteer button flow — "Ég get!" on an appointment without a driver sets the current user as driver in one tap
 
 ---
 

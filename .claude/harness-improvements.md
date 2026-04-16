@@ -29,7 +29,30 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 
 ## Open Items
 
-_(empty — pending `docs-sync` follow-ups for proxy.ts fixes, `generateMetadata` example, Phase 3 contact-count reconciliation, `logEntries` `by_creation` index removal from spec, and Phase 4 Tailwind v4 doc update; all tracked under Resolved with handoff notes.)_
+### 2026-04-17 · qa · Phase 5: appointments schema index changed but docs/spec.md not updated
+
+**Context:** Phase 5 QA. `convex/schema.ts` replaced `.index("by_status", ["status"])` on the `appointments` table with `.index("by_status_and_startTime", ["status", "startTime"])`. The new composite index is strictly more capable (its prefix serves any `by_status`-only query) and is required for the efficient `upcoming` query.
+**Observation:** `docs/spec.md` line 162 still shows `.index("by_status", ["status"])` on the appointments table. The `upcoming` Convex function (not present in the spec's function list) is also undocumented. Any developer reading the spec and copying the schema verbatim will get a less optimal index and a missing function.
+**Suggested action:** `docs-sync` should: (a) replace `.index("by_status", ["status"])` with `.index("by_status_and_startTime", ["status", "startTime"])` in `docs/spec.md`; (b) add `appointments.upcoming` to the Convex function contracts section (same file, near `appointments.list`); (c) optionally update `docs/implementation-plan.md` Phase 5 query list to reference `appointments.upcoming` instead of describing it inline as a filter of `appointments.list`.
+
+### 2026-04-17 · qa · QuickActions section aria-label uses first-action text rather than a section label
+
+**Context:** Phase 5 QA. `src/components/dashboard/QuickActions.tsx` sets `aria-label={t("newAppointment")}` on the wrapping `<section>`. This means assistive technology announces the section as "Nýr tími" — only the first action's text, not a description of the section.
+**Observation:** The `quickActions` namespace in `messages/*.json` has no `title` or `label` key. The `aria-label` borrowing one action's text is a minor accessibility defect that will confuse screen reader users. Best practice: add a `"title": "Flýtileiðir"` (or similar) key and use it as the section's `aria-label`.
+**Suggested action:** Add `"title": "Flýtileiðir"` (is) / `"title": "Quick actions"` (en) to `messages/{is,en}.json` under `dashboard.quickActions`, then use `t("title")` as the `aria-label` on the `<section>` in `QuickActions.tsx`. Non-blocking — no QA block, just a future-fix item.
+
+### 2026-04-17 · qa · "Skrifa í dagbók" quick action navigates rather than opens form per Phase 5 spec
+
+**Context:** Phase 5 QA. `docs/implementation-plan.md` Phase 5 items 3 and 4 say "Skrifa í dagbók" should open a quick-add form / bottom sheet. The implementation links to `/dagbok` instead, because the bottom sheet is Phase 6 work.
+**Observation:** The exit criteria are partially met: navigation works, but the in-place form entry isn't there. This is a sensible pragmatic deferral (Phase 6 adds the Dagbók full view with its entry form), but the Phase 5 exit criteria don't call it out as deferred.
+**Suggested action:** `docs-sync` should annotate Phase 5 item 3/4 in `docs/implementation-plan.md` to note that the "open quick-add form" behaviour is deferred to Phase 6, and that Phase 5 ships navigation-only links as a placeholder. No code change required — the behaviour is acceptable for the phase.
+**Resolution:** 2026-04-17 · docs · `docs/implementation-plan.md` Phase 5 items 3 and 4 updated to note the deferral explicitly. Phase 5 Status block added, marking the navigation-only behaviour as intentional and listing the Phase 6 form as the completion point.
+
+### 2026-04-17 · docs-sync · code-followup — QuickActions `aria-label` announces first action text instead of section label
+
+**Context:** Phase 5 docs-sync pass. `src/components/dashboard/QuickActions.tsx` sets `aria-label={t("newAppointment")}` on the wrapping `<section>`, which makes screen readers announce the entire section as "Nýr tími" — the text of the first action, not a description of the section.
+**Observation:** This is a minor accessibility defect. The correct fix is a dedicated translation key (e.g., `dashboard.quickActions.title = "Flýtileiðir"` in `is.json`, `"Quick actions"` in `en.json`) used as the `aria-label`. The fix touches `src/components/dashboard/QuickActions.tsx` and both `messages/*.json` — out of scope for docs-sync, which only edits `docs/` and the improvements queue.
+**Suggested action:** In a future code session: (1) add `"title": "Flýtileiðir"` under `dashboard.quickActions` in `messages/is.json`; (2) add `"title": "Quick actions"` in `messages/en.json`; (3) replace `aria-label={t("newAppointment")}` with `aria-label={t("title")}` in `QuickActions.tsx`. Non-blocking — no QA gate impact.
 
 ---
 

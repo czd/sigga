@@ -159,7 +159,7 @@ export default defineSchema({
     updatedBy: v.id("users"),
   })
     .index("by_startTime", ["startTime"])
-    .index("by_status", ["status"]),
+    .index("by_status_and_startTime", ["status", "startTime"]),
 
   // Dagbók — log entries (append-only, editable)
   // Default Convex ordering is by `_creationTime` ascending — no explicit index needed.
@@ -577,6 +577,7 @@ Label text always visible (not icon-only).
 
 **appointments.ts:**
 - `list` — query: all appointments, ordered by startTime. Args: `{ status?: "upcoming" | "completed" | "cancelled" }`. Filter upcoming = startTime > now.
+- `upcoming` — query: dashboard-optimised. Uses `.withIndex("by_status_and_startTime", q => q.eq("status", "upcoming").gte("startTime", now)).order("asc").take(limit)`. Args: `{ limit?: number }` (default 3). Returns only future-dated upcoming appointments; consumed by the dashboard via `api.appointments.upcoming`.
 - `get` — query: single appointment by ID.
 - `create` — mutation: create appointment. Auto-set `createdBy`, `updatedBy`, `updatedAt`, `status: "upcoming"`.
 - `update` — mutation: update appointment fields. Set `updatedBy`, `updatedAt`.
