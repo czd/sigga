@@ -10,7 +10,7 @@ This document is the build plan. Work through the phases in order — each phase
 
 ### Status (2026-04-16)
 
-Branch `phase-0-scaffold`. Code scaffold complete. Convex login + Vercel link still pending — both require user action.
+Branch `phase-0-scaffold`. Code scaffold and Convex deployment both complete. Vercel link still pending — deferred to end of Phase 1.
 
 ### What to do
 
@@ -70,7 +70,8 @@ Branch `phase-0-scaffold`. Code scaffold complete. Convex login + Vercel link st
 - [x] `bun run lint` (Biome) passes
 - [x] `bunx tsc --noEmit` passes
 - [x] `bun run build` passes
-- [ ] `npx convex dev` connects — pending user login
+- [x] `npx convex dev` connects (deployment `dev:brazen-oriole-651`, EU-West-1)
+- [x] `npx convex ai-files install` installed Convex agent skills under `.agents/skills/`
 - [ ] Vercel deploy — deferred to end of Phase 1
 
 ---
