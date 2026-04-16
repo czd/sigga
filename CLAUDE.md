@@ -95,3 +95,17 @@ Append entries when:
 - You keep running into the same ambiguity and want the auditor to lock it down.
 
 Use `/log-improvement` or just append the entry directly — format is documented in the queue file.
+
+## Workflow skills
+
+The `superpowers` and `code-review` plugins are installed. Use them at the moments they're designed for — they supplement the project-specific harness above, they don't replace it.
+
+- **`superpowers:brainstorming`** — before any new feature or non-trivial design decision, unless it's already been shaped in `docs/`.
+- **`superpowers:executing-plans`** (or `subagent-driven-development` when subagents help) — for working through phases in `docs/implementation-plan.md`. Don't ad-hoc what the plan already scripts.
+- **`superpowers:test-driven-development`** — before writing a testable feature.
+- **`superpowers:systematic-debugging`** — for any bug that isn't a one-line obvious fix.
+- **`superpowers:verification-before-completion`** — always, as a discipline. Never claim PASS / DONE / FIXED / "it works" without running the verifying command *this turn*. The `qa` agent inherits this rule; so do you.
+- **`superpowers:finishing-a-development-branch`** — after QA passes on a feature branch. Use its 4-option menu (merge / PR / keep / discard) instead of auto-integrating.
+- **`superpowers:requesting-code-review`** or **`/code-review`** — before merging a phase or substantial feature. This is deeper than pre-commit `qa` — it catches cross-file issues and CLAUDE.md compliance that a local lint+typecheck cannot.
+
+The three project agents (`qa`, `docs-sync`, `harness-auditor`) encode Sigga-specific rules that superpowers doesn't know about. Keep using them.
