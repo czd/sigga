@@ -8,7 +8,8 @@
 		"back": "Til baka",
 		"loading": "Hleð...",
 		"lastUpdated": "Síðast uppfært",
-		"by": "af"
+		"by": "af",
+		"comingSoon": "Kemur fljótlega"
 	},
 	"app": {
 		"name": "Sigga",
@@ -19,6 +20,18 @@
 		"log": "Dagbók",
 		"appointments": "Tímar",
 		"info": "Upplýsingar"
+	},
+	"dashboard": {
+		"title": "Í dag"
+	},
+	"dagbok": {
+		"title": "Dagbók"
+	},
+	"timar": {
+		"title": "Tímar"
+	},
+	"upplysingr": {
+		"title": "Upplýsingar"
 	},
 	"auth": {
 		"signIn": "Skrá inn",
