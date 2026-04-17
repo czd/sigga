@@ -73,11 +73,11 @@ npx convex env set <KEY> "<value>"
 
 The project has a three-agent harness defined under `.claude/agents/` with matching slash commands under `.claude/commands/`. Use it.
 
-### `qa` — optional, triggered manually
+### `qa` — runs before every `git commit`
 
-- There is no pre-commit hook. Invoke QA when you want a thorough review — run `/qa` or the `Agent` tool with `subagent_type: "qa"`.
-- Flow: stage changes → invoke `qa` → agent reviews the staged diff, runs lint/typecheck, and reports PASS / FAIL → main agent decides whether to proceed.
-- Reach for QA on substantive changes (new routes, schema, mutations, UI). Skip it for trivial doc/config tweaks.
+- A pre-commit hook (`.claude/hooks/qa-gate.sh`) blocks `git commit` unless a fresh QA marker exists at `/tmp/sigga-qa-passed` (≤ 15 min old, consumed on use). The marker lives in `/tmp/` — not under `.claude/` — so creating it doesn't require approval each time.
+- Standard flow: stage changes → invoke the `qa` agent (`Agent` tool with `subagent_type: "qa"`) or run `/qa` → on PASS the agent creates the marker → commit within 15 min.
+- Bypass only for genuinely trivial changes: include `[skip-qa]` in the commit message, or `SIGGA_SKIP_QA=1`, or `git commit --no-verify`. Don't bypass reflexively — the user asked for QA to run.
 
 ### `docs-sync` — keeps `docs/` truthful
 
