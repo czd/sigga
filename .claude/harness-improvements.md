@@ -29,84 +29,76 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 
 ## Open Items
 
-### 2026-04-17 · docs-sync · `docs/spec.md` project structure tree is stale — missing Phase 9–12 components and `(app)` route group
-
-**Context:** Phases 9–12 docs reconciliation. The project structure tree in `docs/spec.md` was written during initial planning. The actual `src/` tree now includes an `(app)` route group under `[locale]/`, the `upplysingar/` directory (renamed from `upplysingr/`), `UpplysingarTabs.tsx` under `src/components/info/`, `src/components/ui/tabs.tsx` (shadcn Tabs), `src/lib/formatDate.ts`, and `AppointmentCard.tsx`. Several of these are already noted in Phase status blocks in `docs/implementation-plan.md` but the tree in `docs/spec.md` hasn't been updated to reflect them.
-**Observation:** The project structure tree is the first thing a new contributor reads to orient themselves. When it drifts significantly, it loses its value as a navigation aid. The `(app)` route group in particular is invisible from the spec — a contributor won't know it exists.
-**Suggested action:** During the next docs-sync pass that touches the spec's structure tree, update it to reflect: (a) `src/app/[locale]/(app)/` route group containing the authenticated routes; (b) `UpplysingarTabs.tsx` in `src/components/info/`; (c) `AppointmentCard.tsx` in `src/components/appointments/`; (d) `src/lib/formatDate.ts`. Keep the tree as a representative sample, not an exhaustive listing.
-
-### 2026-04-17 · qa · `docs/spec.md` proxy matcher example excludes `api`, but `/api/auth` must pass through Convex Auth middleware
-
-**Context:** Proxy-fix QA. Staged `src/proxy.ts` changed the matcher from `"/((?!api|trpc|_next|_vercel|.*\\..*).*)"` to `"/((?!_next|_vercel|.*\\..*).*)"` to fix a bug where `POST /api/auth` was returning 404 HTML (Safari sign-in: "The string did not match the expected pattern"). Convex Auth's client POSTs to `/api/auth` and expects `convexAuthNextjsMiddleware` to intercept it — when the matcher excludes `api`, the middleware doesn't run and Next has no app route for `/api/auth`, so it 404s. Verified via grep in `node_modules/@convex-dev/auth/dist/nextjs/client.js` (fetches `apiRoute ?? "/api/auth"`) and `nextjs/server/index.js` (default `apiRoute` is `/api/auth`).
-**Observation:** `docs/spec.md` line 335 still shows the old matcher `"/((?!api|trpc|_next|_vercel|convex|.*\\..*).*)"`. Any agent copying the spec verbatim will re-introduce the bug. The matcher comment in the spec also has no explanation of *why* the matcher cannot exclude `api` — the failure mode ("sign-in POST 404s to /api/auth, Safari surfaces it as 'The string did not match the expected pattern'") is not documented anywhere.
-**Suggested action:** `docs-sync` should: (a) replace the matcher in `docs/spec.md` proxy.ts example with `"/((?!_next|_vercel|.*\\..*).*)"`; (b) add a short inline note like "Do **not** exclude `api` from the matcher — Convex Auth's client POSTs to `/api/auth` and relies on `convexAuthNextjsMiddleware` to intercept it. Excluding `api` makes sign-in fail with a 404 HTML response (Safari surfaces this as 'The string did not match the expected pattern')."; (c) consider mirroring the one-liner into `CLAUDE.md`'s proxy/Next.js 16 bullet.
-
-### 2026-04-17 · qa · `@vercel/analytics` dependency added but not listed in `docs/spec.md` stack
-
-**Context:** Proxy-fix QA. The same staged commit adds `@vercel/analytics@^2.0.1` to `package.json` and renders `<Analytics />` in `src/app/[locale]/layout.tsx`. This is a new runtime dependency — a third-party analytics pixel that sends page-view data to Vercel.
-**Observation:** `docs/spec.md` does not mention `@vercel/analytics` anywhere (grep: zero matches for "analytics"). The Stack section has no row for it, and the "Hosting" / "Observability" story (if there is one) doesn't cover what data is collected. For a project whose primary users are elderly Icelandic women and whose entire premise is private family coordination, shipping a telemetry SDK without documenting it is worth flagging — even if Vercel Analytics is low-risk. The addition is also not in `docs/implementation-plan.md` for any phase.
-**Suggested action:** `docs-sync` should: (a) add a brief mention in `docs/spec.md` Stack / Observability section describing `@vercel/analytics` and what it collects (page views, referrer, device class — no PII per Vercel's docs); (b) note it in the appropriate phase of `docs/implementation-plan.md` (probably a "deploy / observability" phase or as a post-MVP add-on); (c) confirm with the user that shipping Vercel Analytics is intended (it is currently unconditional — no opt-out, no env gate). Non-blocking for this commit; the dependency is small and the pixel is harmless, but the docs should reflect reality.
-
-### 2026-04-17 · qa · shadcn scaffold UI components contain hardcoded English strings
-
-**Context:** Phase 6 QA. `src/components/ui/dialog.tsx` and `src/components/ui/sheet.tsx` were installed via `bunx shadcn@latest add`. Both contain hardcoded English "Close" strings — in `dialog.tsx` line 77 (`sr-only`), line 116 (visible `Button` text in `DialogFooter`), and in `sheet.tsx` line 78 (`sr-only`). The shadcn scaffolds ship English labels by default.
-**Observation:** These strings are currently inert: `LogEntryForm` passes `showCloseButton={false}`, `DialogFooter` with its visible "Close" is not used anywhere in app code, and `dialog.tsx` is not imported by any app component. But every future consumer of `Sheet` with `showCloseButton={true}` or `DialogFooter` will silently render English — violating the "no hardcoded user-facing strings" rule.
-**Suggested action:** When new shadcn components are installed, do a one-pass audit for any hardcoded user-facing strings (especially sr-only labels for close/dismiss) and replace them with translation keys sourced from `tCommon("close")` (already exists in `messages/is.json` as `"Loka"` and `messages/en.json` as `"Close"`). Consider adding this as an explicit step in the Phase-N "install shadcn component" pattern in `docs/implementation-plan.md`.
-
-### 2026-04-17 · qa · Icon-only edit button in LogFeed uses `size="icon-lg"` (36px), below 48px tap-target minimum
-
-**Context:** Phase 6 QA. `src/components/log/LogFeed.tsx:111` renders the author-only edit (pencil) button with `size="icon-lg"`. The `button.tsx` CVA definition maps `icon-lg` to `size-9` = 36px — below the 48px minimum tap target required by CLAUDE.md and docs/spec.md ("48px min tap targets (56px+ preferred)").
-**Observation:** The correct size for an icon-only CTA that meets the 48px floor is `size="icon"` if it were ≥48px, or the project-custom `size="touch-icon"` (`size-14` = 56px). `icon-lg` at 36px is the shadcn default for "large icon button" but that default doesn't meet Sigga's accessibility bar.
-**Suggested action:** Change `size="icon-lg"` to `size="touch-icon"` at `src/components/log/LogFeed.tsx:111`. If the visual size feels too large in the card header, consider using negative margins (`-my-1 -mr-1`) to keep the touch target large while the visual fills less space.
-
-### 2026-04-17 · qa · `users.ts` requireAuth throws `new Error` instead of `ConvexError` on queries
-
-**Context:** Phase 7 QA. `convex/users.ts` added a `requireAuth` helper for the new `users.list` query. The helper throws `new Error("Ekki innskráður")` rather than `ConvexError("Ekki innskráður")`. All `requireAuth` helpers in `convex/appointments.ts` correctly use `ConvexError`.
-**Observation:** CLAUDE.md mandates `ConvexError("Ekki innskráður")` for auth failures. Using plain `Error` means the error is surfaced as an unhandled server error rather than a typed Convex domain error, which affects client-side error handling (Convex clients distinguish `ConvexError` from other errors). Query auth helpers should follow the same convention as mutation helpers.
-**Suggested action:** Change `throw new Error("Ekki innskráður")` to `throw new ConvexError("Ekki innskráður")` in `convex/users.ts`, and add `ConvexError` to the import from `"convex/values"`. Add a qa check or CLAUDE.md note that extends the `ConvexError` auth-throw convention to **all** Convex functions (queries and mutations), not just mutations.
-
 ### 2026-04-17 · qa · `appointments.past` query skips auth check, inconsistent with `users.list`
 
 **Context:** Phase 7 QA. The new `appointments.past` query does not call `requireAuth`, while `users.list` (added in the same commit) does. Other read queries in `appointments.ts` (`list`, `upcoming`, `get`) also skip auth. The app is behind an auth proxy so unauthenticated browser access is blocked, but the Convex backend itself enforces no auth on these reads.
-**Observation:** There is currently no documented policy for whether Convex *queries* must check auth. CLAUDE.md says "every mutation calls `ctx.auth.getUserIdentity()` and throws…" — queries are not mentioned. In practice some queries check auth (`users.list`) and some don't (`appointments.*`). This inconsistency could confuse future contributors and leaves appointment data accessible to any Convex client with the deployment URL.
-**Suggested action:** Decide on a policy and document it: either (a) all queries also require auth (best for defence-in-depth), or (b) mutations require auth, queries may or may not (current implicit state). Update CLAUDE.md accordingly and make the existing queries consistent with the choice.
+**Observation:** There is currently no documented policy for whether Convex *queries* must check auth. CLAUDE.md says "every mutation calls `ctx.auth.getUserIdentity()` and throws…" — queries are not mentioned. In practice some queries check auth (`users.list`) and some don't (`appointments.*`). This inconsistency could confuse future contributors and leaves appointment data accessible to any Convex client with the deployment URL. Note: `users.ts` no longer has the `requireAuth` helper from the original QA report; `users.list` currently has no auth check either.
+**Suggested action:** Decide on a policy and document it: either (a) all queries also require auth (best for defence-in-depth — recommended), or (b) mutations require auth, queries may or may not (current implicit state). If (a), update CLAUDE.md's Architecture Notes to say "every Convex function — query or mutation — calls `getAuthUserId(ctx)` and throws `ConvexError('Ekki innskráður')` if null", then add `requireAuth` calls to the unauthenticated queries. **Needs Nic's decision on policy.**
 
-### 2026-04-17 · qa · Tab toggle buttons use `min-h-11` (44px), below the 48px tap-target minimum
+### 2026-04-17 · qa · `dialog.tsx` sr-only "Close" label should source from translations (medium-term)
 
-**Context:** Phase 7 QA. `AppointmentList.tsx` tab buttons have `min-h-11` (Tailwind = 2.75rem = 44px). CLAUDE.md and docs/spec.md both require 48px minimum tap targets (56px+ preferred).
-**Observation:** `min-h-11` is 4px short of the 48px floor. The same pattern appears here alone; elsewhere in the codebase the project consistently uses `h-12`/`min-h-12` (48px) or `size="touch"` buttons. This is a minor accessibility shortfall for 60+ primary users.
-**Suggested action:** Change `min-h-11` to `min-h-12` (48px) in `AppointmentList.tsx` line 53. Consider adding an explicit qa check for `min-h-[0-9]+` classes below `min-h-12` in interactive elements.
-
-### 2026-04-17 · qa · shadcn Dialog close button "Close" sr-only string now reachable via AppointmentForm
-
-**Context:** Phase 6 QA flagged `dialog.tsx` line 77 (`<span className="sr-only">Close</span>`) as a future i18n violation, noting it was inert at the time. Phase 7 ships `AppointmentForm.tsx` which renders `DialogContent` with default `showCloseButton={true}` (default in `dialog.tsx` line 52). The confirmation dialog in `AppointmentForm` no longer passes `showCloseButton={false}`, so the "Close" sr-only X button is now rendered and active on screen readers.
-**Observation:** This is the trigger condition the Phase 6 open item was waiting for — the "Close" string is now in production UI. Screen readers on the delete-confirmation dialog will announce the X button as "Close" (English) rather than an Icelandic equivalent. Fix: replace `<span className="sr-only">Close</span>` with a translated `tCommon("close")` call (Icelandic `"Loka"` already exists in `messages/is.json`), or pass `showCloseButton={false}` to the confirmation dialog (footer already has cancel/confirm buttons).
-**Suggested action:** Short-term: in `AppointmentForm.tsx`, add `showCloseButton={false}` to the `<DialogContent className="max-w-sm">` on line 298 — the dialog already has explicit cancel/confirm buttons in the footer. Medium-term: fix `dialog.tsx` to source the sr-only label from a prop or `useTranslations`, so the component is locale-safe for all future callers.
-
-### 2026-04-17 · qa · `bg-emerald-100 text-emerald-800` uses bare Tailwind palette, not a project CSS token
-
-**Context:** Phase 10 QA. `EntitlementList.tsx` uses `bg-emerald-100 text-emerald-800` for the `approved` status badge. All other status colors (`primary`, `warning`, `muted`) reference CSS variables from `globals.css @theme inline`.
-**Observation:** `emerald` is a Tailwind v4 default palette color, not a project-defined warm palette token. Using it directly means: (a) the color can't be adjusted via the project's CSS-token theming system without touching component code; (b) there are no dark-mode variants (`dark:bg-emerald-900 dark:text-emerald-100` etc.), which would break if dark mode is ever added. The implementation plan explicitly calls out "emerald `approved`" by name, so the intent is documented; the concern is that the mechanism bypasses the token layer.
-**Suggested action:** Consider defining a `--success` / `--color-success` CSS variable in `globals.css` (analogous to `--warning`) mapped to an emerald-family value. Then reference `bg-success/15 text-success` in `EntitlementList.tsx` consistent with how `in_progress` and `not_applied` statuses are expressed. If dark mode is not planned, mark won't-fix.
-
-### 2026-04-17 · qa · `useSearchParams` in client components forces dynamic rendering — no Suspense required in this project, but worth documenting
-
-**Context:** Phase 12 QA. `UpplysingarTabs.tsx` uses `useSearchParams` from `next/navigation` without a `<Suspense>` wrapper. The parent page (`/[locale]/upplysingar/page.tsx`) is a server component inside the `[locale]` segment which has `generateStaticParams`. Normally, `useSearchParams` in a statically-generated segment requires wrapping the consumer in `<Suspense>` to avoid a build-time error. However, the build succeeded cleanly and the route rendered as `ƒ (Dynamic)`, meaning Next.js automatically opted the route into dynamic rendering when it detected `useSearchParams` in the tree — no Suspense wrapper needed.
-
-**Observation:** This behaviour (auto-dynamic opt-in) is not obvious, and a future agent might add an unnecessary `<Suspense>` wrapper "to be safe" or, conversely, worry the missing Suspense is a bug. Neither the qa playbook nor CLAUDE.md documents that `useSearchParams` in a client component is sufficient to make a route dynamic without manual `export const dynamic = 'force-dynamic'` or Suspense.
-
-**Suggested action:** Add a one-line note in `docs/implementation-plan.md` or `CLAUDE.md` Architecture Notes clarifying: "Client components using `useSearchParams` cause the nearest server-component page to render dynamically (ƒ) — no explicit `export const dynamic = 'force-dynamic'` or `<Suspense>` wrapper is required in this project's routing setup." This prevents future confusion about missing Suspense and prevents unnecessary wrapping.
-
-### 2026-04-17 · qa · `documents.abandonUpload` mutation added but not listed in `docs/spec.md` function contracts
-
-**Context:** Phase 11 defensive-fixes QA. `convex/documents.ts` gained a new `abandonUpload({ storageId })` mutation as part of an orphan-blob cleanup flow. The two-step upload in `DocumentUpload.tsx` now calls it in the catch branch when `save` fails after the blob has already been POSTed.
-**Observation:** `docs/spec.md` lines 612–617 enumerate the `documents.ts` function contracts as: `list`, `generateUploadUrl`, `save`, `getUrl`, `remove`. The new `abandonUpload` is not listed. Any agent or developer reading the spec to understand the backend surface area will not know this function exists.
-**Suggested action:** `docs-sync` should add `abandonUpload` to the `documents.ts` function contracts in `docs/spec.md`: "mutation: requires auth; deletes a previously uploaded blob by `storageId` without creating a document record. Called by `DocumentUpload` in the catch branch to clean up orphan blobs when `save` fails."
-**Resolution:** 2026-04-17 · docs-sync · Added `abandonUpload` contract to `documents.ts` section in `docs/spec.md`; replaced the stale `getUrl` separate-query entry with a note that `list` embeds signed URLs per row. Updated Phase 11 Convex functions list in `docs/implementation-plan.md` to match (`getUrl` removed, `abandonUpload` added).
+**Context:** Phase 6 QA flagged `dialog.tsx` line 77 (`<span className="sr-only">Close</span>`). Phase 7 triggered it; the short-term fix (`showCloseButton={false}` on the confirm dialog in `AppointmentForm.tsx`) is already applied. The underlying issue remains: any future `DialogContent` with the default `showCloseButton={true}` will render English to screen readers.
+**Observation:** `dialog.tsx` is a shared primitive used by all dialogs. Making it locale-safe at the source is better than requiring every caller to pass `showCloseButton={false}`.
+**Suggested action:** Update `src/components/ui/dialog.tsx` to accept an optional `closeLabel` prop (defaulting to a value sourced from context or passed by the caller), or thread `useTranslations("common")` into `DialogContent` so the sr-only span reads `tCommon("close")` = "Loka". Apply the same pattern to `sheet.tsx` which has the same hardcoded string. This is a code fix, not a harness fix — route to the next applicable phase.
 
 ---
 
 ## Resolved
+
+### 2026-04-17 · docs-sync · `docs/spec.md` project structure tree is stale — missing Phase 9–12 components and `(app)` route group
+
+**Context:** Phases 9–12 docs reconciliation. The project structure tree in `docs/spec.md` was written during initial planning and is missing `(app)` route group, `UpplysingarTabs.tsx`, `AppointmentCard.tsx`, `formatDate.ts`, `tabs.tsx`.
+**Resolution:** 2026-04-17 · docs · Pure docs item. Routed to the next `docs-sync` run. No harness rule needed — the tree's staleness is a docs maintenance task, not a gap in agent behavior. The `(app)` route group is now noted in the Architecture Notes routing bullet in `CLAUDE.md` as the parent of authenticated routes.
+
+### 2026-04-17 · qa · `docs/spec.md` proxy matcher example excludes `api`, but `/api/auth` must pass through Convex Auth middleware
+
+**Context:** The old matcher `"/((?!api|...)"` excluded `api`, breaking Convex Auth's `POST /api/auth` sign-in flow.
+**Resolution:** 2026-04-17 · rule + agent · (a) Added "Do not exclude `api` from the proxy matcher" with correct matcher and failure-mode fingerprint to the Next.js 16 bullet in `CLAUDE.md`. (b) Added a matching check to the Next.js 16 section of `.claude/agents/qa.md` ("Flag any proxy matcher that excludes `api`"). (c) Docs part (updating `docs/spec.md` proxy.ts example) routed to next `docs-sync` run.
+
+### 2026-04-17 · qa · `@vercel/analytics` dependency added but not listed in `docs/spec.md` stack
+
+**Context:** `@vercel/analytics@^2.0.1` shipped in `layout.tsx` without spec documentation.
+**Resolution:** 2026-04-17 · docs · Pure docs item, no harness rule needed. Routed to next `docs-sync` run to add a brief observability note to `docs/spec.md` and the relevant phase in `docs/implementation-plan.md`. Privacy posture (page views only, no PII per Vercel docs) should be confirmed by Nic in that pass.
+
+### 2026-04-17 · qa · shadcn scaffold UI components contain hardcoded English strings
+
+**Context:** `dialog.tsx` and `sheet.tsx` installed via `bunx shadcn@latest add` contain hardcoded "Close" sr-only strings.
+**Resolution:** 2026-04-17 · agent · Added a post-install sr-only string audit step to the i18n check section of `.claude/agents/qa.md`: "After any `bunx shadcn@latest add <component>` install, grep new files for hardcoded user-facing strings, especially `sr-only` close/dismiss labels, and replace with `tCommon('close')`." Root cause: the QA i18n check had no explicit mention of shadcn post-install hygiene.
+
+### 2026-04-17 · qa · Icon-only edit button in LogFeed uses `size="icon-lg"` (36px), below 48px tap-target minimum
+
+**Context:** `LogFeed.tsx:111` used `size="icon-lg"` (36px).
+**Resolution:** 2026-04-17 · won't-fix (already done) · Verified current code at line 111 uses `size="touch-icon"` with `-my-1 -mr-1` margins — exactly the suggested fix. The code issue was corrected before this audit run. No harness change needed.
+
+### 2026-04-17 · qa · `users.ts` requireAuth throws `new Error` instead of `ConvexError` on queries
+
+**Context:** QA reported `convex/users.ts` using `new Error` instead of `ConvexError` for auth failures.
+**Resolution:** 2026-04-17 · agent · Current `users.ts` code no longer has the `requireAuth` helper (the bug no longer exists). However, the underlying policy gap is real: QA Convex check only mentioned mutations. Tightened `.claude/agents/qa.md` Convex section to: (a) cover auth checks on both queries and mutations, (b) explicitly state `ConvexError` must be used in both — never `new Error`. Root cause: CLAUDE.md's Architecture Notes only mentioned mutations; QA check mirrored that gap.
+
+### 2026-04-17 · qa · Tab toggle buttons use `min-h-11` (44px), below the 48px tap-target minimum
+
+**Context:** `AppointmentList.tsx` tab buttons had `min-h-11` (44px).
+**Resolution:** 2026-04-17 · won't-fix (already done) · Verified current code uses `min-h-12` (48px) — the suggested fix is already applied. No harness change needed; the existing UX check in qa.md ("check classes like `h-12`, `h-14`, `min-h-[48px]`") already covers this.
+
+### 2026-04-17 · qa · shadcn Dialog close button "Close" sr-only string now reachable via AppointmentForm
+
+**Context:** `AppointmentForm.tsx` confirmation dialog exposed the hardcoded "Close" sr-only string.
+**Resolution:** 2026-04-17 · code (already done) + open (medium-term) · Short-term: `AppointmentForm.tsx` already has `showCloseButton={false}` on the confirmation dialog (verified at line 298). Longer-term fix — making `dialog.tsx` locale-safe at the source — moved to Open Items as a scoped code task for the next applicable phase.
+
+### 2026-04-17 · qa · `bg-emerald-100 text-emerald-800` uses bare Tailwind palette, not a project CSS token
+
+**Context:** `EntitlementList.tsx` uses bare `emerald-100/800` for the `approved` badge; other statuses use CSS variable tokens.
+**Resolution:** 2026-04-17 · won't-fix · Dark mode is not planned (not in spec, not in implementation plan). The emerald values are named explicitly in the implementation plan for this status. Without dark mode, bypassing the token layer for a single status badge is acceptable and creates no breakage risk. If dark mode is ever added to the scope, this should be revisited as a `--success` token addition.
+
+### 2026-04-17 · qa · `useSearchParams` in client components forces dynamic rendering — no Suspense required in this project, but worth documenting
+
+**Context:** `UpplysingarTabs.tsx` uses `useSearchParams` without `<Suspense>` and the build succeeded cleanly.
+**Resolution:** 2026-04-17 · rule · Added a note to CLAUDE.md Architecture Notes: "`useSearchParams` in a client component is sufficient to opt a route into dynamic rendering (ƒ) — no `export const dynamic = 'force-dynamic'` or `<Suspense>` wrapper is required in this project's routing setup."
+
+### 2026-04-17 · qa · `documents.abandonUpload` mutation added but not listed in `docs/spec.md` function contracts
+
+**Context:** `convex/documents.ts` gained `abandonUpload` but it wasn't in the spec.
+**Resolution:** 2026-04-17 · docs-sync · Added `abandonUpload` contract to `documents.ts` section in `docs/spec.md`; replaced the stale `getUrl` separate-query entry with a note that `list` embeds signed URLs per row. Updated Phase 11 Convex functions list in `docs/implementation-plan.md` to match (`getUrl` removed, `abandonUpload` added).
 
 ### 2026-04-17 · qa · "Skrifa í dagbók" quick action navigates rather than opens form per Phase 5 spec
 
@@ -210,6 +202,7 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 **Context:** Phase 11 QA. `DocumentUpload.tsx` uses a native `<datalist>` with 5 Icelandic category suggestions ("Lyfseðill", "Blóðprufa", "Bréf frá lækni", "Umsókn", "Vottorð") hardcoded as `<option value="..." />` elements. All other user-facing strings in the component route through `useTranslations`.
 **Observation:** The i18n rule ("no hardcoded user-facing strings in production UI") technically applies to datalist option values — they appear as autocomplete suggestions in the UI. However, the spec itself lists these as a fixed set tied to document types used by the family; they're not arbitrary strings. The English locale would also show Icelandic category names for these suggestions. In practice this is low-impact: the category field is free-text so English users can type any value, and the `/en/` locale is secondary (mainly for Nic to proofread). The spec (line 543) lists them as Icelandic strings with no mention of localization.
 **Suggested action:** Either (a) add `documents.categories.*` keys to `messages/{is,en}.json` and render them via `t("categories.lyfseðill")` etc., or (b) explicitly document in `CLAUDE.md` / the i18n rule that `<datalist>` suggestion values for domain-specific fixed lists are exempt from the i18n requirement when the source language is Icelandic. Option (b) is more pragmatic given the project context. The QA agent should not FAIL a commit for this pattern once exempted.
+**Resolution:** 2026-04-17 · agent · Took option (b). Added an explicit exemption note to the i18n check section of `.claude/agents/qa.md`: domain-specific `<datalist>` `<option>` values in a spec-defined fixed Icelandic list do not need `next-intl` routing and should not trigger an i18n FAIL. Root cause: the i18n rule had no carve-out for fixed-vocabulary domain hints that are inherently language-specific.
 
 ### 2026-04-17 · qa · spec.md has 4 category suggestions; implementation ships 5
 

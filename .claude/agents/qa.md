@@ -42,13 +42,16 @@ Run these and report each as PASS / FAIL / SKIP with evidence.
 - **Build**: run `bun run build` only if the diff touches build-critical config (`next.config.ts`, route files, Convex schema). Otherwise SKIP — builds are slow.
 
 ### Next.js 16 conventions (see `AGENTS.md`)
-- Flag any `middleware.ts` at the project root — must be `proxy.ts` with a function exported as `proxy`.
+- Flag any `middleware.ts` at the project root — must be `src/proxy.ts` (when `app/` is under `src/`) using `export default`.
+- Flag any named `proxy` export wrapping `convexAuthNextjsMiddleware` or `createMiddleware` — wrapped middlewares must use `export default` or they throw `TypeError: adapterFn is not a function`.
+- Flag any proxy matcher that excludes `api` (e.g. `(?!api|...)`) — Convex Auth POSTs to `/api/auth`; excluding `api` breaks sign-in.
 - Flag `skipMiddlewareUrlNormalize` — must be `skipProxyUrlNormalize`.
 - Flag parallel route slots missing a `default.tsx`.
 - Flag any use of `next lint` in scripts — it was removed in Next.js 16.
 
 ### Convex conventions (once `convex/` exists)
-- Every mutation must call `ctx.auth.getUserIdentity()` and throw `ConvexError("Ekki innskráður")` on null. Grep the diff for new mutations missing this.
+- Every mutation must call `ctx.auth.getUserIdentity()` or `getAuthUserId(ctx)` and throw `ConvexError("Ekki innskráður")` on null. Grep the diff for new mutations missing this.
+- Queries that return user-specific or sensitive data should also call `getAuthUserId(ctx)` and throw `ConvexError("Ekki innskráður")` on null. Auth failures in both mutations and queries must use `ConvexError` — never `new Error` — so the client can distinguish domain errors from server crashes.
 - Log-entry edit mutations must verify `authorId === currentUserId`.
 - Document-delete mutations must delete both the row and the blob (`ctx.storage.delete`).
 - Function naming is `[table].[action]`.
@@ -57,6 +60,8 @@ Run these and report each as PASS / FAIL / SKIP with evidence.
 - No hardcoded user-facing strings (English *or* Icelandic) in production UI. Strings should route through `next-intl` (`useTranslations` or `getTranslations`).
 - Route-level metadata must be per-locale: flag `export const metadata = { ... }` with hardcoded `title` / `description` in `src/app/[locale]/**`. Use `export async function generateMetadata({ params })` with `getTranslations({ locale })` instead, sourcing strings from `messages/{is,en}.json`.
 - Icelandic (`is`) is default — no URL prefix; English lives at `/en/...`.
+- **After any `bunx shadcn@latest add <component>` install**, do a one-pass grep for hardcoded user-facing strings in the new files — especially `<span className="sr-only">Close</span>` (and similar dismiss/cancel labels). Replace them with `tCommon("close")` or equivalent translation keys. `tCommon("close")` = `"Loka"` in `is.json` already exists; add it to `en.json` as `"Close"` if missing.
+- **Exemption — domain-specific `<datalist>` suggestions in Icelandic**: native `<datalist>` `<option value="...">` elements whose values are a fixed, spec-defined list of Icelandic domain terms (e.g., document category suggestions "Lyfseðill", "Blóðprufa", "Bréf frá lækni", "Umsókn", "Vottorð") do **not** need to route through `next-intl`. The category field is free-text; the suggestions are a convenience hint. Do not FAIL a commit for this pattern.
 
 ### UX (for UI code)
 - Phone numbers use `<a href="tel:...">`. Emails use `<a href="mailto:...">`.

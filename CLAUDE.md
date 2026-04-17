@@ -29,7 +29,7 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 
 ## Stack
 
-- **Next.js 16** (App Router, Turbopack default). **Breaking**: `middleware.ts` → `proxy.ts`, which must live at `src/proxy.ts` when `app/` is under `src/` (project root only when `app/` is at root); use `export default` — wrapped middlewares like `convexAuthNextjsMiddleware` and next-intl's `createMiddleware` require it, and a named `proxy` export with a wrapper throws `TypeError: adapterFn is not a function` at request time. `next lint` removed (use Biome or ESLint directly); parallel route slots require explicit `default.tsx`; `skipMiddlewareUrlNormalize` → `skipProxyUrlNormalize`. See `@AGENTS.md` — consult `node_modules/next/dist/docs/` before writing Next-specific code.
+- **Next.js 16** (App Router, Turbopack default). **Breaking**: `middleware.ts` → `proxy.ts`, which must live at `src/proxy.ts` when `app/` is under `src/` (project root only when `app/` is at root); use `export default` — wrapped middlewares like `convexAuthNextjsMiddleware` and next-intl's `createMiddleware` require it, and a named `proxy` export with a wrapper throws `TypeError: adapterFn is not a function` at request time. `next lint` removed (use Biome or ESLint directly); parallel route slots require explicit `default.tsx`; `skipMiddlewareUrlNormalize` → `skipProxyUrlNormalize`. **Do not exclude `api` from the proxy matcher** — Convex Auth POSTs to `/api/auth` and requires the middleware to intercept it; excluding `api` causes sign-in to 404 (Safari surfaces this as "The string did not match the expected pattern"). The correct matcher is `"/((?!_next|_vercel|.*\\..*).*)"`. See `@AGENTS.md` — consult `node_modules/next/dist/docs/` before writing Next-specific code.
 - **Convex** — backend, DB, real-time subscriptions, file storage, scheduled functions. Single source of truth for data.
 - **Convex Auth** (`@convex-dev/auth`) with Google OAuth. Whitelist enforced server-side via `ALLOWED_EMAILS` env var — no invite system.
 - **next-intl** for i18n. `is` default (no prefix), `en` at `/en/...`. Auth redirect + locale routing both live in `proxy.ts`.
@@ -54,10 +54,11 @@ npx convex env set <KEY> "<value>"
 
 ## Architecture Notes (once built out)
 
-- **Routing**: `src/app/[locale]/{page,dagbok,timar,upplysingar,login}/page.tsx`. Four tabs correspond to the four top-level routes; bottom nav is fixed and always visible.
+- **Routing**: Authenticated routes live under `src/app/[locale]/(app)/` (an `(app)` route group); public routes (`login`) live directly under `src/app/[locale]/`. The four tab routes are `(app)/{page,dagbok,timar,upplysingar}/page.tsx`. Bottom nav is fixed and always visible.
 - **`src/proxy.ts` is load-bearing**: it combines next-intl locale routing with Convex Auth redirect-to-login. The two concerns must not conflict — adapt `convexAuthNextjsMiddleware` and `export default` the wrapped middleware.
 - **Convex function naming**: `[table].[action]` (e.g., `appointments.volunteerToDrive`, `logEntries.add`). Every mutation calls `ctx.auth.getUserIdentity()` and throws `ConvexError("Ekki innskráður")` if null. No roles in v1 — any authenticated family member can do anything, except log-entry editing which checks `authorId === currentUser`.
 - **Real-time by default**: all reads are Convex `useQuery` subscriptions. Two tabs open → mutation in one appears in the other without refresh. E2E tests explicitly cover this.
+- **`useSearchParams` in a client component** is sufficient to opt a route into dynamic rendering (ƒ) — no `export const dynamic = 'force-dynamic'` or `<Suspense>` wrapper is required in this project's routing setup. Do not add either unless there is a specific reason beyond "useSearchParams is present".
 - **File uploads**: `generateUploadUrl` mutation → client POSTs file → client gets `storageId` → `save` mutation records metadata. Deletes must remove both the row and the underlying blob.
 - **Break-glass backup**: weekly Convex cron (`backup.weeklyExport`, Sunday 03:00 UTC) serializes all tables to JSON into Convex file storage; keeps last 4.
 - **PWA**: installable via `public/manifest.json` (`display: standalone`, `lang: is`). Service worker caches app shell; data areas show "Hleð..." while reconnecting.
