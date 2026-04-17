@@ -18,6 +18,10 @@ export function normaliseDaysOfWeek(days: readonly number[]): number[] {
  * Given a pattern and a reference timestamp (ms), return the next moment
  * strictly after `now` that matches. Iceland is UTC+0 year-round, so we can
  * do the math purely in UTC without DST concerns.
+ *
+ * Mirror of `computeNextStartTime` in `convex/recurringSeries.ts` (kept
+ * duplicated so Convex bundles cleanly without reaching across repo). If
+ * you change the algorithm here, change it there too.
  */
 export function computeNextStartTime(params: {
 	daysOfWeek: readonly number[];

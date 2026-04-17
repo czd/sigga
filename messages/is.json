@@ -135,8 +135,6 @@
 			"confirm": "Eyða",
 			"cancel": "Hætta við"
 		},
-		"pauseToast": "{title} sett í hlé",
-		"resumeToast": "Næsti tími: {when}",
 		"form": {
 			"createTitle": "Nýr reglulegur tími",
 			"editTitle": "Breyta reglulegum tíma",

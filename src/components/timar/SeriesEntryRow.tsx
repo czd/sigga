@@ -25,7 +25,7 @@ export function SeriesEntryRow() {
 	return (
 		<Link
 			href="/timar/reglulegir"
-			className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-paper px-5 py-4 ring-1 ring-foreground/10 transition-colors hover:bg-paper-deep/60"
+			className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-paper px-5 py-4 ring-1 ring-foreground/10 transition-colors outline-none hover:bg-paper-deep/60 focus-visible:ring-2 focus-visible:ring-ring/50"
 		>
 			<div className="flex flex-col">
 				<span className="font-serif text-base text-ink">{t("entryLabel")}</span>

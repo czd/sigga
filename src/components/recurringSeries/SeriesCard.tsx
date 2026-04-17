@@ -33,6 +33,7 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 	const remove = useMutation(api.recurringSeries.remove);
 	const [pending, setPending] = useState(false);
 	const [confirmDelete, setConfirmDelete] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const longLabels: Record<number, string> = {
 		0: tLong("0"),
@@ -48,8 +49,12 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 
 	async function handleToggle(next: boolean) {
 		setPending(true);
+		setError(null);
 		try {
 			await setActive({ id: series._id, isActive: next });
+		} catch (err) {
+			console.error(err);
+			setError(t("form.errors.generic"));
 		} finally {
 			setPending(false);
 		}
@@ -57,9 +62,13 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 
 	async function handleDelete() {
 		setPending(true);
+		setError(null);
 		try {
 			await remove({ id: series._id });
 			setConfirmDelete(false);
+		} catch (err) {
+			console.error(err);
+			setError(t("form.errors.generic"));
 		} finally {
 			setPending(false);
 		}
@@ -94,7 +103,6 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 						checked={series.isActive}
 						onCheckedChange={handleToggle}
 						disabled={pending}
-						aria-label={series.isActive ? t("active") : t("paused")}
 					/>
 					<span className="text-base text-ink-soft">
 						{series.isActive ? t("active") : t("paused")}
@@ -123,6 +131,12 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 					</Button>
 				</div>
 			</div>
+
+			{error ? (
+				<p className="text-sm text-destructive" role="alert">
+					{error}
+				</p>
+			) : null}
 
 			<Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
 				<DialogContent className="max-w-sm" showCloseButton={false}>

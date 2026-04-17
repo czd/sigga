@@ -135,8 +135,6 @@
 			"confirm": "Delete",
 			"cancel": "Cancel"
 		},
-		"pauseToast": "{title} paused",
-		"resumeToast": "Next: {when}",
 		"form": {
 			"createTitle": "New recurring appointment",
 			"editTitle": "Edit recurring appointment",
