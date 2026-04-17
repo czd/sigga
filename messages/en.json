@@ -137,6 +137,39 @@
 			"generic": "Could not save the contact."
 		}
 	},
+	"entitlements": {
+		"title": "Entitlements",
+		"add": "Add entitlement",
+		"createTitle": "New entitlement",
+		"editTitle": "Edit entitlement",
+		"empty": "No entitlements yet",
+		"urgent": "Urgent",
+		"owner": "Owner",
+		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"statuses": {
+			"in_progress": "In progress",
+			"not_applied": "Not applied",
+			"approved": "Approved",
+			"denied": "Denied"
+		},
+		"fields": {
+			"title": "Title",
+			"status": "Status",
+			"appliedTo": "Applied to",
+			"owner": "Owner",
+			"noOwner": "None selected",
+			"description": "Description",
+			"notes": "Notes"
+		},
+		"placeholders": {
+			"appliedTo": "e.g. Icelandic Health Insurance",
+			"notes": "e.g. URGENT — reason for priority"
+		},
+		"errors": {
+			"titleRequired": "Title cannot be empty.",
+			"generic": "Could not save the entitlement."
+		}
+	},
 	"medications": {
 		"title": "Medications",
 		"add": "Add medication",

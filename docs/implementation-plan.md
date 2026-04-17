@@ -660,6 +660,25 @@ The following exit-criteria items require user browser verification post-deploy 
 - Status grouping and color coding works
 - Can update status, assign owner
 
+### Status (2026-04-17)
+
+Code complete. All implementation tasks done:
+
+- [x] `convex/entitlements.ts` — `list`, `create`, `update`, `remove`. `list` enriches each row with `ownerUser` and `updatedByUser` summaries and sorts by status priority (`in_progress` → `not_applied` → `approved` → `denied`) then by title with Icelandic collation. All mutations require auth via `requireAuth` and reject empty titles.
+- [x] `EntitlementList` — status-grouped display with Icelandic section headers; empty statuses hidden. Each card carries a color-coded status pill (teal `in_progress`, amber `not_applied`, emerald `approved`, muted `denied`) with a matching Lucide icon. Urgency surfaces via a regex check on `notes` for the word "brýnt" (case-insensitive) — matching cards get an orange BRÝNT pill and a warning-tinted border. Cards show title, appliedTo, description, notes, owner avatar + name, and last-updated footer.
+- [x] `EntitlementForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Fields: title, status `Select`, appliedTo, owner `Select` (populated from `api.users.list` with a "None selected" option), description, notes. Edit mode pre-fills all fields and surfaces a destructive delete behind a shadcn `Dialog` confirmation.
+- [x] Translation keys added under `entitlements.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, urgent, owner, deleteConfirm, statuses.*, fields.*, placeholders.*, errors.*).
+- [x] `src/app/[locale]/(app)/upplysingr/page.tsx` — renders `EntitlementList` below `ContactList`. Tab container for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+
+`convex/entitlements` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
+
+The following exit-criteria items require user browser verification post-deploy (the agent cannot complete Google OAuth to reach authenticated routes):
+
+- [ ] All 11 seeded entitlements display correctly with status grouping — visual check
+- [ ] BRÝNT urgency pill renders on the heimahjúkrun entitlement (whose `notes` start with "BRÝNT:") — visual check
+- [ ] Color coding reads at a glance for 60+ users — visual check
+- [ ] Create / edit / delete entitlement and assign owner flow — visual check post Google OAuth login
+
 ---
 
 ## Phase 11: Upplýsingar — Skjöl (Documents)

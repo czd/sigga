@@ -137,6 +137,39 @@
 			"generic": "Ekki tókst að vista tengiliðinn."
 		}
 	},
+	"entitlements": {
+		"title": "Réttindi",
+		"add": "Bæta við réttindum",
+		"createTitle": "Ný réttindi",
+		"editTitle": "Breyta réttindum",
+		"empty": "Engin réttindi skráð",
+		"urgent": "Brýnt",
+		"owner": "Umsjón",
+		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"statuses": {
+			"in_progress": "Í vinnslu",
+			"not_applied": "Ekki sótt um",
+			"approved": "Samþykkt",
+			"denied": "Hafnað"
+		},
+		"fields": {
+			"title": "Titill",
+			"status": "Staða",
+			"appliedTo": "Sótt til",
+			"owner": "Umsjón",
+			"noOwner": "Enginn valinn",
+			"description": "Lýsing",
+			"notes": "Athugasemdir"
+		},
+		"placeholders": {
+			"appliedTo": "T.d. Sjúkratryggingar Íslands",
+			"notes": "T.d. BRÝNT — skýr ástæða fyrir forgangi"
+		},
+		"errors": {
+			"titleRequired": "Titill má ekki vera tómur.",
+			"generic": "Ekki tókst að vista réttindin."
+		}
+	},
 	"medications": {
 		"title": "Lyf",
 		"add": "Bæta við lyfi",
