@@ -79,6 +79,8 @@
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
+	--color-divider: var(--divider);
+	--color-divider-strong: var(--divider-strong);
 
 	--color-page: var(--page);
 	--color-paper: var(--paper);
