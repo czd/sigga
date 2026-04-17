@@ -11,7 +11,15 @@ type AuthorSummary = {
 	email: string | null;
 	image: string | null;
 };
-type LogEntryWithAuthor = LogEntryDoc & { author: AuthorSummary | null };
+type AppointmentSummary = {
+	_id: Id<"appointments">;
+	title: string;
+	startTime: number;
+};
+type LogEntryWithAuthor = LogEntryDoc & {
+	author: AuthorSummary | null;
+	appointment: AppointmentSummary | null;
+};
 
 async function resolveAuthor(
 	ctx: QueryCtx,
@@ -27,14 +35,29 @@ async function resolveAuthor(
 	};
 }
 
-async function withAuthor(
+async function resolveAppointment(
+	ctx: QueryCtx,
+	appointmentId: Id<"appointments"> | undefined,
+): Promise<AppointmentSummary | null> {
+	if (!appointmentId) return null;
+	const appointment = await ctx.db.get(appointmentId);
+	if (!appointment) return null;
+	return {
+		_id: appointment._id,
+		title: appointment.title,
+		startTime: appointment.startTime,
+	};
+}
+
+async function enrich(
 	ctx: QueryCtx,
 	entry: LogEntryDoc,
 ): Promise<LogEntryWithAuthor> {
-	return {
-		...entry,
-		author: await resolveAuthor(ctx, entry.authorId),
-	};
+	const [author, appointment] = await Promise.all([
+		resolveAuthor(ctx, entry.authorId),
+		resolveAppointment(ctx, entry.relatedAppointmentId),
+	]);
+	return { ...entry, author, appointment };
 }
 
 async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
@@ -52,7 +75,7 @@ export const recent = query({
 			.query("logEntries")
 			.order("desc")
 			.take(args.count ?? 3);
-		return Promise.all(rows.map((row) => withAuthor(ctx, row)));
+		return Promise.all(rows.map((row) => enrich(ctx, row)));
 	},
 });
 
@@ -63,9 +86,7 @@ export const list = query({
 			.query("logEntries")
 			.order("desc")
 			.paginate(args.paginationOpts);
-		const page = await Promise.all(
-			result.page.map((row) => withAuthor(ctx, row)),
-		);
+		const page = await Promise.all(result.page.map((row) => enrich(ctx, row)));
 		return { ...result, page };
 	},
 });

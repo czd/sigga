@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 
 type NavItem = {
 	href: "/" | "/dagbok" | "/timar" | "/upplysingr";
@@ -45,11 +46,12 @@ export function BottomNav() {
 							<Link
 								href={href}
 								aria-current={active ? "page" : undefined}
-								className={`flex flex-col items-center justify-center gap-1 min-h-16 px-2 py-2 text-sm transition-colors ${
+								className={cn(
+									"flex flex-col items-center justify-center gap-1 min-h-16 px-2 py-2 text-sm transition-colors",
 									active
-										? "text-accent font-semibold"
-										: "text-muted-foreground hover:text-foreground"
-								}`}
+										? "text-primary font-semibold"
+										: "text-muted-foreground hover:text-foreground",
+								)}
 							>
 								<Icon
 									size={26}

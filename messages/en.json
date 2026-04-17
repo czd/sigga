@@ -17,7 +17,10 @@
 		"daysAgo": "{count} days ago",
 		"minutesAgo": "{count} min ago",
 		"hoursAgo": "{count} h ago",
-		"justNow": "Just now"
+		"justNow": "Just now",
+		"close": "Close",
+		"saving": "Saving...",
+		"none": "None"
 	},
 	"app": {
 		"name": "Sigga",
@@ -45,12 +48,28 @@
 			"write": "Write in the log"
 		},
 		"quickActions": {
+			"title": "Quick actions",
 			"newAppointment": "New appointment",
 			"writeLog": "Write in the log"
 		}
 	},
 	"dagbok": {
-		"title": "Log"
+		"title": "Log",
+		"write": "Write",
+		"empty": "No log entries yet",
+		"emptyHint": "Start by writing the first entry.",
+		"showOlder": "Show older",
+		"newEntry": "New entry",
+		"editEntry": "Edit entry",
+		"contentLabel": "Entry",
+		"contentPlaceholder": "What happened? What's important to know?",
+		"linkAppointment": "Link to appointment (optional)",
+		"noAppointment": "No appointment",
+		"linkedAppointment": "Linked appointment",
+		"errors": {
+			"empty": "Entry cannot be empty.",
+			"generic": "Could not save the entry."
+		}
 	},
 	"timar": {
 		"title": "Appointments"

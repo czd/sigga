@@ -1,10 +1,11 @@
-import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 type UserAvatarProps = {
 	name?: string | null;
 	email?: string | null;
 	imageUrl?: string | null;
-	size?: number;
+	className?: string;
 };
 
 function initialsFrom(name?: string | null, email?: string | null): string {
@@ -21,27 +22,16 @@ export function UserAvatar({
 	name,
 	email,
 	imageUrl,
-	size = 40,
+	className,
 }: UserAvatarProps) {
 	const initials = initialsFrom(name, email);
-	if (imageUrl) {
-		return (
-			<Image
-				src={imageUrl}
-				alt={name ?? email ?? ""}
-				width={size}
-				height={size}
-				className="rounded-full object-cover"
-			/>
-		);
-	}
+	const alt = name ?? email ?? "";
 	return (
-		<div
-			aria-hidden
-			className="rounded-full bg-accent text-accent-foreground flex items-center justify-center font-semibold"
-			style={{ width: size, height: size, fontSize: size * 0.4 }}
-		>
-			{initials}
-		</div>
+		<Avatar className={cn("size-10", className)}>
+			{imageUrl ? <AvatarImage src={imageUrl} alt={alt} /> : null}
+			<AvatarFallback className="bg-primary/10 text-primary font-semibold">
+				{initials}
+			</AvatarFallback>
+		</Avatar>
 	);
 }

@@ -17,7 +17,10 @@
 		"daysAgo": "Fyrir {count} dögum",
 		"minutesAgo": "Fyrir {count} mín.",
 		"hoursAgo": "Fyrir {count} klst.",
-		"justNow": "Rétt í þessu"
+		"justNow": "Rétt í þessu",
+		"close": "Loka",
+		"saving": "Vista...",
+		"none": "Ekkert"
 	},
 	"app": {
 		"name": "Sigga",
@@ -45,12 +48,28 @@
 			"write": "Skrifa í dagbók"
 		},
 		"quickActions": {
+			"title": "Flýtileiðir",
 			"newAppointment": "Nýr tími",
 			"writeLog": "Skrifa í dagbók"
 		}
 	},
 	"dagbok": {
-		"title": "Dagbók"
+		"title": "Dagbók",
+		"write": "Skrifa",
+		"empty": "Engar færslur í dagbók ennþá",
+		"emptyHint": "Byrjaðu á að skrifa fyrstu færsluna.",
+		"showOlder": "Sýna eldri",
+		"newEntry": "Ný færsla",
+		"editEntry": "Breyta færslu",
+		"contentLabel": "Færsla",
+		"contentPlaceholder": "Hvað gerðist? Hvaða upplýsingar eru mikilvægar?",
+		"linkAppointment": "Tengja tíma (valfrjálst)",
+		"noAppointment": "Enginn tími",
+		"linkedAppointment": "Tengdur tími",
+		"errors": {
+			"empty": "Færslan má ekki vera tóm.",
+			"generic": "Ekki tókst að vista færsluna."
+		}
 	},
 	"timar": {
 		"title": "Tímar"
