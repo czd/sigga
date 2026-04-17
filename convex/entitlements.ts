@@ -157,3 +157,23 @@ export const remove = mutation({
 		await ctx.db.delete(args.id);
 	},
 });
+
+export const claim = mutation({
+	args: { id: v.id("entitlements") },
+	handler: async (ctx, args) => {
+		const userId = await requireAuth(ctx);
+		const existing = await ctx.db.get(args.id);
+		if (!existing) {
+			throw new ConvexError("Réttindi fundust ekki.");
+		}
+		if (existing.ownerId && existing.ownerId !== userId) {
+			throw new ConvexError("Réttindi eru þegar í umsjón annars.");
+		}
+		if (existing.ownerId === userId) return;
+		await ctx.db.patch(args.id, {
+			ownerId: userId,
+			updatedAt: Date.now(),
+			updatedBy: userId,
+		});
+	},
+});

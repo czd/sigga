@@ -131,7 +131,13 @@
 	},
 	"pappirar": {
 		"title": "Pappírar",
-		"subtitle": "Réttindi og skjöl.",
+		"headlines": {
+			"rettindi": "Réttindi í vinnslu.",
+			"rettindiAllDone": "Allt í höfn.",
+			"rettindiEmpty": "Engin réttindi enn.",
+			"skjol": "Skjöl í safninu.",
+			"skjolEmpty": "Skjalasafnið er tómt."
+		},
 		"tabs": {
 			"rettindi": "Réttindi",
 			"skjol": "Skjöl"
@@ -187,7 +193,31 @@
 		"empty": "Engin réttindi skráð",
 		"urgent": "Brýnt",
 		"owner": "Umsjón",
+		"ownerSuffix": "sér um",
+		"noOwner": "Enginn eigandi",
 		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"progress": {
+			"remaining": "{done} af {total} komin í höfn",
+			"inProgress": "{done} af {total} enn í vinnslu",
+			"allDone": "Allt komið í höfn",
+			"reset": "Yfirlit"
+		},
+		"filters": {
+			"active": "Virk",
+			"in_progress": "Í vinnslu",
+			"not_applied": "Ekki sótt",
+			"approved": "Samþykkt",
+			"denied": "Hafnað"
+		},
+		"emptyFilter": "Ekkert í þessum flokki.",
+		"claim": {
+			"cta": "+ Enginn eigandi · tek þetta",
+			"ctaShort": "Tek þetta",
+			"confirmTitle": "Taka að sér?",
+			"confirmBody": "Þú verður skráð(ur) sem umsjón með \"{title}\". Þú getur breytt þessu aftur seinna.",
+			"confirmAction": "Já, ég tek þetta",
+			"error": "Ekki tókst að taka réttindin að sér."
+		},
 		"statuses": {
 			"in_progress": "Í vinnslu",
 			"not_applied": "Ekki sótt um",
@@ -215,6 +245,7 @@
 	"documents": {
 		"title": "Skjöl",
 		"upload": "Hlaða upp",
+		"uploadCta": "Bæta við skjali",
 		"uploading": "Hlaða upp...",
 		"uploadTitle": "Nýtt skjal",
 		"download": "Opna",
@@ -222,6 +253,13 @@
 		"empty": "Engin skjöl skráð",
 		"emptyHint": "Hladdu upp lyfseðlum, bréfum eða vottorðum til að hafa allt á einum stað.",
 		"deleteConfirm": "Ertu viss? Skjalið eyðist varanlega — þetta er ekki hægt að afturkalla.",
+		"detailTitle": "Skjal",
+		"sort": {
+			"recent": "Nýleg",
+			"byCategory": "Eftir flokki"
+		},
+		"uncategorized": "Án flokks",
+		"addedBy": "{date} · {name}",
 		"fields": {
 			"file": "Skjal",
 			"chooseFile": "Velja skjal",
@@ -245,6 +283,7 @@
 		"createTitle": "Nýtt lyf",
 		"editTitle": "Breyta lyfi",
 		"empty": "Engin lyf skráð",
+		"countActive": "{count} virk",
 		"showInactive": "Sýna eldri lyf",
 		"hideInactive": "Fela eldri lyf",
 		"fields": {

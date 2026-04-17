@@ -1,15 +1,14 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { ChevronDown, ChevronUp, Pencil, Pill, Plus } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import type { LucideIcon } from "lucide-react";
+import { Moon, Pill, Plus, Sun, Syringe } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { MedicationForm } from "./MedicationForm";
 
@@ -24,106 +23,54 @@ type MedicationWithUpdater = MedicationDoc & {
 	updatedByUser: UserSummary | null;
 };
 
-function formatUpdatedAt(ts: number, locale: string): string {
-	return new Intl.DateTimeFormat(locale, {
-		day: "numeric",
-		month: "long",
-		year: "numeric",
-	}).format(new Date(ts));
+function iconFor(med: MedicationDoc): LucideIcon {
+	const haystack =
+		`${med.name} ${med.schedule} ${med.notes ?? ""}`.toLowerCase();
+	if (/(spraut|inject)/.test(haystack)) return Syringe;
+	if (/(kvöld|nótt|fyrir svefn|á kvöldin)/.test(haystack)) return Moon;
+	if (/(morgn|morgun|á daginn|dag)/.test(haystack)) return Sun;
+	return Pill;
 }
 
 function MedicationRow({
 	medication,
 	onEdit,
+	isLast,
 }: {
 	medication: MedicationWithUpdater;
 	onEdit: (med: MedicationWithUpdater) => void;
+	isLast: boolean;
 }) {
-	const t = useTranslations("medications");
-	const tCommon = useTranslations("common");
-	const locale = useLocale();
-	const [expanded, setExpanded] = useState(false);
-	const hasDetails =
-		Boolean(medication.prescriber) ||
-		Boolean(medication.notes) ||
-		Boolean(medication.updatedByUser);
+	const Icon = iconFor(medication);
+	const subtitle = medication.purpose ?? medication.notes ?? null;
 
 	return (
-		<Card className={cn(!medication.isActive && "opacity-75")}>
-			<CardContent className="flex flex-col gap-2">
-				<button
-					type="button"
-					onClick={() => setExpanded((v) => !v)}
-					aria-expanded={expanded}
-					className="flex items-start gap-3 text-left min-h-12 -mx-1 px-1 py-1 rounded-lg hover:bg-accent/40 transition-colors"
+		<li className={cn(!isLast && "border-b border-divider")}>
+			<button
+				type="button"
+				onClick={() => onEdit(medication)}
+				className="flex w-full items-start gap-4 px-4 py-4 text-left outline-none focus-visible:bg-paper-deep/60"
+			>
+				<span
+					aria-hidden
+					className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-paper-deep text-ink-faint"
 				>
-					<div className="flex-1 min-w-0">
-						<h3 className="text-lg font-semibold leading-snug">
-							{medication.name}
-						</h3>
-						<p className="text-base mt-0.5">
-							{medication.dose} · {medication.schedule}
-						</p>
-						{medication.purpose ? (
-							<p className="text-base text-muted-foreground mt-1">
-								{medication.purpose}
-							</p>
-						) : null}
-					</div>
-					{hasDetails ? (
-						<span className="text-muted-foreground shrink-0 mt-1" aria-hidden>
-							{expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-						</span>
+					<Icon className="size-5" strokeWidth={1.6} aria-hidden />
+				</span>
+				<span className="flex min-w-0 flex-1 flex-col gap-1">
+					<span className="font-serif text-lg leading-tight font-semibold text-ink">
+						{medication.name}
+					</span>
+					<span className="text-base text-ink">
+						{medication.dose} <span className="text-ink-faint">·</span>{" "}
+						{medication.schedule}
+					</span>
+					{subtitle ? (
+						<span className="text-sm italic text-ink-soft">{subtitle}</span>
 					) : null}
-				</button>
-
-				{expanded && hasDetails ? (
-					<div className="pt-2 mt-1 border-t border-border flex flex-col gap-2 text-base">
-						{medication.prescriber ? (
-							<div>
-								<span className="text-muted-foreground">
-									{t("fields.prescriber")}:{" "}
-								</span>
-								<span>{medication.prescriber}</span>
-							</div>
-						) : null}
-						{medication.notes ? (
-							<p className="whitespace-pre-wrap text-foreground/90">
-								{medication.notes}
-							</p>
-						) : null}
-						{medication.updatedByUser ? (
-							<div className="flex items-center gap-2 text-sm text-muted-foreground">
-								<UserAvatar
-									name={medication.updatedByUser.name}
-									email={medication.updatedByUser.email}
-									imageUrl={medication.updatedByUser.image}
-									className="size-6"
-								/>
-								<span>
-									{tCommon("lastUpdated")}{" "}
-									{formatUpdatedAt(medication.updatedAt, locale)}{" "}
-									{tCommon("by")}{" "}
-									{medication.updatedByUser.name ??
-										medication.updatedByUser.email ??
-										""}
-								</span>
-							</div>
-						) : null}
-						<div className="pt-1">
-							<Button
-								variant="outline"
-								size="touch"
-								onClick={() => onEdit(medication)}
-							>
-								<Pencil aria-hidden />
-								<span>{tCommon("edit")}</span>
-							</Button>
-						</div>
-					</div>
-				) : null}
-			</CardContent>
-		</Card>
+				</span>
+			</button>
+		</li>
 	);
 }
 
@@ -145,55 +92,76 @@ export function MedicationTable() {
 	return (
 		<>
 			<div className="flex flex-col gap-4">
-				<div className="flex items-center justify-between gap-3">
-					<h3 className="text-xl font-semibold">{t("title")}</h3>
-					<Button size="touch" onClick={() => setCreateOpen(true)}>
-						<Plus aria-hidden />
-						<span>{t("add")}</span>
-					</Button>
+				<div className="flex items-baseline justify-between gap-3">
+					<h3 className="font-serif text-[1.6rem] font-normal tracking-tight text-ink">
+						{t("title")}
+					</h3>
+					{!loading && active.length > 0 ? (
+						<span className="text-sm text-ink-soft">
+							{t("countActive", { count: active.length })}
+						</span>
+					) : null}
 				</div>
 
 				{loading ? (
-					<Card>
-						<CardContent className="text-muted-foreground py-2">
-							{tCommon("loading")}
-						</CardContent>
-					</Card>
+					<div className="rounded-2xl bg-paper px-4 py-6 ring-1 ring-foreground/10 text-muted-foreground">
+						{tCommon("loading")}
+					</div>
 				) : active.length === 0 ? (
 					<EmptyState
 						icon={<Pill size={40} aria-hidden />}
 						title={t("empty")}
+						action={
+							<Button size="touch" onClick={() => setCreateOpen(true)}>
+								<Plus aria-hidden />
+								<span>{t("add")}</span>
+							</Button>
+						}
 					/>
 				) : (
-					<ul className="flex flex-col gap-3">
-						{active.map((med) => (
-							<li key={med._id}>
-								<MedicationRow medication={med} onEdit={setEditTarget} />
-							</li>
+					<ul className="overflow-hidden rounded-2xl bg-paper ring-1 ring-foreground/10">
+						{active.map((med, i) => (
+							<MedicationRow
+								key={med._id}
+								medication={med}
+								onEdit={setEditTarget}
+								isLast={i === active.length - 1}
+							/>
 						))}
 					</ul>
 				)}
 
-				{inactive.length > 0 ? (
-					<div className="flex flex-col gap-3">
+				<div className="flex flex-wrap items-center gap-3">
+					<Button
+						variant="outline"
+						size="touch"
+						onClick={() => setCreateOpen(true)}
+					>
+						<Plus aria-hidden />
+						<span>{t("add")}</span>
+					</Button>
+					{inactive.length > 0 ? (
 						<Button
-							variant="outline"
+							variant="ghost"
 							size="touch"
 							onClick={() => setShowInactive((v) => !v)}
-							className="self-start"
 						>
 							{showInactive ? t("hideInactive") : t("showInactive")}
 						</Button>
-						{showInactive ? (
-							<ul className="flex flex-col gap-3">
-								{inactive.map((med) => (
-									<li key={med._id}>
-										<MedicationRow medication={med} onEdit={setEditTarget} />
-									</li>
-								))}
-							</ul>
-						) : null}
-					</div>
+					) : null}
+				</div>
+
+				{inactive.length > 0 && showInactive ? (
+					<ul className="overflow-hidden rounded-2xl bg-paper/60 ring-1 ring-foreground/10">
+						{inactive.map((med, i) => (
+							<MedicationRow
+								key={med._id}
+								medication={med}
+								onEdit={setEditTarget}
+								isLast={i === inactive.length - 1}
+							/>
+						))}
+					</ul>
 				) : null}
 			</div>
 

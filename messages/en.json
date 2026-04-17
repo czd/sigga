@@ -131,7 +131,13 @@
 	},
 	"pappirar": {
 		"title": "Paperwork",
-		"subtitle": "Entitlements and documents.",
+		"headlines": {
+			"rettindi": "Entitlements in motion.",
+			"rettindiAllDone": "All squared away.",
+			"rettindiEmpty": "No entitlements yet.",
+			"skjol": "Documents on file.",
+			"skjolEmpty": "No documents yet."
+		},
 		"tabs": {
 			"rettindi": "Entitlements",
 			"skjol": "Documents"
@@ -187,7 +193,31 @@
 		"empty": "No entitlements yet",
 		"urgent": "Urgent",
 		"owner": "Owner",
+		"ownerSuffix": "owns this",
+		"noOwner": "No owner",
 		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"progress": {
+			"remaining": "{done} of {total} done",
+			"inProgress": "{done} of {total} still in progress",
+			"allDone": "All done",
+			"reset": "Overview"
+		},
+		"filters": {
+			"active": "Active",
+			"in_progress": "In progress",
+			"not_applied": "Not applied",
+			"approved": "Approved",
+			"denied": "Denied"
+		},
+		"emptyFilter": "Nothing in this filter.",
+		"claim": {
+			"cta": "+ No owner · I'll take this",
+			"ctaShort": "I'll take this",
+			"confirmTitle": "Take this on?",
+			"confirmBody": "You'll be listed as the owner of \"{title}\". You can change this later.",
+			"confirmAction": "Yes, I'll take this",
+			"error": "Could not claim this entitlement."
+		},
 		"statuses": {
 			"in_progress": "In progress",
 			"not_applied": "Not applied",
@@ -215,6 +245,7 @@
 	"documents": {
 		"title": "Documents",
 		"upload": "Upload",
+		"uploadCta": "Add document",
 		"uploading": "Uploading...",
 		"uploadTitle": "New document",
 		"download": "Open",
@@ -222,6 +253,13 @@
 		"empty": "No documents yet",
 		"emptyHint": "Upload prescriptions, letters, or certificates to keep everything in one place.",
 		"deleteConfirm": "Are you sure? The document will be permanently deleted — this cannot be undone.",
+		"detailTitle": "Document",
+		"sort": {
+			"recent": "Recent",
+			"byCategory": "By category"
+		},
+		"uncategorized": "Uncategorized",
+		"addedBy": "{date} · {name}",
 		"fields": {
 			"file": "File",
 			"chooseFile": "Choose file",
@@ -245,6 +283,7 @@
 		"createTitle": "New medication",
 		"editTitle": "Edit medication",
 		"empty": "No medications yet",
+		"countActive": "{count} active",
 		"showInactive": "Show older medications",
 		"hideInactive": "Hide older medications",
 		"fields": {

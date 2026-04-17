@@ -1,15 +1,14 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Download, FileText, Trash2, Upload } from "lucide-react";
+import { ChevronRight, Download, FileText, Trash2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -18,6 +17,14 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import { DocumentUpload } from "./DocumentUpload";
 
 type DocumentDoc = Doc<"documents">;
@@ -32,7 +39,30 @@ type DocumentWithMeta = DocumentDoc & {
 	addedByUser: UserSummary | null;
 };
 
-function formatDate(ts: number, locale: string): string {
+type SortKey = "recent" | "category";
+
+type ThumbKind = "pdf" | "img" | "doc";
+
+function thumbKindOf(fileType: string): ThumbKind {
+	if (fileType === "application/pdf") return "pdf";
+	if (fileType.startsWith("image/")) return "img";
+	return "doc";
+}
+
+const THUMB_STYLE: Record<ThumbKind, { bg: string; label: string }> = {
+	pdf: { bg: "bg-[#e9d0cb] text-[#8a4e48]", label: "PDF" },
+	img: { bg: "bg-sage/25 text-sage-shadow", label: "IMG" },
+	doc: { bg: "bg-paper-deep text-ink-soft", label: "DOC" },
+};
+
+function formatShortDate(ts: number, locale: string): string {
+	return new Intl.DateTimeFormat(locale, {
+		day: "numeric",
+		month: "short",
+	}).format(new Date(ts));
+}
+
+function formatFullDate(ts: number, locale: string): string {
 	return new Intl.DateTimeFormat(locale, {
 		day: "numeric",
 		month: "long",
@@ -46,107 +76,237 @@ function formatSize(bytes: number): string {
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function DocumentCard({
+function firstName(name: string | null | undefined, email?: string | null) {
+	const source = name?.trim() || email?.trim() || "";
+	if (!source) return "";
+	return source.split(/\s+/)[0];
+}
+
+function DocRow({
 	doc,
-	onDelete,
+	onOpen,
+	isLast,
 }: {
 	doc: DocumentWithMeta;
-	onDelete: (d: DocumentWithMeta) => void;
+	onOpen: (d: DocumentWithMeta) => void;
+	isLast: boolean;
+}) {
+	const locale = useLocale();
+	const kind = thumbKindOf(doc.fileType);
+	const thumb = THUMB_STYLE[kind];
+	const uploader = firstName(doc.addedByUser?.name, doc.addedByUser?.email);
+	const dateShort = formatShortDate(doc._creationTime, locale);
+	const metaParts = [doc.category, dateShort, uploader].filter(
+		(p): p is string => Boolean(p && p.length > 0),
+	);
+
+	return (
+		<li className={cn(!isLast && "border-b border-divider")}>
+			<button
+				type="button"
+				onClick={() => onOpen(doc)}
+				className="flex w-full items-center gap-4 px-4 py-3 text-left outline-none focus-visible:bg-paper-deep/60"
+			>
+				<span
+					aria-hidden
+					className={cn(
+						"flex size-14 shrink-0 items-center justify-center rounded-xl font-semibold tracking-wide",
+						thumb.bg,
+					)}
+				>
+					<span className="text-[0.7rem]">{thumb.label}</span>
+				</span>
+				<span className="flex min-w-0 flex-1 flex-col gap-0.5">
+					<span className="font-serif text-lg leading-tight font-semibold text-ink truncate">
+						{doc.title}
+					</span>
+					{metaParts.length > 0 ? (
+						<span className="truncate text-sm text-ink-soft">
+							{metaParts.join(" · ")}
+						</span>
+					) : null}
+				</span>
+				<ChevronRight
+					aria-hidden
+					className="size-5 shrink-0 text-ink-faint"
+					strokeWidth={1.8}
+				/>
+			</button>
+		</li>
+	);
+}
+
+type Section = { label: string; rows: DocumentWithMeta[] };
+
+function buildSections(
+	documents: DocumentWithMeta[],
+	sort: SortKey,
+	uncategorizedLabel: string,
+	locale: string,
+): Section[] {
+	if (sort === "recent") {
+		const rows = [...documents].sort(
+			(a, b) => b._creationTime - a._creationTime,
+		);
+		return [{ label: "", rows }];
+	}
+	const map = new Map<string, DocumentWithMeta[]>();
+	for (const d of documents) {
+		const key = d.category?.trim() || uncategorizedLabel;
+		const bucket = map.get(key) ?? [];
+		bucket.push(d);
+		map.set(key, bucket);
+	}
+	const entries = [...map.entries()];
+	entries.sort(([a], [b]) => {
+		if (a === uncategorizedLabel) return 1;
+		if (b === uncategorizedLabel) return -1;
+		return a.localeCompare(b, locale);
+	});
+	return entries.map(([label, rows]) => ({
+		label,
+		rows: rows.sort((x, y) => y._creationTime - x._creationTime),
+	}));
+}
+
+function DocumentDetail({
+	doc,
+	open,
+	onOpenChange,
+	onRequestDelete,
+}: {
+	doc: DocumentWithMeta | null;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onRequestDelete: (d: DocumentWithMeta) => void;
 }) {
 	const t = useTranslations("documents");
 	const tCommon = useTranslations("common");
 	const locale = useLocale();
 
+	if (!doc) return null;
+
+	const kind = thumbKindOf(doc.fileType);
+	const thumb = THUMB_STYLE[kind];
+	const uploader = doc.addedByUser;
+	const createdStr = formatFullDate(doc._creationTime, locale);
+
 	return (
-		<Card>
-			<CardContent className="flex flex-col gap-3">
-				<div className="flex items-start gap-3">
-					<div
-						aria-hidden
-						className="shrink-0 rounded-xl bg-primary/10 text-primary p-3"
-					>
-						<FileText className="size-6" />
+		<Sheet open={open} onOpenChange={onOpenChange}>
+			<SheetContent
+				side="bottom"
+				className="max-h-[85vh] overflow-y-auto rounded-t-2xl"
+				showCloseButton
+			>
+				<div className="flex flex-col gap-5 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+					<SheetHeader className="p-0">
+						<SheetTitle className="font-serif text-2xl leading-snug font-semibold text-ink">
+							{doc.title}
+						</SheetTitle>
+						<SheetDescription className="sr-only">
+							{t("detailTitle")}
+						</SheetDescription>
+					</SheetHeader>
+
+					<div className="flex items-center gap-4">
+						<span
+							aria-hidden
+							className={cn(
+								"flex size-16 shrink-0 items-center justify-center rounded-xl text-sm font-semibold tracking-wide",
+								thumb.bg,
+							)}
+						>
+							{thumb.label}
+						</span>
+						<div className="flex min-w-0 flex-col gap-0.5">
+							<span className="truncate text-base text-ink">
+								{doc.fileName}
+							</span>
+							<span className="text-sm text-ink-soft">
+								{formatSize(doc.fileSize)}
+							</span>
+						</div>
 					</div>
-					<div className="flex-1 min-w-0 flex flex-col gap-1">
-						<h4 className="text-lg font-semibold leading-snug">{doc.title}</h4>
-						<p className="text-sm text-muted-foreground truncate">
-							{doc.fileName} · {formatSize(doc.fileSize)}
-						</p>
-						{doc.category ? (
-							<span className="inline-flex w-fit items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium text-foreground/80 mt-1">
+
+					{doc.category ? (
+						<div>
+							<span className="inline-flex items-center rounded-full bg-paper-deep px-3 py-1 text-sm font-medium text-ink">
 								{doc.category}
 							</span>
+						</div>
+					) : null}
+
+					{doc.notes ? (
+						<p className="whitespace-pre-wrap text-base text-foreground/90">
+							{doc.notes}
+						</p>
+					) : null}
+
+					<div className="flex items-center gap-2 text-sm text-ink-soft">
+						{uploader ? (
+							<UserAvatar
+								name={uploader.name}
+								email={uploader.email}
+								imageUrl={uploader.image}
+								className="size-6"
+							/>
 						) : null}
+						<span>
+							{createdStr}
+							{uploader ? ` · ${uploader.name ?? uploader.email ?? ""}` : ""}
+						</span>
+					</div>
+
+					<div className="flex flex-col gap-2 pt-1">
+						{doc.url ? (
+							<Button asChild size="touch">
+								<a href={doc.url} target="_blank" rel="noreferrer">
+									<Download aria-hidden />
+									<span>{t("download")}</span>
+								</a>
+							</Button>
+						) : (
+							<Button variant="outline" size="touch" disabled>
+								{t("unavailable")}
+							</Button>
+						)}
+						<Button
+							variant="destructive"
+							size="touch"
+							onClick={() => onRequestDelete(doc)}
+						>
+							<Trash2 aria-hidden />
+							<span>{tCommon("delete")}</span>
+						</Button>
 					</div>
 				</div>
-
-				{doc.notes ? (
-					<p className="whitespace-pre-wrap text-base text-foreground/90">
-						{doc.notes}
-					</p>
-				) : null}
-
-				<div className="flex flex-wrap items-center gap-2 pt-1">
-					{doc.url ? (
-						<Button
-							asChild
-							variant="default"
-							size="touch"
-							className="flex-1 min-w-[10rem]"
-						>
-							<a href={doc.url} target="_blank" rel="noreferrer">
-								<Download aria-hidden />
-								<span>{t("download")}</span>
-							</a>
-						</Button>
-					) : (
-						<Button variant="outline" size="touch" disabled>
-							{t("unavailable")}
-						</Button>
-					)}
-					<Button
-						variant="destructive"
-						size="touch-icon"
-						onClick={() => onDelete(doc)}
-						aria-label={tCommon("delete")}
-					>
-						<Trash2 aria-hidden />
-					</Button>
-				</div>
-
-				<div className="pt-2 mt-1 border-t border-border flex items-center gap-2 text-sm text-muted-foreground">
-					{doc.addedByUser ? (
-						<UserAvatar
-							name={doc.addedByUser.name}
-							email={doc.addedByUser.email}
-							imageUrl={doc.addedByUser.image}
-							className="size-6"
-						/>
-					) : null}
-					<span>
-						{formatDate(doc._creationTime, locale)}
-						{doc.addedByUser
-							? ` · ${doc.addedByUser.name ?? doc.addedByUser.email ?? ""}`
-							: ""}
-					</span>
-				</div>
-			</CardContent>
-		</Card>
+			</SheetContent>
+		</Sheet>
 	);
 }
 
 export function DocumentList() {
 	const t = useTranslations("documents");
 	const tCommon = useTranslations("common");
+	const locale = useLocale();
 	const [uploadOpen, setUploadOpen] = useState(false);
+	const [detailTarget, setDetailTarget] = useState<DocumentWithMeta | null>(
+		null,
+	);
 	const [deleteTarget, setDeleteTarget] = useState<DocumentWithMeta | null>(
 		null,
 	);
 	const [deleting, setDeleting] = useState(false);
+	const [sort, setSort] = useState<SortKey>("recent");
 
 	const documents = useQuery(api.documents.list, {});
 	const remove = useMutation(api.documents.remove);
 	const loading = documents === undefined;
+
+	const sections = useMemo(
+		() => buildSections(documents ?? [], sort, t("uncategorized"), locale),
+		[documents, sort, t, locale],
+	);
 
 	async function handleDelete() {
 		if (!deleteTarget) return;
@@ -154,6 +314,7 @@ export function DocumentList() {
 		try {
 			await remove({ id: deleteTarget._id });
 			setDeleteTarget(null);
+			setDetailTarget(null);
 		} catch (err) {
 			console.error(err);
 		} finally {
@@ -161,41 +322,108 @@ export function DocumentList() {
 		}
 	}
 
+	const totalDocs = documents?.length ?? 0;
+	const sortOptions: Array<{ key: SortKey; label: string }> = [
+		{ key: "recent", label: t("sort.recent") },
+		{ key: "category", label: t("sort.byCategory") },
+	];
+
 	return (
 		<>
-			<div className="flex flex-col gap-4">
-				<div className="flex items-center justify-between gap-3">
-					<h3 className="text-xl font-semibold">{t("title")}</h3>
-					<Button size="touch" onClick={() => setUploadOpen(true)}>
-						<Upload aria-hidden />
-						<span>{t("upload")}</span>
-					</Button>
-				</div>
-
+			<div className="flex flex-col gap-5">
 				{loading ? (
-					<Card>
-						<CardContent className="text-muted-foreground py-2">
-							{tCommon("loading")}
-						</CardContent>
-					</Card>
-				) : (documents?.length ?? 0) === 0 ? (
+					<div className="rounded-2xl bg-paper px-4 py-6 ring-1 ring-foreground/10 text-muted-foreground">
+						{tCommon("loading")}
+					</div>
+				) : totalDocs === 0 ? (
 					<EmptyState
 						icon={<FileText size={40} aria-hidden />}
 						title={t("empty")}
 						description={t("emptyHint")}
+						action={
+							<Button size="touch" onClick={() => setUploadOpen(true)}>
+								<Upload aria-hidden />
+								<span>{t("upload")}</span>
+							</Button>
+						}
 					/>
 				) : (
-					<ul className="flex flex-col gap-3">
-						{documents?.map((doc) => (
-							<li key={doc._id}>
-								<DocumentCard doc={doc} onDelete={setDeleteTarget} />
-							</li>
-						))}
-					</ul>
+					<>
+						<div
+							role="tablist"
+							aria-label={t("title")}
+							className="grid grid-cols-2 rounded-xl border border-border bg-muted p-1"
+						>
+							{sortOptions.map(({ key, label }) => {
+								const active = sort === key;
+								return (
+									<button
+										key={key}
+										type="button"
+										role="tab"
+										aria-selected={active}
+										onClick={() => setSort(key)}
+										className={cn(
+											"min-h-12 rounded-lg text-base font-medium transition-colors",
+											active
+												? "bg-card text-foreground shadow-sm"
+												: "text-muted-foreground hover:text-foreground",
+										)}
+									>
+										{label}
+									</button>
+								);
+							})}
+						</div>
+
+						<button
+							type="button"
+							onClick={() => setUploadOpen(true)}
+							className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-divider-strong bg-paper/50 px-4 text-base font-medium text-ink-soft transition-colors hover:bg-paper hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+						>
+							<Upload aria-hidden className="size-5" strokeWidth={1.8} />
+							<span>{t("uploadCta")}</span>
+						</button>
+
+						<div className="flex flex-col gap-6">
+							{sections.map(({ label, rows }) => (
+								<section
+									key={label || "all"}
+									className="flex flex-col gap-2"
+									aria-label={label || t("title")}
+								>
+									{label ? (
+										<h4 className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint">
+											{label}
+										</h4>
+									) : null}
+									<ul className="overflow-hidden rounded-2xl bg-paper ring-1 ring-foreground/10">
+										{rows.map((d, i) => (
+											<DocRow
+												key={d._id}
+												doc={d}
+												onOpen={setDetailTarget}
+												isLast={i === rows.length - 1}
+											/>
+										))}
+									</ul>
+								</section>
+							))}
+						</div>
+					</>
 				)}
 			</div>
 
 			<DocumentUpload open={uploadOpen} onOpenChange={setUploadOpen} />
+
+			<DocumentDetail
+				doc={detailTarget}
+				open={detailTarget !== null}
+				onOpenChange={(open) => {
+					if (!open) setDetailTarget(null);
+				}}
+				onRequestDelete={(d) => setDeleteTarget(d)}
+			/>
 
 			<Dialog
 				open={deleteTarget !== null}
