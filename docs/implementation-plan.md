@@ -30,6 +30,16 @@ Branch `phase-0-scaffold`. Code scaffold and Convex deployment complete. Vercel 
    ```
    This writes `CONVEX_DEPLOYMENT` and `NEXT_PUBLIC_CONVEX_URL` to `.env.local` and creates the `convex/` directory.
 
+3a. Install shadcn/ui:
+   ```bash
+   bunx shadcn@latest init
+   ```
+   Choose the CSS-variables style, set the base color to neutral, and confirm `src/app/globals.css` as the CSS file. This creates `components.json`, updates `src/app/globals.css` with shadcn's `:root` CSS variable scheme, and scaffolds `src/lib/utils.ts`. The warm palette tokens (cream background, sage/teal accent) are merged into the `:root`/`.dark` blocks that shadcn generates — there is no separate `tailwind.config.ts` in Tailwind v4. Install component primitives as needed per phase:
+   ```bash
+   bunx shadcn@latest add button card sheet dialog input label select textarea avatar dropdown-menu
+   ```
+   After installing any shadcn component, audit for hardcoded English strings (especially `sr-only` close/dismiss labels) and replace them with `tCommon(...)` translation keys.
+
 4. Replace ESLint with Biome (the scaffold came with ESLint, which was accidental — Biome is the intended tool):
    ```bash
    bun remove eslint eslint-config-next
@@ -257,11 +267,13 @@ Fill out the rest as each view is built.
 
 ### What to do
 
+**Note:** All shell components in this phase (`Header`, `BottomNav`, `UserAvatar`, `EmptyState`) are built on shadcn primitives (`Button`, `Card`, `Avatar`, `DropdownMenu`, etc.). The warm palette is merged into shadcn's `:root` CSS variable scheme in `src/app/globals.css` — the shadcn variables (`--background`, `--foreground`, `--primary`, etc.) are mapped to the warm cream/teal/amber values rather than using a separate `@theme inline` block.
+
 1. Build the root `[locale]/layout.tsx`:
    - `ConvexProvider` wrapping everything
    - `NextIntlClientProvider` for translations
    - `AuthGate` component — redirects to login if not authenticated
-   - The warm color palette is declared inline in `src/app/globals.css` via `@theme inline { --color-... }` (Tailwind v4 idiom — no JS config file). The layout just imports `globals.css` once.
+   - The warm color palette is declared inline in `src/app/globals.css` via shadcn's `:root` CSS variable scheme (Tailwind v4 idiom — no JS config file). The layout just imports `globals.css` once.
 
 2. Build `BottomNav.tsx` — fixed bottom, 4 tabs:
    | Icon (Lucide) | Label | Route |
@@ -429,6 +441,22 @@ Reverse-chronological care journal. Keep the entry form dead simple — text box
 - Cannot edit others' entries
 - Pagination works
 
+### Status (2026-04-17)
+
+Code complete (commit 59ee3e0). All implementation tasks done, plus shadcn retrofit of Phase 4/5 components:
+
+- [x] `LogFeed` — paginated via `usePaginatedQuery` (20/page). "Sýna eldri" button loads 20 more. Each card: author avatar + name, relative date, full content, "Breytt" badge when `editedAt` is set, author-only edit button (pencil, `size="touch-icon"`), linked appointment chip rendered server-side via a resolver in `logEntries.ts`.
+- [x] `LogEntryForm` — shadcn `Sheet` from bottom (`side="bottom"`, rounded top, `max-h-[92vh]`). Shared create/edit flow: pre-fills content and `relatedAppointmentId` when `editEntry` prop is present. Appointment link dropdown uses `appointments.list` (limit 50). Supports `preselectedAppointmentId` prop for "Skrá í dagbók" jump from Tímar.
+- [x] Author-only edit enforcement in `logEntries.update` mutation — throws `ConvexError("Ekki innskráður")` if `authorId !== currentUser`.
+- [x] `components.json` and `src/components/ui/` (avatar, button, card, dialog, dropdown-menu, input, label, select, sheet, textarea) added; Phase 4/5 components (`Header`, `BottomNav`, `UserAvatar`, `NextAppointments`, `RecentLog`, `QuickActions`) retrofitted to use shadcn primitives.
+- [x] `QuickActions` aria fix: replaced `aria-label={t("newAppointment")}` on the `<section>` with `aria-labelledby` pointing to a visually-hidden `<h2>` using the new `dashboard.quickActions.title` = "Flýtileiðir" key.
+
+The following exit-criteria items require user browser verification post-deploy:
+
+- [ ] Real-time feed update — add an entry in one tab, confirm it appears in another without refresh
+- [ ] "Breytt" badge displays correctly after editing own entry
+- [ ] Author-only enforcement — edit button absent for others' entries (visual check)
+
 ---
 
 ## Phase 7: Tímar (Appointments)
@@ -458,6 +486,7 @@ Reverse-chronological care journal. Keep the entry form dead simple — text box
 ### Files to create/modify
 
 - `src/app/[locale]/timar/page.tsx`
+- `src/components/appointments/AppointmentCard.tsx` — single appointment card component (upcoming + past variants); extracted during implementation for clarity
 - `src/components/appointments/AppointmentList.tsx`
 - `src/components/appointments/AppointmentForm.tsx`
 - `src/components/appointments/DriverPicker.tsx`
@@ -468,6 +497,23 @@ Reverse-chronological care journal. Keep the entry form dead simple — text box
 - Driver volunteering is a single tap — no extra confirmation
 - Upcoming/past toggle works
 - Icelandic date formatting is correct
+
+### Status (2026-04-17)
+
+Code complete (commit 8f4356d). All implementation tasks done:
+
+- [x] `AppointmentList` — tab toggle ("Næstu tímar" / "Liðnir tímar") with `role="tablist"` aria pattern, `min-h-12` tab buttons. Upcoming uses `api.appointments.upcoming` (limit 50); past uses the new `api.appointments.past` query. Inactive tab is skipped (`"skip"`) to avoid unnecessary fetches.
+- [x] `AppointmentCard` — extracted component handling both variants. Upcoming: driver avatar or "Enginn skutlar" + "Ég get!" volunteer button. Past: static driver display + "Skrá í dagbók" button that opens `LogEntryForm` with `preselectedAppointmentId`.
+- [x] `AppointmentForm` — shadcn `Sheet` from bottom. Date/time via `<input type="datetime-local">` (native mobile picker). `DriverPicker` dropdown populated from `api.users.list`. Edit mode pre-fills all fields. Delete button triggers a shadcn `Dialog` confirmation ("Ertu viss? Þetta er ekki hægt að afturkalla.") with `showCloseButton={false}`.
+- [x] `convex/appointments.past` — new query using `.withIndex("by_startTime", q => q.lt("startTime", now)).order("desc").take(limit ?? 50)`. Not in original plan — added for Tímar past-tab.
+- [x] `convex/users.list` — new query returning all users as `{ _id, name, email, image }` summaries. Used by `DriverPicker`.
+- [x] "Skrá í dagbók" jump — past appointment card opens `LogEntryForm` with the appointment pre-selected via `preselectedAppointmentId` prop (already supported by `LogEntryForm` from Phase 6).
+
+The following exit-criteria items require user browser verification post-deploy:
+
+- [ ] Volunteer button assigns driver in one tap and updates immediately (real-time, visual check)
+- [ ] Icelandic date formatting displays correctly in the browser (e.g., "fös. 18. apríl kl. 14:00")
+- [ ] Full CRUD — create, edit, delete appointment — visual check post Google OAuth login
 
 ---
 

@@ -29,37 +29,6 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 
 ## Open Items
 
-### 2026-04-17 · user-correction · Phases 4–5 shipped without shadcn/ui despite stack requirement
-
-**Context:** Starting Phase 6, I noted that `src/components/ui/` and `components.json` don't exist, then proposed building the bottom sheet "with plain Tailwind + native `<dialog>`" instead of installing shadcn. Nic flagged this: shadcn was named in `CLAUDE.md`'s stack section and is required for all UI components. Phases 4 (`Header`, `BottomNav`, `UserAvatar`, `EmptyState`) and 5 (`NextAppointments`, `RecentLog`, `QuickActions`) all shipped using raw Tailwind primitives. The implementation plan's Phase 4 section does not call out an explicit shadcn install step.
-**Observation:** The stack list in `CLAUDE.md` mentioned shadcn/ui, but neither `docs/implementation-plan.md` Phase 0 nor Phase 4 had a concrete install step. The QA agent did not catch the divergence either. CLAUDE.md's "plan wins by default" rule says I should have surfaced the missing install rather than silently building without it. This is the second documented case where the spec/plan listed something as canonical but the absence of an install step let the implementation drift.
-**Suggested action:** (a) `docs-sync` should add an explicit "install shadcn/ui" step to `docs/implementation-plan.md` Phase 0 (next to the Convex install) so the dependency lands before any component work. (b) `docs-sync` should also add a sentence to Phase 4 ("All shell components are built on shadcn primitives — `Sheet`, `Button`, `Card`, etc."). (c) Consider whether the `qa` agent should have a check for "any new component file under `src/components/` that does not import from `@/components/ui` or `@/lib/utils` is suspect" — file under `harness-auditor` to evaluate.
-
-### 2026-04-17 · qa · Phase 5: appointments schema index changed but docs/spec.md not updated
-
-**Context:** Phase 5 QA. `convex/schema.ts` replaced `.index("by_status", ["status"])` on the `appointments` table with `.index("by_status_and_startTime", ["status", "startTime"])`. The new composite index is strictly more capable (its prefix serves any `by_status`-only query) and is required for the efficient `upcoming` query.
-**Observation:** `docs/spec.md` line 162 still shows `.index("by_status", ["status"])` on the appointments table. The `upcoming` Convex function (not present in the spec's function list) is also undocumented. Any developer reading the spec and copying the schema verbatim will get a less optimal index and a missing function.
-**Suggested action:** `docs-sync` should: (a) replace `.index("by_status", ["status"])` with `.index("by_status_and_startTime", ["status", "startTime"])` in `docs/spec.md`; (b) add `appointments.upcoming` to the Convex function contracts section (same file, near `appointments.list`); (c) optionally update `docs/implementation-plan.md` Phase 5 query list to reference `appointments.upcoming` instead of describing it inline as a filter of `appointments.list`.
-
-### 2026-04-17 · qa · QuickActions section aria-label uses first-action text rather than a section label
-
-**Context:** Phase 5 QA. `src/components/dashboard/QuickActions.tsx` sets `aria-label={t("newAppointment")}` on the wrapping `<section>`. This means assistive technology announces the section as "Nýr tími" — only the first action's text, not a description of the section.
-**Observation:** The `quickActions` namespace in `messages/*.json` has no `title` or `label` key. The `aria-label` borrowing one action's text is a minor accessibility defect that will confuse screen reader users. Best practice: add a `"title": "Flýtileiðir"` (or similar) key and use it as the section's `aria-label`.
-**Suggested action:** Add `"title": "Flýtileiðir"` (is) / `"title": "Quick actions"` (en) to `messages/{is,en}.json` under `dashboard.quickActions`, then use `t("title")` as the `aria-label` on the `<section>` in `QuickActions.tsx`. Non-blocking — no QA block, just a future-fix item.
-
-### 2026-04-17 · qa · "Skrifa í dagbók" quick action navigates rather than opens form per Phase 5 spec
-
-**Context:** Phase 5 QA. `docs/implementation-plan.md` Phase 5 items 3 and 4 say "Skrifa í dagbók" should open a quick-add form / bottom sheet. The implementation links to `/dagbok` instead, because the bottom sheet is Phase 6 work.
-**Observation:** The exit criteria are partially met: navigation works, but the in-place form entry isn't there. This is a sensible pragmatic deferral (Phase 6 adds the Dagbók full view with its entry form), but the Phase 5 exit criteria don't call it out as deferred.
-**Suggested action:** `docs-sync` should annotate Phase 5 item 3/4 in `docs/implementation-plan.md` to note that the "open quick-add form" behaviour is deferred to Phase 6, and that Phase 5 ships navigation-only links as a placeholder. No code change required — the behaviour is acceptable for the phase.
-**Resolution:** 2026-04-17 · docs · `docs/implementation-plan.md` Phase 5 items 3 and 4 updated to note the deferral explicitly. Phase 5 Status block added, marking the navigation-only behaviour as intentional and listing the Phase 6 form as the completion point.
-
-### 2026-04-17 · docs-sync · code-followup — QuickActions `aria-label` announces first action text instead of section label
-
-**Context:** Phase 5 docs-sync pass. `src/components/dashboard/QuickActions.tsx` sets `aria-label={t("newAppointment")}` on the wrapping `<section>`, which makes screen readers announce the entire section as "Nýr tími" — the text of the first action, not a description of the section.
-**Observation:** This is a minor accessibility defect. The correct fix is a dedicated translation key (e.g., `dashboard.quickActions.title = "Flýtileiðir"` in `is.json`, `"Quick actions"` in `en.json`) used as the `aria-label`. The fix touches `src/components/dashboard/QuickActions.tsx` and both `messages/*.json` — out of scope for docs-sync, which only edits `docs/` and the improvements queue.
-**Suggested action:** In a future code session: (1) add `"title": "Flýtileiðir"` under `dashboard.quickActions` in `messages/is.json`; (2) add `"title": "Quick actions"` in `messages/en.json`; (3) replace `aria-label={t("newAppointment")}` with `aria-label={t("title")}` in `QuickActions.tsx`. Non-blocking — no QA gate impact.
-
 ### 2026-04-17 · qa · `docs/spec.md` proxy matcher example excludes `api`, but `/api/auth` must pass through Convex Auth middleware
 
 **Context:** Proxy-fix QA. Staged `src/proxy.ts` changed the matcher from `"/((?!api|trpc|_next|_vercel|.*\\..*).*)"` to `"/((?!_next|_vercel|.*\\..*).*)"` to fix a bug where `POST /api/auth` was returning 404 HTML (Safari sign-in: "The string did not match the expected pattern"). Convex Auth's client POSTs to `/api/auth` and expects `convexAuthNextjsMiddleware` to intercept it — when the matcher excludes `api`, the middleware doesn't run and Next has no app route for `/api/auth`, so it 404s. Verified via grep in `node_modules/@convex-dev/auth/dist/nextjs/client.js` (fetches `apiRoute ?? "/api/auth"`) and `nextjs/server/index.js` (default `apiRoute` is `/api/auth`).
@@ -72,9 +41,79 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 **Observation:** `docs/spec.md` does not mention `@vercel/analytics` anywhere (grep: zero matches for "analytics"). The Stack section has no row for it, and the "Hosting" / "Observability" story (if there is one) doesn't cover what data is collected. For a project whose primary users are elderly Icelandic women and whose entire premise is private family coordination, shipping a telemetry SDK without documenting it is worth flagging — even if Vercel Analytics is low-risk. The addition is also not in `docs/implementation-plan.md` for any phase.
 **Suggested action:** `docs-sync` should: (a) add a brief mention in `docs/spec.md` Stack / Observability section describing `@vercel/analytics` and what it collects (page views, referrer, device class — no PII per Vercel's docs); (b) note it in the appropriate phase of `docs/implementation-plan.md` (probably a "deploy / observability" phase or as a post-MVP add-on); (c) confirm with the user that shipping Vercel Analytics is intended (it is currently unconditional — no opt-out, no env gate). Non-blocking for this commit; the dependency is small and the pixel is harmless, but the docs should reflect reality.
 
+### 2026-04-17 · qa · shadcn scaffold UI components contain hardcoded English strings
+
+**Context:** Phase 6 QA. `src/components/ui/dialog.tsx` and `src/components/ui/sheet.tsx` were installed via `bunx shadcn@latest add`. Both contain hardcoded English "Close" strings — in `dialog.tsx` line 77 (`sr-only`), line 116 (visible `Button` text in `DialogFooter`), and in `sheet.tsx` line 78 (`sr-only`). The shadcn scaffolds ship English labels by default.
+**Observation:** These strings are currently inert: `LogEntryForm` passes `showCloseButton={false}`, `DialogFooter` with its visible "Close" is not used anywhere in app code, and `dialog.tsx` is not imported by any app component. But every future consumer of `Sheet` with `showCloseButton={true}` or `DialogFooter` will silently render English — violating the "no hardcoded user-facing strings" rule.
+**Suggested action:** When new shadcn components are installed, do a one-pass audit for any hardcoded user-facing strings (especially sr-only labels for close/dismiss) and replace them with translation keys sourced from `tCommon("close")` (already exists in `messages/is.json` as `"Loka"` and `messages/en.json` as `"Close"`). Consider adding this as an explicit step in the Phase-N "install shadcn component" pattern in `docs/implementation-plan.md`.
+
+### 2026-04-17 · qa · Icon-only edit button in LogFeed uses `size="icon-lg"` (36px), below 48px tap-target minimum
+
+**Context:** Phase 6 QA. `src/components/log/LogFeed.tsx:111` renders the author-only edit (pencil) button with `size="icon-lg"`. The `button.tsx` CVA definition maps `icon-lg` to `size-9` = 36px — below the 48px minimum tap target required by CLAUDE.md and docs/spec.md ("48px min tap targets (56px+ preferred)").
+**Observation:** The correct size for an icon-only CTA that meets the 48px floor is `size="icon"` if it were ≥48px, or the project-custom `size="touch-icon"` (`size-14` = 56px). `icon-lg` at 36px is the shadcn default for "large icon button" but that default doesn't meet Sigga's accessibility bar.
+**Suggested action:** Change `size="icon-lg"` to `size="touch-icon"` at `src/components/log/LogFeed.tsx:111`. If the visual size feels too large in the card header, consider using negative margins (`-my-1 -mr-1`) to keep the touch target large while the visual fills less space.
+
+### 2026-04-17 · qa · `users.ts` requireAuth throws `new Error` instead of `ConvexError` on queries
+
+**Context:** Phase 7 QA. `convex/users.ts` added a `requireAuth` helper for the new `users.list` query. The helper throws `new Error("Ekki innskráður")` rather than `ConvexError("Ekki innskráður")`. All `requireAuth` helpers in `convex/appointments.ts` correctly use `ConvexError`.
+**Observation:** CLAUDE.md mandates `ConvexError("Ekki innskráður")` for auth failures. Using plain `Error` means the error is surfaced as an unhandled server error rather than a typed Convex domain error, which affects client-side error handling (Convex clients distinguish `ConvexError` from other errors). Query auth helpers should follow the same convention as mutation helpers.
+**Suggested action:** Change `throw new Error("Ekki innskráður")` to `throw new ConvexError("Ekki innskráður")` in `convex/users.ts`, and add `ConvexError` to the import from `"convex/values"`. Add a qa check or CLAUDE.md note that extends the `ConvexError` auth-throw convention to **all** Convex functions (queries and mutations), not just mutations.
+
+### 2026-04-17 · qa · `appointments.past` query skips auth check, inconsistent with `users.list`
+
+**Context:** Phase 7 QA. The new `appointments.past` query does not call `requireAuth`, while `users.list` (added in the same commit) does. Other read queries in `appointments.ts` (`list`, `upcoming`, `get`) also skip auth. The app is behind an auth proxy so unauthenticated browser access is blocked, but the Convex backend itself enforces no auth on these reads.
+**Observation:** There is currently no documented policy for whether Convex *queries* must check auth. CLAUDE.md says "every mutation calls `ctx.auth.getUserIdentity()` and throws…" — queries are not mentioned. In practice some queries check auth (`users.list`) and some don't (`appointments.*`). This inconsistency could confuse future contributors and leaves appointment data accessible to any Convex client with the deployment URL.
+**Suggested action:** Decide on a policy and document it: either (a) all queries also require auth (best for defence-in-depth), or (b) mutations require auth, queries may or may not (current implicit state). Update CLAUDE.md accordingly and make the existing queries consistent with the choice.
+
+### 2026-04-17 · qa · Tab toggle buttons use `min-h-11` (44px), below the 48px tap-target minimum
+
+**Context:** Phase 7 QA. `AppointmentList.tsx` tab buttons have `min-h-11` (Tailwind = 2.75rem = 44px). CLAUDE.md and docs/spec.md both require 48px minimum tap targets (56px+ preferred).
+**Observation:** `min-h-11` is 4px short of the 48px floor. The same pattern appears here alone; elsewhere in the codebase the project consistently uses `h-12`/`min-h-12` (48px) or `size="touch"` buttons. This is a minor accessibility shortfall for 60+ primary users.
+**Suggested action:** Change `min-h-11` to `min-h-12` (48px) in `AppointmentList.tsx` line 53. Consider adding an explicit qa check for `min-h-[0-9]+` classes below `min-h-12` in interactive elements.
+
+### 2026-04-17 · qa · shadcn Dialog close button "Close" sr-only string now reachable via AppointmentForm
+
+**Context:** Phase 6 QA flagged `dialog.tsx` line 77 (`<span className="sr-only">Close</span>`) as a future i18n violation, noting it was inert at the time. Phase 7 ships `AppointmentForm.tsx` which renders `DialogContent` with default `showCloseButton={true}` (default in `dialog.tsx` line 52). The confirmation dialog in `AppointmentForm` no longer passes `showCloseButton={false}`, so the "Close" sr-only X button is now rendered and active on screen readers.
+**Observation:** This is the trigger condition the Phase 6 open item was waiting for — the "Close" string is now in production UI. Screen readers on the delete-confirmation dialog will announce the X button as "Close" (English) rather than an Icelandic equivalent. Fix: replace `<span className="sr-only">Close</span>` with a translated `tCommon("close")` call (Icelandic `"Loka"` already exists in `messages/is.json`), or pass `showCloseButton={false}` to the confirmation dialog (footer already has cancel/confirm buttons).
+**Suggested action:** Short-term: in `AppointmentForm.tsx`, add `showCloseButton={false}` to the `<DialogContent className="max-w-sm">` on line 298 — the dialog already has explicit cancel/confirm buttons in the footer. Medium-term: fix `dialog.tsx` to source the sr-only label from a prop or `useTranslations`, so the component is locale-safe for all future callers.
+
 ---
 
 ## Resolved
+
+### 2026-04-17 · qa · "Skrifa í dagbók" quick action navigates rather than opens form per Phase 5 spec
+
+**Context:** Phase 5 QA. `docs/implementation-plan.md` Phase 5 items 3 and 4 say "Skrifa í dagbók" should open a quick-add form / bottom sheet. The implementation links to `/dagbok` instead, because the bottom sheet is Phase 6 work.
+**Observation:** The exit criteria are partially met: navigation works, but the in-place form entry isn't there. This is a sensible pragmatic deferral (Phase 6 adds the Dagbók full view with its entry form), but the Phase 5 exit criteria don't call it out as deferred.
+**Suggested action:** `docs-sync` should annotate Phase 5 item 3/4 in `docs/implementation-plan.md` to note that the "open quick-add form" behaviour is deferred to Phase 6, and that Phase 5 ships navigation-only links as a placeholder. No code change required — the behaviour is acceptable for the phase.
+**Resolution:** 2026-04-17 · docs · `docs/implementation-plan.md` Phase 5 items 3 and 4 updated to note the deferral explicitly. Phase 5 Status block added, marking the navigation-only behaviour as intentional and listing the Phase 6 form as the completion point.
+
+### 2026-04-17 · user-correction · Phases 4–5 shipped without shadcn/ui despite stack requirement
+
+**Context:** Starting Phase 6, I noted that `src/components/ui/` and `components.json` don't exist, then proposed building the bottom sheet "with plain Tailwind + native `<dialog>`" instead of installing shadcn. Nic flagged this: shadcn was named in `CLAUDE.md`'s stack section and is required for all UI components. Phases 4 (`Header`, `BottomNav`, `UserAvatar`, `EmptyState`) and 5 (`NextAppointments`, `RecentLog`, `QuickActions`) all shipped using raw Tailwind primitives. The implementation plan's Phase 4 section does not call out an explicit shadcn install step.
+**Observation:** The stack list in `CLAUDE.md` mentioned shadcn/ui, but neither `docs/implementation-plan.md` Phase 0 nor Phase 4 had a concrete install step. The QA agent did not catch the divergence either.
+**Suggested action:** (a) `docs-sync` add an explicit shadcn install step to Phase 0; (b) add a shadcn note to Phase 4; (c) `harness-auditor` evaluate a qa check for components not importing from `@/components/ui`.
+**Resolution:** 2026-04-17 · docs · (a) Added explicit `bunx shadcn@latest init` + component install step as item 3a in Phase 0 of `docs/implementation-plan.md`, immediately after the Convex init step, with notes on palette merging and the post-install i18n audit. (b) Added a "Note" block at the top of Phase 4 stating all shell components are built on shadcn primitives and the warm palette is merged into shadcn's `:root` CSS variable scheme. Item (c) remains open for `harness-auditor`.
+
+### 2026-04-17 · qa · Phase 5: appointments schema index changed but docs/spec.md not updated
+
+**Context:** Phase 5 QA. `convex/schema.ts` replaced `.index("by_status", ["status"])` on the `appointments` table with `.index("by_status_and_startTime", ["status", "startTime"])`. The `upcoming` Convex function was also absent from the spec's function list.
+**Observation:** `docs/spec.md` showed the old index and was missing the `upcoming` and `past` function contracts, plus the `users.ts` file was undocumented.
+**Suggested action:** `docs-sync` should update the schema index and add the missing function contracts.
+**Resolution:** 2026-04-17 · docs · (a) The schema index was already corrected in the prior docs-sync pass. (b) `appointments.upcoming` was already present. (c) Added the missing `appointments.past` function contract and the missing `users.ts` section (`me` + `list`) to `docs/spec.md`; added `AppointmentCard.tsx` to the project structure tree.
+
+### 2026-04-17 · qa · QuickActions section aria-label uses first-action text rather than a section label
+
+**Context:** Phase 5 QA. `src/components/dashboard/QuickActions.tsx` set `aria-label={t("newAppointment")}` on the wrapping `<section>`, announcing it as "Nýr tími" instead of a section description.
+**Observation:** Minor accessibility defect — screen readers announced the section using the first action's text.
+**Suggested action:** Add a `dashboard.quickActions.title` translation key and use it on the section.
+**Resolution:** 2026-04-17 · code · Fixed in Phase 6 shadcn retrofit (commit 59ee3e0). `QuickActions.tsx` now uses `aria-labelledby` pointing to a visually-hidden `<h2 id="quick-actions-heading">` with `{t("title")}`. `dashboard.quickActions.title` = "Flýtileiðir" in `is.json`; "Quick actions" in `en.json`.
+
+### 2026-04-17 · docs-sync · code-followup — QuickActions `aria-label` announces first action text instead of section label
+
+**Context:** Phase 5 docs-sync pass. Duplicate tracking of the aria-label defect noted above.
+**Observation:** Redundant with the qa item above. Both were waiting for the code fix.
+**Resolution:** 2026-04-17 · code · Resolved together with the sibling qa item — fixed in Phase 6 shadcn retrofit (commit 59ee3e0).
 
 ### 2026-04-17 · manual · Phase 3 contact count: plan says ~18, spec lists 14
 
