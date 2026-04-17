@@ -54,7 +54,7 @@ npx convex env set <KEY> "<value>"
 
 ## Architecture Notes (once built out)
 
-- **Routing**: `src/app/[locale]/{page,dagbok,timar,upplysingr,login}/page.tsx`. Four tabs correspond to the four top-level routes; bottom nav is fixed and always visible.
+- **Routing**: `src/app/[locale]/{page,dagbok,timar,upplysingar,login}/page.tsx`. Four tabs correspond to the four top-level routes; bottom nav is fixed and always visible.
 - **`src/proxy.ts` is load-bearing**: it combines next-intl locale routing with Convex Auth redirect-to-login. The two concerns must not conflict — adapt `convexAuthNextjsMiddleware` and `export default` the wrapped middleware.
 - **Convex function naming**: `[table].[action]` (e.g., `appointments.volunteerToDrive`, `logEntries.add`). Every mutation calls `ctx.auth.getUserIdentity()` and throws `ConvexError("Ekki innskráður")` if null. No roles in v1 — any authenticated family member can do anything, except log-entry editing which checks `authorId === currentUser`.
 - **Real-time by default**: all reads are Convex `useQuery` subscriptions. Two tabs open → mutation in one appears in the other without refresh. E2E tests explicitly cover this.

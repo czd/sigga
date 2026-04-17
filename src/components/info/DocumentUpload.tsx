@@ -2,7 +2,7 @@
 
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ export function DocumentUpload({ open, onOpenChange }: DocumentUploadProps) {
 	const [notes, setNotes] = useState("");
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		if (open) return;
@@ -52,6 +53,7 @@ export function DocumentUpload({ open, onOpenChange }: DocumentUploadProps) {
 		setNotes("");
 		setSaving(false);
 		setError(null);
+		if (fileInputRef.current) fileInputRef.current.value = "";
 	}, [open]);
 
 	function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -130,16 +132,30 @@ export function DocumentUpload({ open, onOpenChange }: DocumentUploadProps) {
 						<Label htmlFor="document-file" className="text-base font-medium">
 							{t("fields.file")}
 						</Label>
-						<Input
+						<div className="flex items-center gap-3">
+							<Button
+								type="button"
+								variant="secondary"
+								size="touch"
+								onClick={() => fileInputRef.current?.click()}
+								disabled={saving}
+							>
+								{t("fields.chooseFile")}
+							</Button>
+							<span className="flex-1 min-w-0 truncate text-base text-muted-foreground">
+								{file ? file.name : t("fields.noFile")}
+							</span>
+						</div>
+						<input
+							ref={fileInputRef}
 							id="document-file"
 							type="file"
 							onChange={handleFileChange}
-							className="h-12 text-base file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium"
+							className="sr-only"
 							required
 						/>
 						{file ? (
 							<p className="text-sm text-muted-foreground">
-								{file.name} ·{" "}
 								{file.size < 1024 * 1024
 									? `${(file.size / 1024).toFixed(0)} KB`
 									: `${(file.size / (1024 * 1024)).toFixed(1)} MB`}

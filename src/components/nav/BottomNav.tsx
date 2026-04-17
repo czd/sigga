@@ -12,7 +12,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
-	href: "/" | "/dagbok" | "/timar" | "/upplysingr";
+	href: "/" | "/dagbok" | "/timar" | "/upplysingar";
 	labelKey: "dashboard" | "log" | "appointments" | "info";
 	icon: LucideIcon;
 };
@@ -21,7 +21,7 @@ const ITEMS: NavItem[] = [
 	{ href: "/", labelKey: "dashboard", icon: Home },
 	{ href: "/dagbok", labelKey: "log", icon: BookOpen },
 	{ href: "/timar", labelKey: "appointments", icon: CalendarClock },
-	{ href: "/upplysingr", labelKey: "info", icon: ClipboardList },
+	{ href: "/upplysingar", labelKey: "info", icon: ClipboardList },
 ];
 
 function isActive(pathname: string, href: NavItem["href"]): boolean {
