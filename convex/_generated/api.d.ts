@@ -16,6 +16,7 @@ import type * as entitlements from "../entitlements.js";
 import type * as http from "../http.js";
 import type * as logEntries from "../logEntries.js";
 import type * as medications from "../medications.js";
+import type * as recurringSeries from "../recurringSeries.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
 
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   logEntries: typeof logEntries;
   medications: typeof medications;
+  recurringSeries: typeof recurringSeries;
   seed: typeof seed;
   users: typeof users;
 }>;
