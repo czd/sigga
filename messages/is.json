@@ -72,7 +72,35 @@
 		}
 	},
 	"timar": {
-		"title": "Tímar"
+		"title": "Tímar",
+		"new": "Nýr tími",
+		"createTitle": "Nýr tími",
+		"editTitle": "Breyta tíma",
+		"volunteer": "Ég get!",
+		"logEntry": "Skrá í dagbók",
+		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"tabs": {
+			"upcoming": "Næstu tímar",
+			"past": "Liðnir tímar"
+		},
+		"empty": {
+			"upcoming": "Engir tímar á næstunni",
+			"past": "Engir liðnir tímar"
+		},
+		"fields": {
+			"title": "Titill",
+			"startTime": "Dagur og tími",
+			"location": "Staður",
+			"notes": "Athugasemdir",
+			"driver": "Skutlari",
+			"noDriver": "Enginn valinn",
+			"noDriverAssigned": "Enginn skutlar"
+		},
+		"errors": {
+			"titleRequired": "Titill má ekki vera tómur.",
+			"startTimeRequired": "Dagsetning og tími er nauðsynleg.",
+			"generic": "Ekki tókst að vista tímann."
+		}
 	},
 	"upplysingr": {
 		"title": "Upplýsingar"

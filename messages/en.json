@@ -72,7 +72,35 @@
 		}
 	},
 	"timar": {
-		"title": "Appointments"
+		"title": "Appointments",
+		"new": "New appointment",
+		"createTitle": "New appointment",
+		"editTitle": "Edit appointment",
+		"volunteer": "I can!",
+		"logEntry": "Log entry",
+		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"tabs": {
+			"upcoming": "Upcoming",
+			"past": "Past"
+		},
+		"empty": {
+			"upcoming": "No upcoming appointments",
+			"past": "No past appointments"
+		},
+		"fields": {
+			"title": "Title",
+			"startTime": "Date and time",
+			"location": "Location",
+			"notes": "Notes",
+			"driver": "Driver",
+			"noDriver": "None selected",
+			"noDriverAssigned": "No driver yet"
+		},
+		"errors": {
+			"titleRequired": "Title cannot be empty.",
+			"startTimeRequired": "Date and time is required.",
+			"generic": "Could not save the appointment."
+		}
 	},
 	"upplysingr": {
 		"title": "Info"

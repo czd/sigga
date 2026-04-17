@@ -36,12 +36,14 @@ type LogEntryFormProps = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	editEntry?: EditTarget | null;
+	preselectedAppointmentId?: Id<"appointments">;
 };
 
 export function LogEntryForm({
 	open,
 	onOpenChange,
 	editEntry,
+	preselectedAppointmentId,
 }: LogEntryFormProps) {
 	const t = useTranslations("dagbok");
 	const tCommon = useTranslations("common");
@@ -63,9 +65,9 @@ export function LogEntryForm({
 			setAppointmentId(editEntry.relatedAppointmentId ?? NO_APPOINTMENT);
 		} else {
 			setContent("");
-			setAppointmentId(NO_APPOINTMENT);
+			setAppointmentId(preselectedAppointmentId ?? NO_APPOINTMENT);
 		}
-	}, [open, editEntry]);
+	}, [open, editEntry, preselectedAppointmentId]);
 
 	async function handleSubmit(event: React.FormEvent) {
 		event.preventDefault();

@@ -91,6 +91,19 @@ export const upcoming = query({
 	},
 });
 
+export const past = query({
+	args: { limit: v.optional(v.number()) },
+	handler: async (ctx, args) => {
+		const now = Date.now();
+		const rows = await ctx.db
+			.query("appointments")
+			.withIndex("by_startTime", (q) => q.lt("startTime", now))
+			.order("desc")
+			.take(args.limit ?? 50);
+		return Promise.all(rows.map((row) => withDriver(ctx, row)));
+	},
+});
+
 export const get = query({
 	args: { id: v.id("appointments") },
 	handler: async (ctx, args) => {
