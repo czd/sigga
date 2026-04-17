@@ -114,6 +114,69 @@
 			"generic": "Could not save the appointment."
 		}
 	},
+	"recurring": {
+		"title": "Recurring appointments",
+		"backToTimar": "Appointments",
+		"entryLabel": "Recurring appointments",
+		"entryCount": "{count, plural, =0 {none yet} =1 {1 active} other {# active}}",
+		"entryAllPaused": "All paused",
+		"empty": {
+			"title": "No recurring appointments",
+			"body": "Repeating appointments — e.g. Activity & Wellbeing — appear here."
+		},
+		"newButton": "New recurring appointment",
+		"active": "Active",
+		"paused": "Paused",
+		"edit": "Edit",
+		"delete": "Delete",
+		"deleteConfirm": {
+			"title": "Delete {title}?",
+			"body": "Past appointments remain visible in the Past tab.",
+			"confirm": "Delete",
+			"cancel": "Cancel"
+		},
+		"pauseToast": "{title} paused",
+		"resumeToast": "Next: {when}",
+		"form": {
+			"createTitle": "New recurring appointment",
+			"editTitle": "Edit recurring appointment",
+			"editNextNote": "The next scheduled occurrence is not updated automatically. Edit it directly in Appointments if needed.",
+			"fields": {
+				"title": "Title",
+				"days": "Days",
+				"time": "Time",
+				"duration": "Duration (minutes)",
+				"durationHint": "Default: none.",
+				"location": "Location",
+				"notes": "Notes"
+			},
+			"daysShort": {
+				"0": "Sun",
+				"1": "Mon",
+				"2": "Tue",
+				"3": "Wed",
+				"4": "Thu",
+				"5": "Fri",
+				"6": "Sat"
+			},
+			"daysLong": {
+				"0": "Sundays",
+				"1": "Mondays",
+				"2": "Tuesdays",
+				"3": "Wednesdays",
+				"4": "Thursdays",
+				"5": "Fridays",
+				"6": "Saturdays"
+			},
+			"errors": {
+				"titleRequired": "Title is required.",
+				"daysRequired": "Choose at least one day.",
+				"timeRequired": "Choose a time.",
+				"generic": "Could not save."
+			}
+		},
+		"cadence": "{days} at {time}"
+	},
 	"umonnun": {
 		"title": "Care",
 		"hvernig": "How Sigga is doing.",

@@ -114,6 +114,69 @@
 			"generic": "Ekki tókst að vista tímann."
 		}
 	},
+	"recurring": {
+		"title": "Reglulegir tímar",
+		"backToTimar": "Tímar",
+		"entryLabel": "Reglulegir tímar",
+		"entryCount": "{count, plural, =0 {engir ennþá} =1 {1 virkur} other {# virkir}}",
+		"entryAllPaused": "Allir í hléi",
+		"empty": {
+			"title": "Engir reglulegir tímar",
+			"body": "Reglulegir tímar sem endurtaka sig — t.d. Virkni og Vellíðan — birtast hér."
+		},
+		"newButton": "Nýr reglulegur tími",
+		"active": "Virkt",
+		"paused": "Í hléi",
+		"edit": "Breyta",
+		"delete": "Eyða",
+		"deleteConfirm": {
+			"title": "Eyða {title}?",
+			"body": "Eldri tímar verða áfram sýnilegir í Liðnir tímar.",
+			"confirm": "Eyða",
+			"cancel": "Hætta við"
+		},
+		"pauseToast": "{title} sett í hlé",
+		"resumeToast": "Næsti tími: {when}",
+		"form": {
+			"createTitle": "Nýr reglulegur tími",
+			"editTitle": "Breyta reglulegum tíma",
+			"editNextNote": "Næsti tími uppfærist ekki sjálfkrafa. Ef þú vilt breyta tímanum sem er á dagskrá, breyttu honum beint í Tímar.",
+			"fields": {
+				"title": "Heiti",
+				"days": "Dagar",
+				"time": "Tími",
+				"duration": "Lengd í mínútum",
+				"durationHint": "Sjálfgefið: engin skráning.",
+				"location": "Staðsetning",
+				"notes": "Athugasemdir"
+			},
+			"daysShort": {
+				"0": "Sun",
+				"1": "Mán",
+				"2": "Þri",
+				"3": "Mið",
+				"4": "Fim",
+				"5": "Fös",
+				"6": "Lau"
+			},
+			"daysLong": {
+				"0": "sunnudaga",
+				"1": "mánudaga",
+				"2": "þriðjudaga",
+				"3": "miðvikudaga",
+				"4": "fimmtudaga",
+				"5": "föstudaga",
+				"6": "laugardaga"
+			},
+			"errors": {
+				"titleRequired": "Heiti má ekki vera tómt.",
+				"daysRequired": "Veldu að minnsta kosti einn dag.",
+				"timeRequired": "Veldu tíma.",
+				"generic": "Ekki tókst að vista."
+			}
+		},
+		"cadence": "{days} kl. {time}"
+	},
 	"umonnun": {
 		"title": "Umönnun",
 		"hvernig": "Hvernig Siggu líður.",
