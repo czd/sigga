@@ -105,6 +105,38 @@
 	"upplysingr": {
 		"title": "Info"
 	},
+	"contacts": {
+		"title": "Contacts",
+		"add": "Add contact",
+		"createTitle": "New contact",
+		"editTitle": "Edit contact",
+		"empty": "No contacts yet",
+		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"categories": {
+			"emergency": "Emergency",
+			"medical": "Doctors and healthcare",
+			"municipal": "Municipal and services",
+			"family": "Family",
+			"other": "Other"
+		},
+		"fields": {
+			"category": "Category",
+			"name": "Name",
+			"role": "Role",
+			"phone": "Phone",
+			"email": "Email",
+			"notes": "Notes"
+		},
+		"placeholders": {
+			"role": "e.g. nurse",
+			"phone": "e.g. 543 9560",
+			"email": "name@domain.is"
+		},
+		"errors": {
+			"nameRequired": "Name cannot be empty.",
+			"generic": "Could not save the contact."
+		}
+	},
 	"medications": {
 		"title": "Medications",
 		"add": "Add medication",

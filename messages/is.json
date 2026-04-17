@@ -105,6 +105,38 @@
 	"upplysingr": {
 		"title": "Upplýsingar"
 	},
+	"contacts": {
+		"title": "Símaskrá",
+		"add": "Bæta við tengilið",
+		"createTitle": "Nýr tengiliður",
+		"editTitle": "Breyta tengilið",
+		"empty": "Engir tengiliðir skráðir",
+		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"categories": {
+			"emergency": "Neyð",
+			"medical": "Læknar og heilsugæsla",
+			"municipal": "Sveitarfélag og þjónusta",
+			"family": "Fjölskylda",
+			"other": "Annað"
+		},
+		"fields": {
+			"category": "Flokkur",
+			"name": "Nafn",
+			"role": "Hlutverk",
+			"phone": "Sími",
+			"email": "Netfang",
+			"notes": "Athugasemdir"
+		},
+		"placeholders": {
+			"role": "T.d. hjúkrunarfræðingur",
+			"phone": "T.d. 543 9560",
+			"email": "nafn@domain.is"
+		},
+		"errors": {
+			"nameRequired": "Nafn má ekki vera tómt.",
+			"generic": "Ekki tókst að vista tengiliðinn."
+		}
+	},
 	"medications": {
 		"title": "Lyf",
 		"add": "Bæta við lyfi",

@@ -606,6 +606,25 @@ The following exit-criteria items require user browser verification post-deploy 
 - Tapping email opens mail client
 - Can add/edit/remove contacts
 
+### Status (2026-04-17)
+
+Code complete. All implementation tasks done:
+
+- [x] `convex/contacts.ts` — `list`, `create`, `update`, `remove`. `list` returns all contacts sorted by `sortOrder` (nullish last) then by name with Icelandic collation (`localeCompare(..., "is")`). All mutations require auth via `requireAuth`; `create`/`update` reject empty `name`. No `updatedBy`/`updatedAt` audit fields — the schema doesn't carry them for contacts.
+- [x] `ContactList` — groups contacts by category in fixed order (emergency → medical → municipal → family → other); empty categories are hidden. Each card: name, role, tappable phone (`tel:` prefixed chip with phone icon and `min-h-12`), tappable email (`mailto:` chip), notes, per-row edit button (`touch-icon` size). Phone href normalisation: short codes (≤ 4 digits) preserved (`112`, `1770`); numbers already starting with `+` or `354` kept; other Icelandic numbers get `+354` prefix and non-digits stripped.
+- [x] `ContactForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Shared create/edit flow. Category chosen via shadcn `Select`; phone uses `type="tel"` + `inputMode="tel"`, email uses `type="email"` + `inputMode="email"`. Edit mode adds a destructive delete button that opens a shadcn `Dialog` confirmation ("Ertu viss? Þetta er ekki hægt að afturkalla.", `showCloseButton={false}`).
+- [x] Translation keys added under `contacts.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, deleteConfirm, categories.*, fields.*, placeholders.*, errors.*).
+- [x] `src/app/[locale]/(app)/upplysingr/page.tsx` — renders `ContactList` below `MedicationTable`. The tab container scaffolding for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+
+`convex/contacts` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
+
+The following exit-criteria items require user browser verification post-deploy (the agent cannot complete Google OAuth to reach authenticated routes):
+
+- [ ] All seeded contacts display in correct groups (Neyð: 3, Læknar og heilsugæsla: 3, Sveitarfélag og þjónusta: 8) — visual check
+- [ ] Tapping a phone number initiates a call on mobile — physical device check
+- [ ] Tapping email opens mail client — physical device check
+- [ ] Add / edit / delete contact flow — visual check post Google OAuth login
+
 ---
 
 ## Phase 10: Upplýsingar — Réttindi (Entitlements)
