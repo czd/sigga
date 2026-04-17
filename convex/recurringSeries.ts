@@ -91,7 +91,7 @@ export async function ensureNextOccurrence(
 	seriesId: Id<"recurringSeries">,
 ): Promise<Id<"appointments"> | null> {
 	const series = await ctx.db.get(seriesId);
-	if (!series || !series.isActive) return null;
+	if (!series?.isActive) return null;
 	if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(series.timeOfDay)) {
 		throw new ConvexError("Ógildur tími í tímasetningarröð.");
 	}
