@@ -17,12 +17,27 @@ export default defineSchema({
 			v.literal("completed"),
 			v.literal("cancelled"),
 		),
+		seriesId: v.optional(v.id("recurringSeries")),
 		createdBy: v.id("users"),
 		updatedAt: v.number(),
 		updatedBy: v.id("users"),
 	})
 		.index("by_startTime", ["startTime"])
-		.index("by_status_and_startTime", ["status", "startTime"]),
+		.index("by_status_and_startTime", ["status", "startTime"])
+		.index("by_series_and_startTime", ["seriesId", "startTime"]),
+
+	recurringSeries: defineTable({
+		title: v.string(),
+		location: v.optional(v.string()),
+		notes: v.optional(v.string()),
+		daysOfWeek: v.array(v.number()),
+		timeOfDay: v.string(),
+		durationMinutes: v.optional(v.number()),
+		isActive: v.boolean(),
+		createdBy: v.id("users"),
+		updatedAt: v.number(),
+		updatedBy: v.id("users"),
+	}).index("by_active", ["isActive"]),
 
 	logEntries: defineTable({
 		content: v.string(),
