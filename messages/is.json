@@ -105,6 +105,33 @@
 	"upplysingr": {
 		"title": "Upplýsingar"
 	},
+	"medications": {
+		"title": "Lyf",
+		"add": "Bæta við lyfi",
+		"createTitle": "Nýtt lyf",
+		"editTitle": "Breyta lyfi",
+		"empty": "Engin lyf skráð",
+		"showInactive": "Sýna eldri lyf",
+		"hideInactive": "Fela eldri lyf",
+		"fields": {
+			"name": "Heiti",
+			"dose": "Skammtur",
+			"schedule": "Tíðni",
+			"purpose": "Tilgangur",
+			"prescriber": "Ávísað af",
+			"notes": "Athugasemdir",
+			"active": "Virkt lyf"
+		},
+		"placeholders": {
+			"dose": "1 tafla",
+			"schedule": "Á morgnana"
+		},
+		"errors": {
+			"nameRequired": "Heiti lyfs má ekki vera tómt.",
+			"doseScheduleRequired": "Skammtur og tíðni eru nauðsynleg.",
+			"generic": "Ekki tókst að vista lyfið."
+		}
+	},
 	"auth": {
 		"signIn": "Skrá inn",
 		"signInWithGoogle": "Skrá inn með Google",

@@ -549,6 +549,24 @@ The following exit-criteria items require user browser verification post-deploy:
 - Can add, edit, deactivate medications
 - Inactive toggle works
 
+### Status (2026-04-17)
+
+Code complete. All implementation tasks done:
+
+- [x] `convex/medications.ts` — `list` (with `activeOnly` arg), `create`, `update`, `remove`. `list` enriches each row with a `updatedByUser` summary (name/email/image) and sorts alphabetically with Icelandic collation (`localeCompare(..., "is")`). All mutations require auth via `requireAuth` and throw `ConvexError("Ekki innskráður")` if unauthenticated; field-level validation rejects empty name/dose/schedule.
+- [x] `MedicationTable` — collapsed rows show name, dose + schedule, purpose. Tap row to expand; expanded reveals prescriber, notes, updatedAt + updatedByUser avatar/name, and an "Breyta" button. "Sýna eldri lyf" / "Fela eldri lyf" toggle renders only when there are inactive medications. "Bæta við lyfi" button opens the create sheet.
+- [x] `MedicationForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Shared create/edit flow, pre-fills fields on edit. Active checkbox shown only when editing (new medications default to active on the server). Placeholder strings ("1 tafla", "Á morgnana") guide free-text dose/schedule input.
+- [x] Translation keys added under `medications.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, showInactive/hideInactive, fields.*, placeholders.*, errors.*).
+- [x] `src/app/[locale]/(app)/upplysingr/page.tsx` — renders `MedicationTable` directly. The tab container scaffolding for Lyf | Símaskrá | Réttindi | Skjöl lands in Phase 12.
+
+Dependencies added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
+
+The following exit-criteria items require user browser verification post-deploy (the agent cannot complete Google OAuth to reach authenticated routes):
+
+- [ ] All 5 seeded medications display correctly with their confirmed dosages — visual check
+- [ ] Expand row → prescriber/notes/updatedAt render correctly
+- [ ] Create + edit + active toggle flow — visual check post Google OAuth login
+
 ---
 
 ## Phase 9: Upplýsingar — Símaskrá (Contacts)
