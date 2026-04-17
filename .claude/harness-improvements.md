@@ -47,6 +47,12 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 **Observation:** There is no grep-level check in the QA agent for deprecated Convex cron registration helpers. They compile fine (TypeScript accepts them), so lint and typecheck cannot catch the regression. A simple grep for `crons\.daily\b|crons\.hourly\b|crons\.weekly\b` in `convex/` would surface this instantly.
 **Suggested action:** Add a Convex conventions check to `.claude/agents/qa.md`: "Grep `convex/` for `crons\.daily(`, `crons\.hourly(`, `crons\.weekly(` — any match is a FAIL; the Convex guidelines require only `crons.interval` or `crons.cron`."
 
+### 2026-04-17 · qa · `--color-divider` / `--color-divider-strong` missing from `@theme inline` block — `border-divider` class may silently no-op in Tailwind v4
+
+**Context:** AppointmentCard refactor QA. The new code uses `border-divider`, which requires `--color-divider` to exist in the `@theme inline` block in `globals.css`. That token is absent; `--divider` is defined in `:root` and aliased to `--border` via `--color-border`, but no standalone `--color-divider` Tailwind alias exists.
+**Observation:** `border-divider` is already used in ContactList, MedicationTable, DocumentList, EntitlementList (6+ usages). Either Tailwind v4 is silently dropping those classes (invisible bug — the border just doesn't appear) or there is a fallback mechanism not obvious from the CSS. The fact that the app visually renders suggests a fallback, but the missing alias is a latent risk.
+**Suggested action:** Add `--color-divider: var(--divider)` and `--color-divider-strong: var(--divider-strong)` to the `@theme inline` block in `src/app/globals.css` to make the Tailwind utility classes explicit and guaranteed. Then verify the `border-divider` visual renders in a browser. This is a code fix for the implementer, not a harness rule change.
+
 ---
 
 ## Resolved
