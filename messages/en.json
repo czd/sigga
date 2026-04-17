@@ -105,6 +105,33 @@
 	"upplysingr": {
 		"title": "Info"
 	},
+	"medications": {
+		"title": "Medications",
+		"add": "Add medication",
+		"createTitle": "New medication",
+		"editTitle": "Edit medication",
+		"empty": "No medications yet",
+		"showInactive": "Show older medications",
+		"hideInactive": "Hide older medications",
+		"fields": {
+			"name": "Name",
+			"dose": "Dose",
+			"schedule": "Schedule",
+			"purpose": "Purpose",
+			"prescriber": "Prescriber",
+			"notes": "Notes",
+			"active": "Active"
+		},
+		"placeholders": {
+			"dose": "1 tablet",
+			"schedule": "In the morning"
+		},
+		"errors": {
+			"nameRequired": "Medication name cannot be empty.",
+			"doseScheduleRequired": "Dose and schedule are required.",
+			"generic": "Could not save the medication."
+		}
+	},
 	"auth": {
 		"signIn": "Sign in",
 		"signInWithGoogle": "Sign in with Google",
