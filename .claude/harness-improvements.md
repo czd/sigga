@@ -41,6 +41,12 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 **Observation:** `dialog.tsx` is a shared primitive used by all dialogs. Making it locale-safe at the source is better than requiring every caller to pass `showCloseButton={false}`.
 **Suggested action:** Update `src/components/ui/dialog.tsx` to accept an optional `closeLabel` prop (defaulting to a value sourced from context or passed by the caller), or thread `useTranslations("common")` into `DialogContent` so the sr-only span reads `tCommon("close")` = "Loka". Apply the same pattern to `sheet.tsx` which has the same hardcoded string. This is a code fix, not a harness fix — route to the next applicable phase.
 
+### 2026-04-17 · qa · QA gate should catch use of deprecated Convex cron helpers (`crons.daily`, `crons.hourly`, `crons.weekly`)
+
+**Context:** Reviewing a fix that swapped `crons.daily(name, { hourUTC, minuteUTC }, fn)` for `crons.cron(name, "10 0 * * *", fn)` to comply with the Convex guidelines in `convex/_generated/ai/guidelines.md`. The violation was only caught by a human reading the guidelines file, not by any automated check.
+**Observation:** There is no grep-level check in the QA agent for deprecated Convex cron registration helpers. They compile fine (TypeScript accepts them), so lint and typecheck cannot catch the regression. A simple grep for `crons\.daily\b|crons\.hourly\b|crons\.weekly\b` in `convex/` would surface this instantly.
+**Suggested action:** Add a Convex conventions check to `.claude/agents/qa.md`: "Grep `convex/` for `crons\.daily(`, `crons\.hourly(`, `crons\.weekly(` — any match is a FAIL; the Convex guidelines require only `crons.interval` or `crons.cron`."
+
 ---
 
 ## Resolved
