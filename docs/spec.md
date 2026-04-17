@@ -73,7 +73,7 @@ sigga/
 │   │   │   │   └── page.tsx      # Log view
 │   │   │   ├── timar/
 │   │   │   │   └── page.tsx      # Appointments view
-│   │   │   ├── upplysingr/
+│   │   │   ├── upplysingar/
 │   │   │   │   └── page.tsx      # Info hub (meds, contacts, entitlements, documents)
 │   │   │   └── login/
 │   │   │       └── page.tsx      # Login page (Google OAuth button)
@@ -276,6 +276,7 @@ export default defineSchema({
 - Default locale: `is` (Icelandic) — no URL prefix
 - Secondary locale: `en` — URL prefix `/en/...`
 - The family will only use Icelandic. English exists so Nic (and potentially future helpers) can read and edit translations easily, and to verify nothing is hardcoded.
+- `localeDetection: false` is set in `src/i18n/routing.ts`. The root URL always serves Icelandic regardless of the browser's `Accept-Language` header — no automatic redirects to `/en/`. This prevents elderly Icelandic users from accidentally landing in the English interface.
 
 **Translation file structure:**
 ```
@@ -470,11 +471,11 @@ All appointments — upcoming and past.
 
 ---
 
-### View 4: Upplýsingar (Info Hub) — `/upplysingr`
+### View 4: Upplýsingar (Info Hub) — `/upplysingar`
 
 The reference section. Rarely changes, frequently consulted.
 
-**Layout:** Tab bar or segmented control at top with 4 sections:
+**Layout:** Tab bar at top with 4 sections (shipped via `UpplysingarTabs.tsx` using the shadcn `Tabs` primitive). Tab order: Lyf | Símaskrá | Réttindi | Skjöl. Default tab: Lyf. Tab selection persists in the URL via `?tab=` query param (e.g. `/upplysingar?tab=simaskra`). All four `TabsContent` regions are `forceMount`-ed and hidden via CSS so local state (expanded rows, open sheets) survives tab switches and Convex queries remain subscribed.
 - **Lyf** (Medications)
 - **Símaskrá** (Contacts)
 - **Réttindi** (Entitlements)
@@ -520,6 +521,7 @@ Each item card:
 - Owner (who's handling it) — avatar + name
 - Notes
 - Status badge (color coded)
+- **Urgency indicator:** Cards whose `notes` field contains the word "brýnt" (case-insensitive regex `/brýnt/i`) show an orange "BRÝNT" pill and a warning-tinted border. There is no dedicated `urgent` schema field — urgency is entirely free-text-driven.
 - Tap to edit
 
 **Add entitlement form:**
@@ -538,9 +540,9 @@ Each item card:
 - "Hlaða upp skjali" (Upload document) button
 
 **Upload form:**
-- File picker (native mobile file picker)
-- Title (required — pre-fill from filename, allow override)
-- Category (optional free text, with suggestions: "Lyfseðill", "Blóðprufa", "Bréf frá lækni", "Umsókn")
+- File picker — a hidden `<input type="file">` triggered by a visible shadcn `Button` (native system file picker opens; no custom file-input styling)
+- Title (required — pre-fill from filename, allow override; a `titleDirty` flag stops further autofill once the user edits it)
+- Category (optional free text with `<datalist>` suggestions: "Lyfseðill", "Blóðprufa", "Bréf frá lækni", "Umsókn", "Vottorð")
 - Notes (optional)
 - Max file size: whatever Convex allows (currently unlimited via upload URLs, 20MB via HTTP actions — use upload URLs)
 
@@ -548,7 +550,7 @@ Each item card:
 1. Client calls `generateUploadUrl` mutation
 2. Client POSTs file to the returned URL
 3. Client receives `storageId`
-4. Client calls `saveDocument` mutation with `storageId` + metadata
+4. Client calls `documents.save` mutation with `storageId` + metadata (or `documents.abandonUpload` in the catch branch if `save` fails)
 
 ---
 
@@ -561,7 +563,7 @@ Fixed at the bottom of every view. 4 tabs:
 | Home/Calendar icon | Í dag | `/` |
 | Book icon | Dagbók | `/dagbok` |
 | Clock icon | Tímar | `/timar` |
-| Info/Clipboard icon | Upplýsingar | `/upplysingr` |
+| Info/Clipboard icon | Upplýsingar | `/upplysingar` |
 
 Active tab: filled icon + accent color. Inactive: outline icon + muted.
 Label text always visible (not icon-only).
@@ -598,7 +600,7 @@ Label text always visible (not icon-only).
 - `update` — mutation. Set `updatedAt`, `updatedBy`.
 
 **contacts.ts:**
-- `list` — query: all contacts, grouped by category. Ordered by `sortOrder` within category.
+- `list` — query: all contacts as a flat array, sorted by `sortOrder` (nullish last) then by name with Icelandic collation. Grouping by category is a UI concern done client-side in `ContactList.tsx`.
 - `create` — mutation.
 - `update` — mutation.
 - `remove` — mutation.
@@ -610,10 +612,10 @@ Label text always visible (not icon-only).
 - `remove` — mutation.
 
 **documents.ts:**
-- `list` — query: all documents, ordered by `_creationTime` desc.
+- `list` — query: all documents, ordered by `_creationTime` desc. Each row is enriched with a signed `url` (via `ctx.storage.getUrl` per row) and an `addedByUser` summary — no separate URL query needed.
 - `generateUploadUrl` — mutation: returns upload URL from `ctx.storage.generateUploadUrl()`.
 - `save` — mutation: creates document record with `storageId` and metadata.
-- `getUrl` — query: returns `ctx.storage.getUrl(storageId)` for a document.
+- `abandonUpload` — mutation: requires auth; deletes a previously uploaded blob by `storageId` without creating a document record. Called by `DocumentUpload` in the catch branch to clean up orphan blobs when `save` fails after the file has already been POSTed.
 - `remove` — mutation: deletes document record AND file from storage via `ctx.storage.delete(storageId)`.
 
 **users.ts:**

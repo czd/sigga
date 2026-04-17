@@ -281,7 +281,7 @@ Fill out the rest as each view is built.
    | Home or CalendarDays | Í dag | `/` |
    | BookOpen | Dagbók | `/dagbok` |
    | Clock | Tímar | `/timar` |
-   | Info or ClipboardList | Upplýsingar | `/upplysingr` |
+   | Info or ClipboardList | Upplýsingar | `/upplysingar` |
 
 3. Design rules (non-negotiable for the 60+ users):
    - Tap targets: **56px+ height** for nav items, **48px minimum** everywhere else
@@ -322,7 +322,7 @@ Fill out the rest as each view is built.
 - `src/app/[locale]/page.tsx` (dashboard shell)
 - `src/app/[locale]/dagbok/page.tsx` (empty shell)
 - `src/app/[locale]/timar/page.tsx` (empty shell)
-- `src/app/[locale]/upplysingr/page.tsx` (empty shell)
+- `src/app/[locale]/upplysingar/page.tsx` (empty shell)
 - `src/components/nav/BottomNav.tsx`
 - `src/components/shared/UserAvatar.tsx`
 - `src/app/globals.css` — design tokens via `@theme inline` (Tailwind v4 — no JS config file)
@@ -557,7 +557,7 @@ Code complete. All implementation tasks done:
 - [x] `MedicationTable` — collapsed rows show name, dose + schedule, purpose. Tap row to expand; expanded reveals prescriber, notes, updatedAt + updatedByUser avatar/name, and an "Breyta" button. "Sýna eldri lyf" / "Fela eldri lyf" toggle renders only when there are inactive medications. "Bæta við lyfi" button opens the create sheet.
 - [x] `MedicationForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Shared create/edit flow, pre-fills fields on edit. Active checkbox shown only when editing (new medications default to active on the server). Placeholder strings ("1 tafla", "Á morgnana") guide free-text dose/schedule input.
 - [x] Translation keys added under `medications.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, showInactive/hideInactive, fields.*, placeholders.*, errors.*).
-- [x] `src/app/[locale]/(app)/upplysingr/page.tsx` — renders `MedicationTable` directly. The tab container scaffolding for Lyf | Símaskrá | Réttindi | Skjöl lands in Phase 12.
+- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — renders `MedicationTable` directly. The tab container scaffolding for Lyf | Símaskrá | Réttindi | Skjöl lands in Phase 12.
 
 Dependencies added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
 
@@ -614,7 +614,7 @@ Code complete. All implementation tasks done:
 - [x] `ContactList` — groups contacts by category in fixed order (emergency → medical → municipal → family → other); empty categories are hidden. Each card: name, role, tappable phone (`tel:` prefixed chip with phone icon and `min-h-12`), tappable email (`mailto:` chip), notes, per-row edit button (`touch-icon` size). Phone href normalisation: short codes (≤ 4 digits) preserved (`112`, `1770`); numbers already starting with `+` or `354` kept; other Icelandic numbers get `+354` prefix and non-digits stripped.
 - [x] `ContactForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Shared create/edit flow. Category chosen via shadcn `Select`; phone uses `type="tel"` + `inputMode="tel"`, email uses `type="email"` + `inputMode="email"`. Edit mode adds a destructive delete button that opens a shadcn `Dialog` confirmation ("Ertu viss? Þetta er ekki hægt að afturkalla.", `showCloseButton={false}`).
 - [x] Translation keys added under `contacts.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, deleteConfirm, categories.*, fields.*, placeholders.*, errors.*).
-- [x] `src/app/[locale]/(app)/upplysingr/page.tsx` — renders `ContactList` below `MedicationTable`. The tab container scaffolding for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — renders `ContactList` below `MedicationTable`. The tab container scaffolding for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
 
 `convex/contacts` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
 
@@ -668,7 +668,7 @@ Code complete. All implementation tasks done:
 - [x] `EntitlementList` — status-grouped display with Icelandic section headers; empty statuses hidden. Each card carries a color-coded status pill (teal `in_progress`, amber `not_applied`, emerald `approved`, muted `denied`) with a matching Lucide icon. Urgency surfaces via a regex check on `notes` for the word "brýnt" (case-insensitive) — matching cards get an orange BRÝNT pill and a warning-tinted border. Cards show title, appliedTo, description, notes, owner avatar + name, and last-updated footer.
 - [x] `EntitlementForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Fields: title, status `Select`, appliedTo, owner `Select` (populated from `api.users.list` with a "None selected" option), description, notes. Edit mode pre-fills all fields and surfaces a destructive delete behind a shadcn `Dialog` confirmation.
 - [x] Translation keys added under `entitlements.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, urgent, owner, deleteConfirm, statuses.*, fields.*, placeholders.*, errors.*).
-- [x] `src/app/[locale]/(app)/upplysingr/page.tsx` — renders `EntitlementList` below `ContactList`. Tab container for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — renders `EntitlementList` below `ContactList`. Tab container for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
 
 `convex/entitlements` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
 
@@ -695,7 +695,7 @@ The following exit-criteria items require user browser verification post-deploy 
    → Client calls save mutation with storageId + metadata
    ```
 
-3. **Upload form:** Native mobile file picker, title (pre-fill from filename), category (free text with suggestions: "Lyfseðill", "Blóðprufa", "Bréf frá lækni", "Umsókn"), notes.
+3. **Upload form:** File picker (hidden `<input type="file">` triggered by a shadcn Button), title (pre-fill from filename), category (free text with suggestions via `<datalist>`: "Lyfseðill", "Blóðprufa", "Bréf frá lækni", "Umsókn", "Vottorð"), notes.
 
 4. **View/download:** `storage.getUrl(storageId)` — tap opens in browser/downloads.
 
@@ -703,7 +703,7 @@ The following exit-criteria items require user browser verification post-deploy 
 
 ### Convex functions
 
-- `documents.list`, `documents.generateUploadUrl`, `documents.save`, `documents.getUrl`, `documents.remove`
+- `documents.list`, `documents.generateUploadUrl`, `documents.save`, `documents.abandonUpload`, `documents.remove`
 
 ### Files to create/modify
 
@@ -726,7 +726,7 @@ Code complete. All implementation tasks done:
 - [x] `DocumentList` — one card per document: file icon in a teal tile, title, `fileName · size`, category pill, notes, primary "Opna" button that opens the signed URL in a new tab, destructive delete (`touch-icon`) that opens a shadcn `Dialog` confirmation. Footer row shows `addedByUser` avatar + upload date (`Intl.DateTimeFormat(locale)`).
 - [x] `DocumentUpload` — shadcn `Sheet` from bottom. Native `<input type="file">`. Title auto-fills from the filename (sans extension) until the user edits it; a `titleDirty` flag stops further autofill so edits aren't clobbered. Category uses a native `<datalist>` with 5 Icelandic suggestions (Lyfseðill / Blóðprufa / Bréf frá lækni / Umsókn / Vottorð) — mobile-safe, free-text fallback. Notes field. Two-step upload: `generateUploadUrl` → `fetch(POST, body=file)` → `save({ storageId, metadata })`. Errors are surfaced in Icelandic.
 - [x] Translation keys added under `documents.*` in `messages/is.json` + `messages/en.json` (title, upload, uploading, uploadTitle, download, unavailable, empty, emptyHint, deleteConfirm, fields.*, placeholders.*, errors.*).
-- [x] `src/app/[locale]/(app)/upplysingr/page.tsx` — renders `DocumentList` below `EntitlementList`. Tab container for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — renders `DocumentList` below `EntitlementList`. Tab container for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
 
 `convex/documents` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
 
@@ -743,7 +743,7 @@ The following exit-criteria items require user browser verification post-deploy 
 
 ### What to do
 
-The `/upplysingr` page needs a tab bar or segmented control to switch between the 4 sub-sections built in Phases 8–11.
+The `/upplysingar` page needs a tab bar or segmented control to switch between the 4 sub-sections built in Phases 8–11.
 
 - Tab bar at top: **Lyf | Símaskrá | Réttindi | Skjöl**
 - Default to Lyf (or whichever tab the family uses most — can be adjusted)
@@ -752,7 +752,7 @@ The `/upplysingr` page needs a tab bar or segmented control to switch between th
 
 ### Files to create/modify
 
-- `src/app/[locale]/upplysingr/page.tsx` — Tab container wiring the 4 components
+- `src/app/[locale]/upplysingar/page.tsx` — Tab container wiring the 4 components
 
 ### Exit criteria
 
