@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 import { AppointmentList } from "@/components/appointments/AppointmentList";
+import { SeriesEntryRow } from "@/components/timar/SeriesEntryRow";
 import { Button } from "@/components/ui/button";
 
 export function TimarView() {
@@ -15,6 +16,7 @@ export function TimarView() {
 		<>
 			<div className="px-4 py-6 pb-28 flex flex-col gap-6">
 				<h2 className="text-3xl font-semibold">{t("title")}</h2>
+				<SeriesEntryRow />
 				<AppointmentList />
 			</div>
 			<div
