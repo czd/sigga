@@ -113,9 +113,9 @@ All mutations call the existing `requireAuth(ctx)` helper. No new roles.
 **`convex/crons.ts`:**
 
 ```ts
-crons.daily(
+crons.cron(
   "ensure recurring appointment occurrences",
-  { hourUTC: 0, minuteUTC: 10 },
+  "10 0 * * *",
   internal.recurringSeries.ensureNextOccurrences,
 );
 ```
