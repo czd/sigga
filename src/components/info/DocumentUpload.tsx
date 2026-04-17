@@ -33,6 +33,7 @@ export function DocumentUpload({ open, onOpenChange }: DocumentUploadProps) {
 	const tCommon = useTranslations("common");
 	const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
 	const save = useMutation(api.documents.save);
+	const abandonUpload = useMutation(api.documents.abandonUpload);
 	const datalistId = useId();
 
 	const [file, setFile] = useState<File | null>(null);
@@ -77,6 +78,7 @@ export function DocumentUpload({ open, onOpenChange }: DocumentUploadProps) {
 		}
 		setSaving(true);
 		setError(null);
+		let uploadedStorageId: Id<"_storage"> | null = null;
 		try {
 			const uploadUrl = await generateUploadUrl();
 			const res = await fetch(uploadUrl, {
@@ -90,6 +92,7 @@ export function DocumentUpload({ open, onOpenChange }: DocumentUploadProps) {
 			const { storageId } = (await res.json()) as {
 				storageId: Id<"_storage">;
 			};
+			uploadedStorageId = storageId;
 			await save({
 				storageId,
 				title: trimmedTitle,
@@ -99,10 +102,18 @@ export function DocumentUpload({ open, onOpenChange }: DocumentUploadProps) {
 				category: category.trim() || undefined,
 				notes: notes.trim() || undefined,
 			});
+			uploadedStorageId = null;
 			onOpenChange(false);
 		} catch (err) {
 			console.error(err);
 			setError(t("errors.generic"));
+			if (uploadedStorageId) {
+				try {
+					await abandonUpload({ storageId: uploadedStorageId });
+				} catch (cleanupErr) {
+					console.error("Failed to clean up orphan blob", cleanupErr);
+				}
+			}
 		} finally {
 			setSaving(false);
 		}

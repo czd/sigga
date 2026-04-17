@@ -107,7 +107,15 @@ export const remove = mutation({
 		await requireAuth(ctx);
 		const existing = await ctx.db.get(args.id);
 		if (!existing) return;
-		await ctx.storage.delete(existing.storageId);
 		await ctx.db.delete(args.id);
+		await ctx.storage.delete(existing.storageId);
+	},
+});
+
+export const abandonUpload = mutation({
+	args: { storageId: v.id("_storage") },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx);
+		await ctx.storage.delete(args.storageId);
 	},
 });
