@@ -8,7 +8,6 @@ import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { formatAbsoluteWithTime } from "@/lib/formatDate";
 
 type AppointmentDoc = Doc<"appointments">;
@@ -49,85 +48,83 @@ export function AppointmentCard({
 	}
 
 	return (
-		<Card>
-			<CardContent className="flex flex-col gap-3">
-				<div className="flex items-start gap-2">
-					<div className="flex-1 min-w-0">
-						<div className="text-sm text-muted-foreground">
-							{formatAbsoluteWithTime(appointment.startTime, locale)}
-						</div>
-						<h3 className="text-lg font-semibold mt-0.5 leading-snug">
-							{appointment.title}
-						</h3>
-						{appointment.location ? (
-							<div className="mt-1 flex items-center gap-1.5 text-base text-muted-foreground">
-								<MapPin size={18} aria-hidden />
-								<span>{appointment.location}</span>
-							</div>
-						) : null}
-						{appointment.notes ? (
-							<p className="mt-2 text-base whitespace-pre-wrap line-clamp-3 text-foreground/90">
-								{appointment.notes}
-							</p>
-						) : null}
+		<article className="flex flex-col gap-4 rounded-2xl bg-paper px-5 py-5 ring-1 ring-foreground/10">
+			<div className="flex items-start gap-3">
+				<div className="flex-1 min-w-0">
+					<div className="text-sm text-ink-faint">
+						{formatAbsoluteWithTime(appointment.startTime, locale)}
 					</div>
-					<Button
-						variant="ghost"
-						size="touch-icon"
-						onClick={onEdit}
-						aria-label={tCommon("edit")}
-						className="-my-1 -mr-1"
-					>
-						<Pencil aria-hidden />
-					</Button>
-				</div>
-
-				<div className="pt-3 border-t border-border flex items-center justify-between gap-3 min-h-12 flex-wrap">
-					{appointment.driver ? (
-						<div className="flex items-center gap-2 min-w-0">
-							<UserAvatar
-								name={appointment.driver.name}
-								email={appointment.driver.email}
-								imageUrl={appointment.driver.image}
-								className="size-8"
-							/>
-							<span className="text-base truncate">
-								{appointment.driver.name ??
-									appointment.driver.email ??
-									t("fields.driver")}
-							</span>
+					<h3 className="mt-0.5 font-serif text-lg leading-snug text-ink">
+						{appointment.title}
+					</h3>
+					{appointment.location ? (
+						<div className="mt-1.5 flex items-center gap-1.5 text-sm text-ink-soft">
+							<MapPin size={16} aria-hidden />
+							<span>{appointment.location}</span>
 						</div>
-					) : variant === "upcoming" ? (
-						<>
-							<span className="text-base text-muted-foreground">
-								{t("fields.noDriverAssigned")}
-							</span>
-							<Button
-								size="touch"
-								onClick={handleVolunteer}
-								disabled={volunteering}
-							>
-								{t("volunteer")}
-							</Button>
-						</>
-					) : (
-						<span className="text-base text-muted-foreground">
-							{t("fields.noDriverAssigned")}
-						</span>
-					)}
-
-					{variant === "past" && onLogEntry ? (
-						<Button
-							variant="outline"
-							size="touch"
-							onClick={() => onLogEntry(appointment._id)}
-						>
-							<BookOpen aria-hidden />
-							<span>{t("logEntry")}</span>
-						</Button>
+					) : null}
+					{appointment.notes ? (
+						<p className="mt-2 text-base whitespace-pre-wrap line-clamp-3 text-ink/90">
+							{appointment.notes}
+						</p>
 					) : null}
 				</div>
-			</CardContent>
-		</Card>
+				<Button
+					variant="ghost"
+					size="touch-icon"
+					onClick={onEdit}
+					aria-label={tCommon("edit")}
+					className="-my-1 -mr-1"
+				>
+					<Pencil aria-hidden />
+				</Button>
+			</div>
+
+			<div className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-t border-divider pt-4">
+				{appointment.driver ? (
+					<div className="flex items-center gap-2 min-w-0">
+						<UserAvatar
+							name={appointment.driver.name}
+							email={appointment.driver.email}
+							imageUrl={appointment.driver.image}
+							className="size-8"
+						/>
+						<span className="text-base text-ink-soft truncate">
+							{appointment.driver.name ??
+								appointment.driver.email ??
+								t("fields.driver")}
+						</span>
+					</div>
+				) : variant === "upcoming" ? (
+					<>
+						<span className="text-base text-ink-faint">
+							{t("fields.noDriverAssigned")}
+						</span>
+						<Button
+							size="touch"
+							onClick={handleVolunteer}
+							disabled={volunteering}
+						>
+							{t("volunteer")}
+						</Button>
+					</>
+				) : (
+					<span className="text-base text-ink-faint">
+						{t("fields.noDriverAssigned")}
+					</span>
+				)}
+
+				{variant === "past" && onLogEntry ? (
+					<Button
+						variant="outline"
+						size="touch"
+						onClick={() => onLogEntry(appointment._id)}
+					>
+						<BookOpen aria-hidden />
+						<span>{t("logEntry")}</span>
+					</Button>
+				) : null}
+			</div>
+		</article>
 	);
 }
