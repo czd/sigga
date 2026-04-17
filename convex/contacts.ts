@@ -33,6 +33,7 @@ function sortContacts(rows: ContactDoc[]): ContactDoc[] {
 export const list = query({
 	args: {},
 	handler: async (ctx) => {
+		await requireAuth(ctx);
 		const rows = await ctx.db.query("contacts").collect();
 		return sortContacts(rows);
 	},

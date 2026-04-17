@@ -57,6 +57,7 @@ export const list = query({
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		const limit = args.limit ?? 100;
 		const status = args.status;
 		if (status) {
@@ -79,6 +80,7 @@ export const list = query({
 export const upcoming = query({
 	args: { limit: v.optional(v.number()) },
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		const now = Date.now();
 		const rows = await ctx.db
 			.query("appointments")
@@ -94,6 +96,7 @@ export const upcoming = query({
 export const past = query({
 	args: { limit: v.optional(v.number()) },
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		const now = Date.now();
 		const rows = await ctx.db
 			.query("appointments")
@@ -107,6 +110,7 @@ export const past = query({
 export const get = query({
 	args: { id: v.id("appointments") },
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		const appointment = await ctx.db.get(args.id);
 		if (!appointment) return null;
 		return withDriver(ctx, appointment);

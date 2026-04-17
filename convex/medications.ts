@@ -50,6 +50,7 @@ async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
 export const list = query({
 	args: { activeOnly: v.optional(v.boolean()) },
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		const rows = args.activeOnly
 			? await ctx.db
 					.query("medications")

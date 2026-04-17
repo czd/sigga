@@ -71,6 +71,7 @@ async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
 export const recent = query({
 	args: { count: v.optional(v.number()) },
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		const rows = await ctx.db
 			.query("logEntries")
 			.order("desc")
@@ -82,6 +83,7 @@ export const recent = query({
 export const list = query({
 	args: { paginationOpts: paginationOptsValidator },
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		const result = await ctx.db
 			.query("logEntries")
 			.order("desc")

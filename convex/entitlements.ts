@@ -66,6 +66,7 @@ async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
 export const list = query({
 	args: {},
 	handler: async (ctx) => {
+		await requireAuth(ctx);
 		const rows = await ctx.db.query("entitlements").collect();
 		const enriched = await Promise.all(rows.map((row) => enrich(ctx, row)));
 		return enriched.sort((a, b) => {

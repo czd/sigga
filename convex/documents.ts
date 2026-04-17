@@ -46,6 +46,7 @@ async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<Id<"users">> {
 export const list = query({
 	args: {},
 	handler: async (ctx): Promise<DocumentWithMeta[]> => {
+		await requireAuth(ctx);
 		const rows = await ctx.db.query("documents").collect();
 		const enriched = await Promise.all(
 			rows.map(async (row): Promise<DocumentWithMeta> => {
