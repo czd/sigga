@@ -11,6 +11,7 @@
 import type * as appointments from "../appointments.js";
 import type * as auth from "../auth.js";
 import type * as contacts from "../contacts.js";
+import type * as documents from "../documents.js";
 import type * as entitlements from "../entitlements.js";
 import type * as http from "../http.js";
 import type * as logEntries from "../logEntries.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   appointments: typeof appointments;
   auth: typeof auth;
   contacts: typeof contacts;
+  documents: typeof documents;
   entitlements: typeof entitlements;
   http: typeof http;
   logEntries: typeof logEntries;

@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ContactList } from "@/components/info/ContactList";
+import { DocumentList } from "@/components/info/DocumentList";
 import { EntitlementList } from "@/components/info/EntitlementList";
 import { MedicationTable } from "@/components/info/MedicationTable";
 
@@ -18,6 +19,7 @@ export default async function UpplysingrPage({
 			<MedicationTable />
 			<ContactList />
 			<EntitlementList />
+			<DocumentList />
 		</div>
 	);
 }

@@ -170,6 +170,31 @@
 			"generic": "Could not save the entitlement."
 		}
 	},
+	"documents": {
+		"title": "Documents",
+		"upload": "Upload",
+		"uploading": "Uploading...",
+		"uploadTitle": "New document",
+		"download": "Open",
+		"unavailable": "Unavailable",
+		"empty": "No documents yet",
+		"emptyHint": "Upload prescriptions, letters, or certificates to keep everything in one place.",
+		"deleteConfirm": "Are you sure? The document will be permanently deleted — this cannot be undone.",
+		"fields": {
+			"file": "File",
+			"docTitle": "Title",
+			"category": "Category",
+			"notes": "Notes"
+		},
+		"placeholders": {
+			"category": "e.g. Prescription, blood test, letter"
+		},
+		"errors": {
+			"fileRequired": "Choose a file to upload.",
+			"titleRequired": "Title cannot be empty.",
+			"generic": "Could not upload the document."
+		}
+	},
 	"medications": {
 		"title": "Medications",
 		"add": "Add medication",

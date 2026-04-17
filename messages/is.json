@@ -170,6 +170,31 @@
 			"generic": "Ekki tókst að vista réttindin."
 		}
 	},
+	"documents": {
+		"title": "Skjöl",
+		"upload": "Hlaða upp",
+		"uploading": "Hlaða upp...",
+		"uploadTitle": "Nýtt skjal",
+		"download": "Opna",
+		"unavailable": "Ekki aðgengilegt",
+		"empty": "Engin skjöl skráð",
+		"emptyHint": "Hladdu upp lyfseðlum, bréfum eða vottorðum til að hafa allt á einum stað.",
+		"deleteConfirm": "Ertu viss? Skjalið eyðist varanlega — þetta er ekki hægt að afturkalla.",
+		"fields": {
+			"file": "Skjal",
+			"docTitle": "Titill",
+			"category": "Flokkur",
+			"notes": "Athugasemdir"
+		},
+		"placeholders": {
+			"category": "T.d. Lyfseðill, Blóðprufa, Bréf frá lækni"
+		},
+		"errors": {
+			"fileRequired": "Veldu skjal til að hlaða upp.",
+			"titleRequired": "Titill má ekki vera tómur.",
+			"generic": "Ekki tókst að hlaða skjalinu upp."
+		}
+	},
 	"medications": {
 		"title": "Lyf",
 		"add": "Bæta við lyfi",

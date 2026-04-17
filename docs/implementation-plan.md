@@ -717,6 +717,26 @@ The following exit-criteria items require user browser verification post-deploy 
 - Can tap to view/download
 - Can delete (with confirmation)
 
+### Status (2026-04-17)
+
+Code complete. All implementation tasks done:
+
+- [x] `convex/documents.ts` — `list`, `generateUploadUrl`, `save`, `remove`. `list` enriches each row with a signed `url` (`ctx.storage.getUrl`) and an `addedByUser` summary, sorted newest-first by `_creationTime`. `generateUploadUrl` and `save` gate on auth via `requireAuth`; `save` rejects empty title/filename. `remove` calls `ctx.storage.delete(storageId)` before deleting the row so no orphaned blobs remain.
+- [x] `getUrl` — **not** shipped as a separate query. The spec listed one but list already embeds URLs, so an extra round-trip isn't needed. If a URL goes stale in practice, add one later.
+- [x] `DocumentList` — one card per document: file icon in a teal tile, title, `fileName · size`, category pill, notes, primary "Opna" button that opens the signed URL in a new tab, destructive delete (`touch-icon`) that opens a shadcn `Dialog` confirmation. Footer row shows `addedByUser` avatar + upload date (`Intl.DateTimeFormat(locale)`).
+- [x] `DocumentUpload` — shadcn `Sheet` from bottom. Native `<input type="file">`. Title auto-fills from the filename (sans extension) until the user edits it; a `titleDirty` flag stops further autofill so edits aren't clobbered. Category uses a native `<datalist>` with 5 Icelandic suggestions (Lyfseðill / Blóðprufa / Bréf frá lækni / Umsókn / Vottorð) — mobile-safe, free-text fallback. Notes field. Two-step upload: `generateUploadUrl` → `fetch(POST, body=file)` → `save({ storageId, metadata })`. Errors are surfaced in Icelandic.
+- [x] Translation keys added under `documents.*` in `messages/is.json` + `messages/en.json` (title, upload, uploading, uploadTitle, download, unavailable, empty, emptyHint, deleteConfirm, fields.*, placeholders.*, errors.*).
+- [x] `src/app/[locale]/(app)/upplysingr/page.tsx` — renders `DocumentList` below `EntitlementList`. Tab container for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+
+`convex/documents` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
+
+The following exit-criteria items require user browser verification post-deploy (the agent cannot complete Google OAuth, upload a real file, or verify Convex storage behaviour):
+
+- [ ] Can upload a file from mobile (native file picker opens; a PDF or image uploads successfully)
+- [ ] Uploaded document appears in the list with correct title/filename/size/category
+- [ ] Tapping "Opna" opens/downloads the file in a new browser tab
+- [ ] Delete confirmation removes both the row and the underlying blob (verify in Convex dashboard that the `_storage` entry is gone)
+
 ---
 
 ## Phase 12: Upplýsingar — Container Page
