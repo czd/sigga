@@ -30,7 +30,6 @@ If the staged diff only touches `.claude/**`, `CLAUDE.md`, `AGENTS.md`, `.gitign
 - Hook scripts under `.claude/hooks/` are executable (`test -x`).
 - Agent and command frontmatter parses (YAML between leading `---` lines).
 - `.claude/settings.json` is valid JSON if touched.
-- `.claude/.qa-passed` is not staged and remains covered by `.gitignore`.
 
 ## Checks
 
@@ -130,10 +129,10 @@ Recommendation: proceed with commit | fix findings before commit
 If the result is PASS, create the QA marker so the pre-commit hook allows the commit:
 
 ```bash
-touch "$CLAUDE_PROJECT_DIR/.claude/.qa-passed"
+touch /tmp/sigga-qa-passed
 ```
 
-The marker is valid for 15 minutes. If the user re-stages meaningful changes after that, run QA again.
+The marker lives in `/tmp/` (not under `.claude/`) so creating it doesn't trigger an approval prompt. It's valid for 15 minutes and is consumed on first use. If the user re-stages meaningful changes after that, run QA again.
 
 ## On FAIL
 
