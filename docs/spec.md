@@ -54,6 +54,8 @@ sigga/
 │   ├── contacts.ts
 │   ├── entitlements.ts
 │   ├── documents.ts
+│   ├── recurringSeries.ts        # Recurring appointment series CRUD + invariant helper
+│   ├── crons.ts                  # Daily cron: ensure next occurrences for active series
 │   ├── backup.ts                 # Scheduled weekly JSON export
 │   └── seed.ts                   # Dev seed data
 ├── messages/
@@ -72,7 +74,11 @@ sigga/
 │   │   │   ├── dagbok/
 │   │   │   │   └── page.tsx      # Log view
 │   │   │   ├── timar/
-│   │   │   │   └── page.tsx      # Appointments view
+│   │   │   │   ├── page.tsx      # Appointments view
+│   │   │   │   ├── TimarView.tsx # Client component wrapping tabs + SeriesEntryRow
+│   │   │   │   └── reglulegir/
+│   │   │   │       ├── page.tsx          # Server wrapper
+│   │   │   │       └── ReglulegirView.tsx # Client: recurring series management list
 │   │   │   ├── upplysingar/
 │   │   │   │   └── page.tsx      # Info hub (meds, contacts, entitlements, documents)
 │   │   │   └── login/
@@ -87,10 +93,17 @@ sigga/
 │   │   │   ├── RecentLog.tsx
 │   │   │   └── QuickActions.tsx
 │   │   ├── appointments/
-│   │   │   ├── AppointmentCard.tsx   # Single appointment card (upcoming + past variants)
+│   │   │   ├── AppointmentCard.tsx   # Single appointment card — borderless Bókasafn aesthetic
 │   │   │   ├── AppointmentList.tsx
 │   │   │   ├── AppointmentForm.tsx
 │   │   │   └── DriverPicker.tsx
+│   │   ├── recurringSeries/          # Recurring series management components
+│   │   │   ├── SeriesList.tsx
+│   │   │   ├── SeriesCard.tsx
+│   │   │   ├── SeriesForm.tsx
+│   │   │   └── DayPicker.tsx         # Seven day-chip multi-select
+│   │   ├── timar/
+│   │   │   └── SeriesEntryRow.tsx    # Entry-point row linking to /timar/reglulegir
 │   │   ├── log/
 │   │   │   ├── LogFeed.tsx
 │   │   │   └── LogEntryForm.tsx
@@ -109,7 +122,8 @@ sigga/
 │   │       └── EmptyState.tsx
 │   └── lib/
 │       ├── convex.ts             # ConvexProvider setup
-│       └── utils.ts              # Shared utilities
+│       ├── utils.ts              # Shared utilities
+│       └── formatRecurrence.ts  # formatDays, formatCadence, computeNextStartTime helpers
 ├── tests/
 │   ├── unit/                     # Vitest unit tests
 │   │   ├── convex/               # Convex function tests
@@ -142,6 +156,20 @@ import { authTables } from "@convex-dev/auth/server";
 export default defineSchema({
   ...authTables,
 
+  // Reglulegir tímar — recurring appointment series
+  recurringSeries: defineTable({
+    title: v.string(),                    // "Virkni og Vellíðan"
+    location: v.optional(v.string()),     // "Fífan"
+    notes: v.optional(v.string()),
+    daysOfWeek: v.array(v.number()),      // [2, 5] = Tue, Fri — 0=Sun..6=Sat (UTC day)
+    timeOfDay: v.string(),                // "09:15" — Iceland is UTC+0, no DST math
+    durationMinutes: v.optional(v.number()),
+    isActive: v.boolean(),                // pause/play
+    createdBy: v.id("users"),
+    updatedAt: v.number(),
+    updatedBy: v.id("users"),
+  }).index("by_active", ["isActive"]),
+
   // Tímar — appointments
   appointments: defineTable({
     title: v.string(),
@@ -155,12 +183,14 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("cancelled"),
     ),
+    seriesId: v.optional(v.id("recurringSeries")),  // null = one-off; set = spawned from a series
     createdBy: v.id("users"),
     updatedAt: v.number(),
     updatedBy: v.id("users"),
   })
     .index("by_startTime", ["startTime"])
-    .index("by_status_and_startTime", ["status", "startTime"]),
+    .index("by_status_and_startTime", ["status", "startTime"])
+    .index("by_series_and_startTime", ["seriesId", "startTime"]),  // used by recurring invariant
 
   // Dagbók — log entries (append-only, editable)
   // Default Convex ordering is by `_creationTime` ascending — no explicit index needed.
@@ -312,6 +342,29 @@ messages/
   "contacts": { ... },
   "entitlements": { ... },
   "documents": { ... },
+  "recurring": {
+    "title": "Reglulegir tímar",
+    "entryLabel": "Reglulegir tímar",
+    "entryCount": "{count, plural, =0 {engir ennþá} =1 {1 virkur} other {{count} virkir}}",
+    "entryAllPaused": "Allir í hléi",
+    "empty": { "title": "...", "body": "..." },
+    "newButton": "Nýr reglulegur tími",
+    "active": "Virkt",
+    "paused": "Í hléi",
+    "edit": "Breyta",
+    "delete": "Eyða",
+    "deleteConfirm": { "title": "...", "body": "...", "confirm": "...", "cancel": "..." },
+    "pauseToast": "{title} sett í hlé",
+    "resumeToast": "Næsti tími: {when}",
+    "form": {
+      "createTitle": "...", "editTitle": "...", "editNextNote": "...",
+      "fields": { "title": "Heiti", "days": "Dagar", "time": "Tími",
+                  "duration": "...", "durationHint": "...", "location": "...", "notes": "..." },
+      "daysShort": { "0": "Sun", "1": "Mán", ... "6": "Lau" },
+      "daysLong": { "0": "sunnudaga", ... "6": "laugardaga" }
+    },
+    "cadence": "{days} kl. {time}"
+  },
   "auth": {
     "signIn": "Skrá inn",
     "signInWithGoogle": "Skrá inn með Google",
@@ -447,9 +500,11 @@ All appointments — upcoming and past.
 
 **Layout:**
 
-1. **Toggle/tabs at top:** "Næstu tímar" (Upcoming) | "Liðnir tímar" (Past). Default: upcoming.
+1. **Reglulegir tímar entry row** (above the tabs): A tappable row (`bg-paper ring-1 ring-foreground/10 rounded-2xl`) linking to `/timar/reglulegir`. Shows the count of **active** series ("3 virkir") or "Allir í hléi" if all are paused, or "engir ennþá" when no series exist. Rendered by `SeriesEntryRow` in `src/components/timar/`.
 
-2. **Upcoming list:** Sorted by date ascending (soonest first). Each card:
+2. **Toggle/tabs:** "Næstu tímar" (Upcoming) | "Liðnir tímar" (Past). Default: upcoming.
+
+3. **Upcoming list:** Sorted by date ascending (soonest first). Each card:
    - Date + time (formatted for Icelandic: "fös. 18. apríl kl. 14:00")
    - Title
    - Location (if set)
@@ -468,6 +523,41 @@ All appointments — upcoming and past.
    - "Vista" button
 
 5. **Edit/delete:** Edit pre-fills the form. Delete requires confirmation modal: "Ertu viss? Þetta er ekki hægt að afturkalla."
+
+**AppointmentCard aesthetic:** Cards use the borderless Bókasafn style — `bg-paper ring-1 ring-foreground/10 rounded-2xl` shell; `font-serif` title; `text-ink-faint`/`text-ink-soft` for secondary text instead of `text-muted-foreground`. Interior row separators use `border-t border-divider`.
+
+---
+
+### View 3b: Reglulegir tímar — `/timar/reglulegir`
+
+Series management sub-page. Route: `src/app/[locale]/(app)/timar/reglulegir/page.tsx` (server wrapper) + `ReglulegirView.tsx` (client).
+
+**Layout:**
+
+- Back link ("← Tímar") at top.
+- Page heading "Reglulegir tímar" (`font-serif`).
+- List of all series rendered by `SeriesList` → individual `SeriesCard` components.
+- "Nýr reglulegur tími" pill button at the bottom (sage-deep).
+
+**SeriesCard anatomy:**
+
+- Title: `font-serif text-lg text-ink`.
+- Day + time line: `text-sm text-ink-soft` — day names in Icelandic long form joined with `Intl.ListFormat` ("þriðjudaga og föstudaga kl. 09:15"). Minutes always shown (`09:00` not `9:00`).
+- Location: `text-sm text-ink-faint` if set.
+- Interior divider (`border-t border-divider`) above the action row.
+- shadcn `Switch` with label: "Virkt" when on, "Í hléi" when off. Toggling calls `recurringSeries.setActive`.
+- "Breyta" (ghost) and "Eyða" (ghost, text-destructive) buttons — `size="touch"`.
+- Delete requires a confirmation dialog: "Eyða [title]? Eldri tímar verða áfram sýnilegir í Liðnir tímar."
+
+**Paused card:** full opacity maintained for accessibility; day-time line uses `text-ink-faint`.
+
+**Empty state:** `EmptyState` component with `CalendarRange` icon, title "Engir reglulegir tímar", body "Reglulegir tímar sem endurtaka sig — t.d. Virkni og Vellíðan — birtast hér."
+
+**SeriesForm (create + edit):** shadcn `Sheet` from bottom (`side="bottom"`, `max-h-[92vh]`). Fields: Heiti (required), Dagar (DayPicker chip grid), Tími (`<input type="time">`), Lengd í mínútum (optional), Staðsetning (optional), Athugasemdir (optional). On edit: footer note that the next occurrence is not updated automatically. Primary button: "Vista".
+
+**DayPicker:** Seven day chips (Sun–Lau abbreviations) in a grid. Selected: `bg-sage-deep text-paper`; unselected: `bg-paper-deep text-ink-soft`. Multi-select, rounded-full, 48px height.
+
+**`update` behaviour:** Editing a series does NOT re-spawn or patch the already-scheduled upcoming occurrence. The user must cancel that appointment directly if they want the new values reflected immediately. The edit form footer warns them of this.
 
 ---
 
@@ -580,13 +670,37 @@ Label text always visible (not icon-only).
 
 **appointments.ts:**
 - `list` — query: all appointments, ordered by startTime. Args: `{ status?: "upcoming" | "completed" | "cancelled" }`. Filter upcoming = startTime > now.
-- `upcoming` — query: dashboard-optimised. Uses `.withIndex("by_status_and_startTime", q => q.eq("status", "upcoming").gte("startTime", now)).order("asc").take(limit)`. Args: `{ limit?: number }` (default 3). Returns only future-dated upcoming appointments; consumed by the dashboard via `api.appointments.upcoming`.
+- `upcoming` — query: dashboard-optimised. Uses `.withIndex("by_status_and_startTime", q => q.eq("status", "upcoming").gte("startTime", now)).order("asc").take(limit)`. Args: `{ limit?: number }` (default 3). Returns only future-dated upcoming appointments; consumed by the dashboard via `api.appointments.upcoming`. Series-spawned occurrences appear here automatically.
 - `past` — query: appointments whose `startTime < now`, ordered by `startTime` descending (most recent first). Uses `.withIndex("by_startTime", q => q.lt("startTime", now))`. Args: `{ limit?: number }` (default 50). Consumed by the Tímar past-tab via `api.appointments.past`.
 - `get` — query: single appointment by ID.
 - `create` — mutation: create appointment. Auto-set `createdBy`, `updatedBy`, `updatedAt`, `status: "upcoming"`.
-- `update` — mutation: update appointment fields. Set `updatedBy`, `updatedAt`.
-- `remove` — mutation: delete appointment.
+- `update` — mutation: update appointment fields. Set `updatedBy`, `updatedAt`. **Side-effect:** if the updated row has a `seriesId` and transitions out of `"upcoming"` status (to `"completed"` or `"cancelled"`), calls `ensureNextOccurrence(ctx, seriesId)` to spawn the next occurrence immediately.
+- `remove` — mutation: delete appointment. **Side-effect:** if the deleted row had a `seriesId` and was `"upcoming"`, calls `ensureNextOccurrence(ctx, seriesId)`.
 - `volunteerToDrive` — mutation: sets `driverId` to current user. Simple, one-tap.
+
+**recurringSeries.ts:**
+
+The core invariant: every `recurringSeries` with `isActive === true` has at most one upcoming `appointments` row at any moment. A shared `ensureNextOccurrence(ctx, seriesId)` internal helper enforces it.
+
+- `list` — query: all series ordered by title (Icelandic collation). No args.
+- `get` — query: `{ id }`. Returns a single series or `null`.
+- `create` — mutation: `{ title, location?, notes?, daysOfWeek, timeOfDay, durationMinutes? }`. Creates with `isActive: true`, then calls `ensureNextOccurrence` to spawn the first occurrence. Validates: `daysOfWeek` non-empty, each value `0..6`; `timeOfDay` matches `/^([01]\d|2[0-3]):[0-5]\d$/`; `durationMinutes` if set `>= 1 && <= 24*60`.
+- `update` — mutation: partial update. **Does not** re-spawn or patch the existing upcoming occurrence. The form footer warns the user; they can cancel the appointment directly to get one with updated values.
+- `setActive` — mutation: `{ id, isActive }`. **Pause** (`true → false`): deletes the upcoming occurrence row. **Resume** (`false → true`): calls `ensureNextOccurrence`. History (past occurrences) is untouched either way.
+- `remove` — mutation: `{ id }`. (1) Deletes upcoming occurrence. (2) Sets `seriesId = undefined` on all past occurrences so they survive as standalone history. (3) Deletes the series row.
+- `ensureNextOccurrences` — **internal** mutation (no public args). Iterates all active series and calls `ensureNextOccurrence` for each. Invoked by the daily cron.
+
+`ensureNextOccurrence(ctx, seriesId)` algorithm: load series; if inactive, return. Query `by_series_and_startTime` for upcoming rows with `startTime >= now`; if any `status === "upcoming"` row exists, return (invariant already holds). Otherwise walk forward from `now` one UTC day at a time (max 8 iterations) until a day in `daysOfWeek` is found with `startTime > now`; insert an `appointments` row copying `title`, `location`, `notes`, `seriesId`; `createdBy`/`updatedBy` = series `createdBy`.
+
+**convex/crons.ts:** daily job at 00:10 UTC:
+```typescript
+crons.cron(
+  "ensure recurring appointment occurrences",
+  "10 0 * * *",
+  internal.recurringSeries.ensureNextOccurrences,
+);
+```
+Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guidelines.
 
 **logEntries.ts:**
 - `list` — query: paginated, ordered by `_creationTime` desc. Args: `{ limit: number, cursor?: string }`.
@@ -624,28 +738,24 @@ Label text always visible (not icon-only).
 
 **backup.ts:**
 - `weeklyExport` — scheduled action (Convex cron): runs weekly. Queries all data, serializes to JSON, stores as a file in Convex storage. Keeps last 4 backups, deletes older ones.
-- Register in `convex/crons.ts`:
+- Register in `convex/crons.ts` using `crons.cron` (the deprecated `crons.weekly` / `crons.daily` helpers must not be used — Convex guidelines require `crons.interval` or `crons.cron`):
   ```typescript
-  import { cronJobs } from "convex/server";
-  import { internal } from "./_generated/api";
-
-  const crons = cronJobs();
-  crons.weekly(
+  crons.cron(
     "weekly backup",
-    { dayOfWeek: "sunday", hourUTC: 3, minuteUTC: 0 },
+    "0 3 * * 0",   // Sunday 03:00 UTC
     internal.backup.weeklyExport,
   );
-  export default crons;
   ```
 
 ### Authorization pattern
 
-Every mutation should:
-1. Get the current user via `ctx.auth.getUserIdentity()`
-2. If null, throw `ConvexError("Ekki innskráður")`
-3. Check email against `ALLOWED_EMAILS` env var (or rely on the auth-level check)
+Every mutation **and** every data-returning query must:
+1. Call `getAuthUserId(ctx)` from `@convex-dev/auth/server`.
+2. If the result is `null`, throw `ConvexError("Ekki innskráður")`.
 
-Keep it simple — no roles, no permissions in v1. Every authenticated family member can do everything.
+`NEXT_PUBLIC_CONVEX_URL` ships in the client bundle, so any caller who inspects the JS can call `api.*.list` directly — only this server-side check enforces the whitelist. The one documented exception is `users.me`, which returns `null` for unauthenticated callers by design so the header can render a signed-out state.
+
+No roles in v1 — every authenticated family member can do everything, except log-entry editing which checks `authorId === currentUser`.
 
 ---
 

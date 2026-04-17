@@ -46,16 +46,24 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 **Context:** Reviewing a fix that swapped `crons.daily(name, { hourUTC, minuteUTC }, fn)` for `crons.cron(name, "10 0 * * *", fn)` to comply with the Convex guidelines in `convex/_generated/ai/guidelines.md`. The violation was only caught by a human reading the guidelines file, not by any automated check.
 **Observation:** There is no grep-level check in the QA agent for deprecated Convex cron registration helpers. They compile fine (TypeScript accepts them), so lint and typecheck cannot catch the regression. A simple grep for `crons\.daily\b|crons\.hourly\b|crons\.weekly\b` in `convex/` would surface this instantly.
 **Suggested action:** Add a Convex conventions check to `.claude/agents/qa.md`: "Grep `convex/` for `crons\.daily(`, `crons\.hourly(`, `crons\.weekly(` — any match is a FAIL; the Convex guidelines require only `crons.interval` or `crons.cron`."
+Note: The code violation was fixed in commit 58856bc (uses `crons.cron` throughout). This item remains Open because the *harness rule* (grep in QA agent) has not yet been added.
+
+### 2026-04-18 · docs-sync · `recurring.pauseToast` / `recurring.resumeToast` i18n keys exist but are not consumed
+
+**Context:** Phase 8.5 recurring appointments. `messages/is.json` and `messages/en.json` both define `recurring.pauseToast` and `recurring.resumeToast`, but no UI component uses them — no toast is shown when pausing or resuming a series.
+**Observation:** The design spec called for pause/resume toasts; the translation keys were added but the toast call was not implemented in `SeriesCard`. Users get no feedback when toggling a series beyond the switch state changing. This may be intentional deferral or an oversight.
+**Suggested action:** Decide: (a) implement the toast in `SeriesCard.setActive` handler (need sonner or shadcn toast primitive installed), or (b) mark the keys as "reserved for future use" and document the deferral. Either way, `docs/spec.md` should not describe these toasts as implemented until the code fires them.
+
+---
+
+## Resolved
 
 ### 2026-04-17 · qa · `--color-divider` / `--color-divider-strong` missing from `@theme inline` block — `border-divider` class may silently no-op in Tailwind v4
 
 **Context:** AppointmentCard refactor QA. The new code uses `border-divider`, which requires `--color-divider` to exist in the `@theme inline` block in `globals.css`. That token is absent; `--divider` is defined in `:root` and aliased to `--border` via `--color-border`, but no standalone `--color-divider` Tailwind alias exists.
 **Observation:** `border-divider` is already used in ContactList, MedicationTable, DocumentList, EntitlementList (6+ usages). Either Tailwind v4 is silently dropping those classes (invisible bug — the border just doesn't appear) or there is a fallback mechanism not obvious from the CSS. The fact that the app visually renders suggests a fallback, but the missing alias is a latent risk.
 **Suggested action:** Add `--color-divider: var(--divider)` and `--color-divider-strong: var(--divider-strong)` to the `@theme inline` block in `src/app/globals.css` to make the Tailwind utility classes explicit and guaranteed. Then verify the `border-divider` visual renders in a browser. This is a code fix for the implementer, not a harness rule change.
-
----
-
-## Resolved
+**Resolution:** 2026-04-18 · code · Fixed in commit c80a800 (`ui(theme): register --color-divider tokens so border-divider class resolves`). Both `--color-divider` and `--color-divider-strong` are now registered in the `@theme inline` block in `src/app/globals.css`.
 
 ### 2026-04-17 · docs-sync · `docs/spec.md` project structure tree is stale — missing Phase 9–12 components and `(app)` route group
 

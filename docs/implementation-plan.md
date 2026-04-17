@@ -569,6 +569,63 @@ The following exit-criteria items require user browser verification post-deploy 
 
 ---
 
+## Phase 8.5: Reglulegir tímar (Recurring Appointments)
+
+### Status (2026-04-18)
+
+Complete and merged on branch `claude/recurring-appointments`.
+
+### What to do
+
+Model a recurring appointment series as a small `recurringSeries` table. At any moment each active series has **at most one** upcoming `appointments` row — no schedule materialized beyond "next time". The `appointments.driverId` field continues to handle driver coordination unchanged.
+
+### Convex changes
+
+- `convex/schema.ts` — add `recurringSeries` table (see spec Data Model); add `seriesId: v.optional(v.id("recurringSeries"))` and `by_series_and_startTime` index to `appointments`.
+- `convex/recurringSeries.ts` — new file: `list`, `get`, `create`, `update`, `setActive`, `remove` (public); `ensureNextOccurrences` (internal); `ensureNextOccurrence(ctx, seriesId)` exported helper.
+- `convex/appointments.ts` — `update` and `remove` call `ensureNextOccurrence(ctx, existing.seriesId)` when a series-bound row transitions out of `"upcoming"` or is deleted.
+- `convex/crons.ts` — new file: daily `crons.cron("10 0 * * *", ...)` invokes `internal.recurringSeries.ensureNextOccurrences`. Uses `crons.cron` (not the deprecated `crons.daily`).
+- `src/lib/formatRecurrence.ts` — new file: `computeNextStartTime`, `formatDays` helpers.
+
+### UI changes
+
+- `src/app/[locale]/(app)/timar/reglulegir/page.tsx` — new server wrapper.
+- `src/app/[locale]/(app)/timar/reglulegir/ReglulegirView.tsx` — new client component: series list + create/edit/delete/pause-resume flows.
+- `src/components/recurringSeries/SeriesList.tsx`, `SeriesCard.tsx`, `SeriesForm.tsx`, `DayPicker.tsx` — new components.
+- `src/components/timar/SeriesEntryRow.tsx` — new component inserted into `TimarView` above the tabs. Shows active-series count; links to `/timar/reglulegir`.
+- `src/app/[locale]/(app)/timar/TimarView.tsx` — existing client component updated to include `SeriesEntryRow`.
+- `src/components/appointments/AppointmentCard.tsx` — refactored to borderless Bókasafn aesthetic (`bg-paper ring-1 ring-foreground/10 rounded-2xl` shell; `font-serif` title; `text-ink-faint`/`text-ink-soft`; `border-t border-divider` row separators). No behaviour change.
+- `src/app/globals.css` — `--color-divider` and `--color-divider-strong` registered in `@theme inline` so `border-divider` Tailwind utility resolves.
+- `src/components/ui/switch.tsx` — shadcn `Switch` primitive installed.
+
+### i18n
+
+New `recurring` namespace in `messages/is.json` and `messages/en.json`. Keys: `title`, `backToTimar`, `entryLabel`, `entryCount` (ICU plural), `entryAllPaused`, `empty.*`, `newButton`, `active`, `paused`, `edit`, `delete`, `deleteConfirm.*`, `pauseToast`, `resumeToast`, `form.*`, `cadence`. Note: `pauseToast` and `resumeToast` translation keys exist but are not yet consumed by any UI component (toast implementation deferred).
+
+### Exit criteria
+
+- [x] `recurringSeries` table in schema with `by_active` index
+- [x] `appointments` gains `seriesId` field and `by_series_and_startTime` index
+- [x] `recurringSeries.create` inserts series + spawns first upcoming appointment
+- [x] `setActive(false)` (pause) deletes upcoming occurrence; `setActive(true)` (resume) spawns next
+- [x] `remove` nulls `seriesId` on past rows and deletes the upcoming row
+- [x] `appointments.update`/`remove` hook calls `ensureNextOccurrence` on status transition
+- [x] Daily cron (`crons.cron`) calls `ensureNextOccurrences` — uses `crons.cron` not `crons.daily`
+- [x] `/timar/reglulegir` page renders series list, pause/play toggle, edit sheet, delete confirmation
+- [x] `SeriesEntryRow` above tabs on Tímar page shows active count
+- [x] `AppointmentCard` refactored to borderless aesthetic
+- [x] `--color-divider` registered in `@theme inline` so `border-divider` class resolves
+- [x] `recurring` i18n namespace present in both locale files
+
+The following items require user browser verification post-deploy:
+
+- [ ] Create a series → next matching occurrence appears in Tímar upcoming list
+- [ ] Pause series → upcoming row disappears; resume → reappears (visual + real-time two-tab check)
+- [ ] Cancel a series-spawned appointment → next occurrence spawns automatically
+- [ ] Delete series with confirmation → past occurrences survive in Liðnir tímar
+
+---
+
 ## Phase 9: Upplýsingar — Símaskrá (Contacts)
 
 ### What to do
@@ -936,12 +993,13 @@ The following exit-criteria items require user browser verification post-deploy 
 
 ---
 
-## Authorization Pattern (All Mutations)
+## Authorization Pattern (All Mutations and Data-Returning Queries)
 
-Every mutation must:
-1. `ctx.auth.getUserIdentity()` — if null, throw `ConvexError("Ekki innskráður")`
-2. No roles or permissions in v1 — every authenticated family member can do everything
-3. Exception: log entry editing — verify `authorId === currentUser`
+Every mutation **and** every data-returning query must:
+1. Call `getAuthUserId(ctx)` from `@convex-dev/auth/server` — if null, throw `ConvexError("Ekki innskráður")`.
+2. No roles or permissions in v1 — every authenticated family member can do everything.
+3. Exception: log entry editing — verify `authorId === currentUser`.
+4. Exception: `users.me` — returns `null` for unauthenticated callers by design.
 
 ---
 
