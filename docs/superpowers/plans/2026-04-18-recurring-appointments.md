@@ -224,7 +224,7 @@ export function computeNextStartTime(params: {
 	const [hh, mm] = params.timeOfDay.split(":").map(Number);
 
 	const nowDate = new Date(params.now);
-	for (let i = 0; i < 7; i++) {
+	for (let i = 0; i < 8; i++) {
 		const candidate = Date.UTC(
 			nowDate.getUTCFullYear(),
 			nowDate.getUTCMonth(),
@@ -332,7 +332,7 @@ function computeNextStartTime(params: {
 	const mm = Number(mmStr);
 	const days = Array.from(new Set(params.daysOfWeek)).sort((a, b) => a - b);
 	const nowDate = new Date(params.now);
-	for (let i = 0; i < 7; i++) {
+	for (let i = 0; i < 8; i++) {
 		const candidate = Date.UTC(
 			nowDate.getUTCFullYear(),
 			nowDate.getUTCMonth(),
