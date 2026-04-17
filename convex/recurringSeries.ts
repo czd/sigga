@@ -91,7 +91,10 @@ export async function ensureNextOccurrence(
 	seriesId: Id<"recurringSeries">,
 ): Promise<Id<"appointments"> | null> {
 	const series = await ctx.db.get(seriesId);
-	if (!series?.isActive) return null;
+	if (!series || !series.isActive) return null;
+	if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(series.timeOfDay)) {
+		throw new ConvexError("Ógildur tími í tímasetningarröð.");
+	}
 
 	const now = Date.now();
 	const existing = await ctx.db
@@ -227,10 +230,12 @@ export const update = mutation({
 			patch.title = title;
 		}
 		if (args.location !== undefined) {
-			patch.location = args.location?.trim() || undefined;
+			patch.location =
+				args.location === null ? undefined : args.location.trim() || undefined;
 		}
 		if (args.notes !== undefined) {
-			patch.notes = args.notes?.trim() || undefined;
+			patch.notes =
+				args.notes === null ? undefined : args.notes.trim() || undefined;
 		}
 		if (args.daysOfWeek !== undefined) {
 			patch.daysOfWeek = validateDays(args.daysOfWeek);
