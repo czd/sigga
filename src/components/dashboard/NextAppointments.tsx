@@ -1,22 +1,106 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { CalendarClock, MapPin } from "lucide-react";
+import { useMutation } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatAbsoluteWithTime } from "@/lib/formatDate";
+import { Link } from "@/i18n/navigation";
 
-export function NextAppointments() {
+type AppointmentWithDriver = FunctionReturnType<
+	typeof api.appointments.upcoming
+>[number];
+
+const WEEKDAY_FMT: Record<string, Intl.DateTimeFormatOptions> = {
+	weekday: { weekday: "short" },
+	day: { day: "numeric" },
+	time: { hour: "2-digit", minute: "2-digit", hour12: false },
+};
+
+function useAppointmentDateParts(timestamp: number, locale: string) {
+	const d = new Date(timestamp);
+	const weekday = new Intl.DateTimeFormat(locale, WEEKDAY_FMT.weekday)
+		.format(d)
+		.replace(/\.$/, "");
+	const day = new Intl.DateTimeFormat(locale, WEEKDAY_FMT.day).format(d);
+	const time = new Intl.DateTimeFormat(locale, WEEKDAY_FMT.time).format(d);
+	return { weekday, day, time };
+}
+
+function AppointmentRow({
+	appointment,
+	onVolunteer,
+	pending,
+}: {
+	appointment: AppointmentWithDriver;
+	onVolunteer: (id: Id<"appointments">) => void;
+	pending: boolean;
+}) {
+	const t = useTranslations("dashboard.nextAppointments");
+	const locale = useLocale();
+	const { weekday, day, time } = useAppointmentDateParts(
+		appointment.startTime,
+		locale,
+	);
+	const driverName =
+		appointment.driver?.name ?? appointment.driver?.email ?? null;
+
+	return (
+		<div className="flex items-start gap-5 py-5">
+			<div className="w-14 flex-shrink-0 text-center pt-0.5">
+				<div className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink-faint">
+					{weekday}
+				</div>
+				<div className="font-serif text-[1.75rem] leading-none text-ink mt-1">
+					{day}
+				</div>
+			</div>
+			<div className="flex-1 min-w-0">
+				<div className="text-sm text-ink-faint">{t("time", { time })}</div>
+				<h3 className="font-serif text-lg leading-snug text-ink text-balance mt-0.5">
+					{appointment.title}
+				</h3>
+				<div className="mt-2.5">
+					{appointment.driver ? (
+						<div className="inline-flex items-center gap-2 text-sm text-ink-soft">
+							<UserAvatar
+								name={appointment.driver.name}
+								email={appointment.driver.email}
+								imageUrl={appointment.driver.image}
+								className="size-6 text-xs"
+							/>
+							<span>{t("driving", { name: driverName ?? "" })}</span>
+						</div>
+					) : (
+						<button
+							type="button"
+							onClick={() => onVolunteer(appointment._id)}
+							disabled={pending}
+							className="inline-flex items-center gap-2 text-sm font-medium text-amber-ink transition-opacity disabled:opacity-60"
+						>
+							<span
+								className="inline-block size-2 rounded-full"
+								style={{ background: "#C9A35C" }}
+								aria-hidden
+							/>
+							{t("noDriver")}
+						</button>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export function NextAppointments({
+	appointments,
+}: {
+	appointments: AppointmentWithDriver[] | undefined;
+}) {
 	const t = useTranslations("dashboard.nextAppointments");
 	const tCommon = useTranslations("common");
-	const locale = useLocale();
-	const appointments = useQuery(api.appointments.upcoming, { limit: 3 });
 	const volunteer = useMutation(api.appointments.volunteerToDrive);
 	const [pendingId, setPendingId] = useState<Id<"appointments"> | null>(null);
 
@@ -31,70 +115,38 @@ export function NextAppointments() {
 
 	return (
 		<section aria-labelledby="next-appointments-heading">
-			<h2 id="next-appointments-heading" className="text-xl font-semibold mb-3">
-				{t("title")}
-			</h2>
+			<div className="flex items-baseline justify-between gap-3 mb-4">
+				<h2
+					id="next-appointments-heading"
+					className="font-serif text-[1.4rem] text-ink font-normal tracking-tight"
+				>
+					{t("title")}
+				</h2>
+				<Link
+					href="/timar"
+					className="text-sm text-ink-faint hover:text-ink-soft transition-colors"
+				>
+					{t("seeAll")}
+				</Link>
+			</div>
+
 			{appointments === undefined ? (
-				<Card>
-					<CardContent className="text-muted-foreground py-2">
-						{tCommon("loading")}
-					</CardContent>
-				</Card>
+				<p className="text-ink-faint py-2">{tCommon("loading")}</p>
 			) : appointments.length === 0 ? (
-				<EmptyState
-					icon={<CalendarClock size={36} aria-hidden />}
-					title={t("empty")}
-				/>
+				<p className="text-ink-faint py-2">{t("empty")}</p>
 			) : (
-				<ul className="flex flex-col gap-3">
+				<ul className="divide-y" style={{ borderColor: "var(--divider)" }}>
 					{appointments.map((apt) => (
-						<li key={apt._id}>
-							<Card>
-								<CardContent className="flex flex-col gap-3">
-									<div className="flex flex-col">
-										<div className="text-sm text-muted-foreground">
-											{formatAbsoluteWithTime(apt.startTime, locale)}
-										</div>
-										<h3 className="text-lg font-semibold mt-0.5 leading-snug">
-											{apt.title}
-										</h3>
-										{apt.location ? (
-											<div className="mt-1 flex items-center gap-1.5 text-base text-muted-foreground">
-												<MapPin size={18} aria-hidden />
-												<span>{apt.location}</span>
-											</div>
-										) : null}
-									</div>
-									<div className="pt-3 border-t border-border flex items-center justify-between gap-3 min-h-12">
-										{apt.driver ? (
-											<div className="flex items-center gap-2 min-w-0">
-												<UserAvatar
-													name={apt.driver.name}
-													email={apt.driver.email}
-													imageUrl={apt.driver.image}
-													className="size-8"
-												/>
-												<span className="text-base truncate">
-													{apt.driver.name ?? apt.driver.email ?? t("driver")}
-												</span>
-											</div>
-										) : (
-											<>
-												<span className="text-base text-muted-foreground">
-													{t("noDriver")}
-												</span>
-												<Button
-													size="touch"
-													onClick={() => handleVolunteer(apt._id)}
-													disabled={pendingId === apt._id}
-												>
-													{t("volunteer")}
-												</Button>
-											</>
-										)}
-									</div>
-								</CardContent>
-							</Card>
+						<li
+							key={apt._id}
+							className="border-0"
+							style={{ borderTopColor: "var(--divider)" }}
+						>
+							<AppointmentRow
+								appointment={apt}
+								onVolunteer={handleVolunteer}
+								pending={pendingId === apt._id}
+							/>
 						</li>
 					))}
 				</ul>

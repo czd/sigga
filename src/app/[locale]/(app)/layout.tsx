@@ -15,7 +15,7 @@ export default async function AppLayout({
 	return (
 		<>
 			<Header />
-			<main className="flex-1 pb-24">{children}</main>
+			<main className="flex-1 pb-32">{children}</main>
 			<BottomNav />
 		</>
 	);

@@ -5,36 +5,56 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-	--background: #faf6ef;
-	--foreground: #2c2520;
-	--card: #ffffff;
-	--card-foreground: #2c2520;
-	--popover: #ffffff;
-	--popover-foreground: #2c2520;
-	--primary: #4a8278;
-	--primary-foreground: #ffffff;
-	--secondary: #f0e9dc;
-	--secondary-foreground: #2c2520;
-	--muted: #f0e9dc;
-	--muted-foreground: #6b6259;
-	--accent: #e6ddc6;
-	--accent-foreground: #2c2520;
+	/* Bókasafn palette — paper, ink, sage, wheat, amber */
+	--page: #f5f1e8;
+	--paper: #faf7f0;
+	--paper-deep: #f1ecdf;
+	--ink: #2e342b;
+	--ink-soft: #5a6158;
+	--ink-faint: #8f958b;
+	--sage: #8ba888;
+	--sage-deep: #6b7f5c;
+	--sage-shadow: #4f6243;
+	--wheat: #c9b896;
+	--wheat-deep: #a89770;
+	--amber-bg-1: #ede3c8;
+	--amber-bg-2: #e8d9b4;
+	--amber-ink: #8a6b3a;
+	--amber-ink-deep: #4a3a1f;
+	--divider: rgba(46, 52, 43, 0.08);
+	--divider-strong: rgba(46, 52, 43, 0.14);
+
+	/* Semantic tokens (shadcn conventions map to Bókasafn) */
+	--background: var(--page);
+	--foreground: var(--ink);
+	--card: var(--paper);
+	--card-foreground: var(--ink);
+	--popover: var(--paper);
+	--popover-foreground: var(--ink);
+	--primary: var(--sage-deep);
+	--primary-foreground: var(--paper);
+	--secondary: var(--paper-deep);
+	--secondary-foreground: var(--ink);
+	--muted: var(--paper-deep);
+	--muted-foreground: var(--ink-faint);
+	--accent: var(--wheat);
+	--accent-foreground: var(--ink);
 	--destructive: #b85a5a;
 	--destructive-foreground: #ffffff;
-	--warning: #c08838;
-	--warning-foreground: #ffffff;
-	--border: #e3d8c4;
-	--input: #e3d8c4;
-	--ring: #4a8278;
-	--radius: 0.75rem;
-	--sidebar: #faf6ef;
-	--sidebar-foreground: #2c2520;
-	--sidebar-primary: #4a8278;
-	--sidebar-primary-foreground: #ffffff;
-	--sidebar-accent: #e6ddc6;
-	--sidebar-accent-foreground: #2c2520;
-	--sidebar-border: #e3d8c4;
-	--sidebar-ring: #4a8278;
+	--warning: var(--amber-ink);
+	--warning-foreground: var(--paper);
+	--border: var(--divider-strong);
+	--input: var(--divider-strong);
+	--ring: var(--sage-deep);
+	--radius: 1rem;
+	--sidebar: var(--page);
+	--sidebar-foreground: var(--ink);
+	--sidebar-primary: var(--sage-deep);
+	--sidebar-primary-foreground: var(--paper);
+	--sidebar-accent: var(--wheat);
+	--sidebar-accent-foreground: var(--ink);
+	--sidebar-border: var(--divider);
+	--sidebar-ring: var(--sage-deep);
 }
 
 @theme inline {
@@ -60,6 +80,22 @@
 	--color-input: var(--input);
 	--color-ring: var(--ring);
 
+	--color-page: var(--page);
+	--color-paper: var(--paper);
+	--color-paper-deep: var(--paper-deep);
+	--color-ink: var(--ink);
+	--color-ink-soft: var(--ink-soft);
+	--color-ink-faint: var(--ink-faint);
+	--color-sage: var(--sage);
+	--color-sage-deep: var(--sage-deep);
+	--color-sage-shadow: var(--sage-shadow);
+	--color-wheat: var(--wheat);
+	--color-wheat-deep: var(--wheat-deep);
+	--color-amber-bg-1: var(--amber-bg-1);
+	--color-amber-bg-2: var(--amber-bg-2);
+	--color-amber-ink: var(--amber-ink);
+	--color-amber-ink-deep: var(--amber-ink-deep);
+
 	--color-sidebar: var(--sidebar);
 	--color-sidebar-foreground: var(--sidebar-foreground);
 	--color-sidebar-primary: var(--sidebar-primary);
@@ -69,35 +105,50 @@
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
 
-	--font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-	--font-heading: var(--font-sans);
+	--font-sans:
+		var(--font-sans-family), "Source Sans 3", ui-sans-serif, system-ui,
+		sans-serif;
+	--font-serif:
+		var(--font-serif-family), "Source Serif 4", "Source Serif Pro", Georgia,
+		serif;
+	--font-heading: var(--font-serif);
 
-	--radius-sm: calc(var(--radius) * 0.6);
-	--radius-md: calc(var(--radius) * 0.8);
+	--radius-sm: calc(var(--radius) * 0.5);
+	--radius-md: calc(var(--radius) * 0.75);
 	--radius-lg: var(--radius);
 	--radius-xl: calc(var(--radius) * 1.4);
 	--radius-2xl: calc(var(--radius) * 1.8);
-	--radius-card: 1rem;
+	--radius-3xl: calc(var(--radius) * 2.25);
+	--radius-card: 1.25rem;
 }
 
-html {
-	background: var(--color-background);
-	color: var(--color-foreground);
-}
-
+html,
 body {
-	font-family: var(--font-sans);
+	background: var(--page);
+	color: var(--ink);
+	font-family:
+		var(--font-sans-family), "Source Sans 3", ui-sans-serif, system-ui,
+		-apple-system, "Segoe UI", Roboto, sans-serif;
 	font-feature-settings: "ss01", "cv11";
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
 	}
-	body {
-		@apply bg-background text-foreground;
+	h1,
+	h2,
+	h3 {
+		font-family:
+			var(--font-serif-family), "Source Serif 4", "Source Serif Pro", Georgia,
+			serif;
+		letter-spacing: -0.01em;
 	}
-	html {
-		@apply font-sans;
+	.font-serif {
+		font-family:
+			var(--font-serif-family), "Source Serif 4", "Source Serif Pro", Georgia,
+			serif;
 	}
 }

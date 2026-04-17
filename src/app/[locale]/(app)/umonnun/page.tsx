@@ -1,12 +1,12 @@
 import { setRequestLocale } from "next-intl/server";
-import { DagbokView } from "./DagbokView";
+import { UmonnunView } from "./UmonnunView";
 
-export default async function DagbokPage({
+export default async function UmonnunPage({
 	params,
 }: {
 	params: Promise<{ locale: string }>;
 }) {
 	const { locale } = await params;
 	setRequestLocale(locale);
-	return <DagbokView />;
+	return <UmonnunView />;
 }

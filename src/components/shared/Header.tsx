@@ -22,10 +22,10 @@ export function Header() {
 	const me = useQuery(api.users.me);
 
 	return (
-		<header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-			<div className="flex items-center justify-between px-4 py-3">
-				<h1 className="text-2xl font-semibold tracking-tight text-primary">
-					{t("app.name")}
+		<header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+			<div className="flex items-center justify-between px-6 pt-5 pb-2">
+				<h1 className="font-serif italic text-base font-normal text-ink-faint tracking-wide">
+					{t("app.name").toLowerCase()}
 				</h1>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -38,7 +38,7 @@ export function Header() {
 								name={me?.name}
 								email={me?.email}
 								imageUrl={me?.image}
-								className="size-11"
+								className="size-9 text-sm"
 							/>
 						</button>
 					</DropdownMenuTrigger>

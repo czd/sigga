@@ -3,23 +3,21 @@
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
+import { DocumentList } from "@/components/info/DocumentList";
+import { EntitlementList } from "@/components/info/EntitlementList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { ContactList } from "./ContactList";
-import { DocumentList } from "./DocumentList";
-import { EntitlementList } from "./EntitlementList";
-import { MedicationTable } from "./MedicationTable";
 
-const TAB_VALUES = ["lyf", "simaskra", "rettindi", "skjol"] as const;
+const TAB_VALUES = ["rettindi", "skjol"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
-const DEFAULT_TAB: TabValue = "lyf";
+const DEFAULT_TAB: TabValue = "rettindi";
 
 function isTabValue(value: string | null): value is TabValue {
 	return value !== null && (TAB_VALUES as readonly string[]).includes(value);
 }
 
-export function UpplysingarTabs() {
-	const t = useTranslations("upplysingar.tabs");
+export function PappirarTabs() {
+	const t = useTranslations("pappirar.tabs");
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -56,20 +54,6 @@ export function UpplysingarTabs() {
 				))}
 			</TabsList>
 
-			<TabsContent
-				value="lyf"
-				forceMount
-				className="data-[state=inactive]:hidden"
-			>
-				<MedicationTable />
-			</TabsContent>
-			<TabsContent
-				value="simaskra"
-				forceMount
-				className="data-[state=inactive]:hidden"
-			>
-				<ContactList />
-			</TabsContent>
 			<TabsContent
 				value="rettindi"
 				forceMount

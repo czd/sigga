@@ -28,29 +28,41 @@
 	},
 	"nav": {
 		"dashboard": "Í dag",
-		"log": "Dagbók",
-		"appointments": "Tímar",
-		"info": "Upplýsingar"
+		"care": "Umönnun",
+		"people": "Fólk",
+		"paperwork": "Pappírar"
 	},
 	"dashboard": {
 		"title": "Í dag",
+		"greeting": "Góðan daginn, <em>{name}</em>.",
+		"greetingPlain": "Góðan daginn.",
+		"drivingCta": {
+			"eyebrow": "Vantar skutlara",
+			"volunteer": "Ég get skutlað"
+		},
+		"attention": {
+			"eyebrow": "Þarf athygli · {count}",
+			"take": "Ég tek þetta að mér",
+			"later": "Seinna",
+			"more": "{count, plural, one {+1 annað atriði} other {+# önnur atriði}} þurfa athygli",
+			"seeAll": "Sjá öll"
+		},
 		"nextAppointments": {
 			"title": "Næstu tímar",
+			"seeAll": "Sjá alla",
 			"empty": "Engir tímar á næstunni",
 			"noDriver": "Enginn skutlar",
 			"volunteer": "Ég get!",
 			"youAreDriving": "Þú keyrir",
-			"driver": "Skutlari"
+			"driver": "Skutlari",
+			"time": "kl. {time}",
+			"driving": "{name} skutlar"
 		},
 		"recentLog": {
-			"title": "Nýjustu færslur",
+			"eyebrow": "Dagbók · síðasta færsla",
 			"empty": "Engar færslur í dagbók ennþá",
-			"write": "Skrifa í dagbók"
-		},
-		"quickActions": {
-			"title": "Flýtileiðir",
-			"newAppointment": "Nýr tími",
-			"writeLog": "Skrifa í dagbók"
+			"write": "Skrifa í dagbók…",
+			"author": "{name} skrifaði"
 		}
 	},
 	"dagbok": {
@@ -102,11 +114,25 @@
 			"generic": "Ekki tókst að vista tímann."
 		}
 	},
-	"upplysingar": {
-		"title": "Upplýsingar",
-		"tabs": {
+	"umonnun": {
+		"title": "Umönnun",
+		"hvernig": "Hvernig Siggu líður.",
+		"sections": {
 			"lyf": "Lyf",
-			"simaskra": "Símaskrá",
+			"dagbok": "Dagbók"
+		}
+	},
+	"folk": {
+		"title": "Fólk",
+		"subtitle": "Sími, læknar, þjónusta.",
+		"headline": "Hver hringir, hver svarar.",
+		"emergencyLabel": "Neyð",
+		"afterHours": "utan dagvinnu"
+	},
+	"pappirar": {
+		"title": "Pappírar",
+		"subtitle": "Réttindi og skjöl.",
+		"tabs": {
 			"rettindi": "Réttindi",
 			"skjol": "Skjöl"
 		}
@@ -117,7 +143,17 @@
 		"createTitle": "Nýr tengiliður",
 		"editTitle": "Breyta tengilið",
 		"empty": "Engir tengiliðir skráðir",
+		"noMatches": "Engir tengiliðir finnast.",
+		"searchPlaceholder": "Leita að nafni eða síma…",
+		"call": "Hringja í {name}",
+		"edit": "Breyta {name}",
 		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"filters": {
+			"all": "Allir",
+			"medical": "Læknar",
+			"service": "Þjónusta",
+			"family": "Fjölskylda"
+		},
 		"categories": {
 			"emergency": "Neyð",
 			"medical": "Læknar og heilsugæsla",

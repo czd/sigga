@@ -1,7 +1,7 @@
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -9,9 +9,19 @@ import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
-const inter = Inter({
-	variable: "--font-inter",
+const sourceSans = Source_Sans_3({
+	variable: "--font-sans-family",
 	subsets: ["latin", "latin-ext"],
+	weight: ["300", "400", "500", "600", "700"],
+	display: "swap",
+});
+
+const sourceSerif = Source_Serif_4({
+	variable: "--font-serif-family",
+	subsets: ["latin", "latin-ext"],
+	weight: ["300", "400", "500", "600"],
+	style: ["normal", "italic"],
+	display: "swap",
 });
 
 export async function generateMetadata({
@@ -46,7 +56,10 @@ export default async function LocaleLayout({
 
 	return (
 		<ConvexAuthNextjsServerProvider>
-			<html lang={locale} className={`${inter.variable} h-full antialiased`}>
+			<html
+				lang={locale}
+				className={`${sourceSans.variable} ${sourceSerif.variable} h-full antialiased`}
+			>
 				<body className="min-h-full flex flex-col text-lg">
 					<NextIntlClientProvider>
 						<ConvexClientProvider>{children}</ConvexClientProvider>

@@ -28,29 +28,41 @@
 	},
 	"nav": {
 		"dashboard": "Today",
-		"log": "Log",
-		"appointments": "Appointments",
-		"info": "Info"
+		"care": "Care",
+		"people": "People",
+		"paperwork": "Paperwork"
 	},
 	"dashboard": {
 		"title": "Today",
+		"greeting": "Good morning, <em>{name}</em>.",
+		"greetingPlain": "Good morning.",
+		"drivingCta": {
+			"eyebrow": "Needs a driver",
+			"volunteer": "I can drive"
+		},
+		"attention": {
+			"eyebrow": "Needs attention · {count}",
+			"take": "I'll take this",
+			"later": "Later",
+			"more": "{count, plural, one {+1 more item} other {+# more items}} need attention",
+			"seeAll": "See all"
+		},
 		"nextAppointments": {
 			"title": "Upcoming appointments",
+			"seeAll": "See all",
 			"empty": "No upcoming appointments",
 			"noDriver": "No driver yet",
 			"volunteer": "I can!",
 			"youAreDriving": "You are driving",
-			"driver": "Driver"
+			"driver": "Driver",
+			"time": "{time}",
+			"driving": "{name} is driving"
 		},
 		"recentLog": {
-			"title": "Recent log entries",
+			"eyebrow": "Log · latest entry",
 			"empty": "No log entries yet",
-			"write": "Write in the log"
-		},
-		"quickActions": {
-			"title": "Quick actions",
-			"newAppointment": "New appointment",
-			"writeLog": "Write in the log"
+			"write": "Write in the log…",
+			"author": "{name} wrote"
 		}
 	},
 	"dagbok": {
@@ -102,11 +114,25 @@
 			"generic": "Could not save the appointment."
 		}
 	},
-	"upplysingar": {
-		"title": "Info",
-		"tabs": {
+	"umonnun": {
+		"title": "Care",
+		"hvernig": "How Sigga is doing.",
+		"sections": {
 			"lyf": "Medications",
-			"simaskra": "Contacts",
+			"dagbok": "Log"
+		}
+	},
+	"folk": {
+		"title": "People",
+		"subtitle": "Phone, doctors, services.",
+		"headline": "Who to call, who picks up.",
+		"emergencyLabel": "Emergency",
+		"afterHours": "after hours"
+	},
+	"pappirar": {
+		"title": "Paperwork",
+		"subtitle": "Entitlements and documents.",
+		"tabs": {
 			"rettindi": "Entitlements",
 			"skjol": "Documents"
 		}
@@ -117,7 +143,17 @@
 		"createTitle": "New contact",
 		"editTitle": "Edit contact",
 		"empty": "No contacts yet",
+		"noMatches": "No contacts match.",
+		"searchPlaceholder": "Search name or number…",
+		"call": "Call {name}",
+		"edit": "Edit {name}",
 		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"filters": {
+			"all": "All",
+			"medical": "Doctors",
+			"service": "Services",
+			"family": "Family"
+		},
 		"categories": {
 			"emergency": "Emergency",
 			"medical": "Doctors and healthcare",
