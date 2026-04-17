@@ -1,4 +1,3 @@
-const DAY_MS = 86_400_000;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export function isValidTimeOfDay(timeOfDay: string): boolean {
@@ -35,7 +34,7 @@ export function computeNextStartTime(params: {
 	const [hh, mm] = params.timeOfDay.split(":").map(Number);
 
 	const nowDate = new Date(params.now);
-	for (let i = 0; i < 7; i++) {
+	for (let i = 0; i < 8; i++) {
 		const candidate = Date.UTC(
 			nowDate.getUTCFullYear(),
 			nowDate.getUTCMonth(),
@@ -74,6 +73,3 @@ export function formatDays(
 	if (parts.length === 1) return parts[0];
 	return `${parts.slice(0, -1).join(", ")} og ${parts[parts.length - 1]}`;
 }
-
-/** Dev helper for readable debug output. */
-export const RECURRENCE_DAY_MS = DAY_MS;
