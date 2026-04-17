@@ -103,7 +103,13 @@
 		}
 	},
 	"upplysingar": {
-		"title": "Info"
+		"title": "Info",
+		"tabs": {
+			"lyf": "Medications",
+			"simaskra": "Contacts",
+			"rettindi": "Entitlements",
+			"skjol": "Documents"
+		}
 	},
 	"contacts": {
 		"title": "Contacts",

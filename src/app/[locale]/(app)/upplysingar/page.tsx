@@ -1,8 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ContactList } from "@/components/info/ContactList";
-import { DocumentList } from "@/components/info/DocumentList";
-import { EntitlementList } from "@/components/info/EntitlementList";
-import { MedicationTable } from "@/components/info/MedicationTable";
+import { UpplysingarTabs } from "@/components/info/UpplysingarTabs";
 
 export default async function UpplysingarPage({
 	params,
@@ -14,12 +11,9 @@ export default async function UpplysingarPage({
 	const t = await getTranslations();
 
 	return (
-		<div className="px-4 py-6 pb-28 flex flex-col gap-8">
+		<div className="px-4 py-6 pb-28 flex flex-col gap-6">
 			<h2 className="text-3xl font-semibold">{t("upplysingar.title")}</h2>
-			<MedicationTable />
-			<ContactList />
-			<EntitlementList />
-			<DocumentList />
+			<UpplysingarTabs />
 		</div>
 	);
 }

@@ -759,6 +759,24 @@ The `/upplysingr` page needs a tab bar or segmented control to switch between th
 - Can switch between all 4 tabs
 - State within tabs persists during tab switches (don't remount/refetch unnecessarily)
 
+### Status (2026-04-17)
+
+Code complete. All implementation tasks done:
+
+- [x] `src/components/ui/tabs.tsx` — shadcn Tabs primitive installed via `bunx shadcn@latest add tabs` (Radix UI Tabs).
+- [x] `src/components/info/UpplysingarTabs.tsx` — client component wrapping the four Upplýsingar sub-sections (`MedicationTable`, `ContactList`, `EntitlementList`, `DocumentList`) in a shadcn `Tabs` with variant="default" (rounded bg-muted pill). Triggers are min-h-12 + text-base + font-semibold (meets the 48px+ tap-target rule). The TabsList is `sticky top-0 z-10` so the tab bar stays visible while the user scrolls through a long list. Tab order: Lyf | Símaskrá | Réttindi | Skjöl. Default tab: `lyf`.
+- [x] URL persistence via `?tab=` query param (e.g. `/upplysingar?tab=simaskra`). Default tab (`lyf`) does not set the param — keeps URLs clean. Reading uses `useSearchParams` from `next/navigation`; writing uses next-intl's locale-aware `useRouter().replace` with `scroll: false`. An unknown `tab=` value falls back to the default.
+- [x] State preservation: all four `TabsContent` regions use `forceMount` + `data-[state=inactive]:hidden` so components are mounted once and toggled via CSS. Local state (expanded medication rows, open sheets, form drafts) survives tab switches. Convex queries remain subscribed — no refetch on switch.
+- [x] Translation keys added under `upplysingar.tabs.*` in `messages/is.json` + `messages/en.json`. Token keys (`lyf`, `simaskra`, `rettindi`, `skjol`) are ASCII so they work as URL query values.
+- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — now renders `<UpplysingarTabs />` instead of the four stacked lists. The title heading stays at the top outside the tabs.
+
+The following exit-criteria items require user browser verification post-deploy (the agent cannot complete Google OAuth to reach authenticated routes):
+
+- [ ] Can switch between all 4 tabs — visual check
+- [ ] Tab state persists: open a medication row, switch to another tab, switch back — row still expanded
+- [ ] URL updates to `?tab=...` for non-default tabs and reflects back on reload
+- [ ] Active tab is obvious at 60+ contrast — visual check at 375×812
+
 ---
 
 ## Phase 13: PWA Configuration

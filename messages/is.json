@@ -103,7 +103,13 @@
 		}
 	},
 	"upplysingar": {
-		"title": "Upplýsingar"
+		"title": "Upplýsingar",
+		"tabs": {
+			"lyf": "Lyf",
+			"simaskra": "Símaskrá",
+			"rettindi": "Réttindi",
+			"skjol": "Skjöl"
+		}
 	},
 	"contacts": {
 		"title": "Símaskrá",
