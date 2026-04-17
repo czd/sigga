@@ -2,6 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
+import { ensureNextOccurrence } from "./recurringSeries";
 
 const statusValidator = v.union(
 	v.literal("upcoming"),
@@ -182,6 +183,15 @@ export const update = mutation({
 		}
 		if (rest.status !== undefined) patch.status = rest.status;
 		await ctx.db.patch(id, patch);
+
+		const newStatus = rest.status ?? existing.status;
+		if (
+			existing.seriesId &&
+			existing.status === "upcoming" &&
+			newStatus !== "upcoming"
+		) {
+			await ensureNextOccurrence(ctx, existing.seriesId);
+		}
 	},
 });
 
@@ -191,7 +201,12 @@ export const remove = mutation({
 		await requireAuth(ctx);
 		const existing = await ctx.db.get(args.id);
 		if (!existing) return;
+		const seriesId = existing.seriesId;
+		const wasUpcoming = existing.status === "upcoming";
 		await ctx.db.delete(args.id);
+		if (seriesId && wasUpcoming) {
+			await ensureNextOccurrence(ctx, seriesId);
+		}
 	},
 });
 
