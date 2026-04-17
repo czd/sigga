@@ -53,6 +53,7 @@ Note: The code violation was fixed in commit 58856bc (uses `crons.cron` througho
 **Context:** Phase 8.5 recurring appointments. `messages/is.json` and `messages/en.json` both define `recurring.pauseToast` and `recurring.resumeToast`, but no UI component uses them — no toast is shown when pausing or resuming a series.
 **Observation:** The design spec called for pause/resume toasts; the translation keys were added but the toast call was not implemented in `SeriesCard`. Users get no feedback when toggling a series beyond the switch state changing. This may be intentional deferral or an oversight.
 **Suggested action:** Decide: (a) implement the toast in `SeriesCard.setActive` handler (need sonner or shadcn toast primitive installed), or (b) mark the keys as "reserved for future use" and document the deferral. Either way, `docs/spec.md` should not describe these toasts as implemented until the code fires them.
+**Resolution:** 2026-04-18 · code · Took option (b) with cleanup — the orphan keys were removed from both `messages/is.json` and `messages/en.json` in the Phase 8 polish commit. No consumer existed; no toast is planned for v1. The error state in `SeriesCard` (inline `<p role="alert">`) now covers the failure-feedback gap instead.
 
 ---
 
