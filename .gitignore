@@ -41,6 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 # claude code — runtime state (agents/commands/settings.json ARE checked in)
-.claude/.qa-passed
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
