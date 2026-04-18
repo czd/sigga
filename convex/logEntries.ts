@@ -141,3 +141,13 @@ export const update = mutation({
 		await ctx.db.patch(args.id, patch);
 	},
 });
+
+export const get = query({
+	args: { id: v.id("logEntries") },
+	handler: async (ctx, args): Promise<LogEntryWithAuthor | null> => {
+		await requireAuth(ctx);
+		const entry = await ctx.db.get(args.id);
+		if (!entry) return null;
+		return enrich(ctx, entry);
+	},
+});
