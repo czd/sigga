@@ -31,6 +31,7 @@
 		"care": "Care",
 		"people": "People",
 		"paperwork": "Paperwork",
+		"appointments": "Appointments",
 		"attention": {
 			"badge": "{count, plural, one {1 item needs attention} other {# items need attention}}"
 		},
@@ -252,6 +253,7 @@
 			"skjol": "Documents on file.",
 			"skjolEmpty": "No documents yet."
 		},
+		"skjolEmptyPane": "Select a document to view.",
 		"tabs": {
 			"rettindi": "Entitlements",
 			"skjol": "Documents"

@@ -31,6 +31,7 @@
 		"care": "Umönnun",
 		"people": "Fólk",
 		"paperwork": "Pappírar",
+		"appointments": "Tímar",
 		"attention": {
 			"badge": "{count, plural, one {1 atriði þarfnast athygli} other {# atriði þarfnast athygli}}"
 		},
@@ -252,6 +253,7 @@
 			"skjol": "Skjöl í safninu.",
 			"skjolEmpty": "Skjalasafnið er tómt."
 		},
+		"skjolEmptyPane": "Veldu skjal til að skoða.",
 		"tabs": {
 			"rettindi": "Réttindi",
 			"skjol": "Skjöl"

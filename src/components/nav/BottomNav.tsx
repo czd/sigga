@@ -18,6 +18,7 @@ const LABEL_TO_COUNT_KEY: Record<
 	care: "care",
 	people: null,
 	paperwork: "paperwork",
+	appointments: null,
 };
 
 function lastVisitCursor(userId: string | undefined): number {
