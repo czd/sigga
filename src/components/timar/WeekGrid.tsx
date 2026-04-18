@@ -13,14 +13,16 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Repeat } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
+import { ClientOnly } from "@/components/shared/ClientOnly";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { RangeRow } from "./MonthGrid";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -79,33 +81,31 @@ function DraggableAvatar({ user }: { user: DriverSummary }) {
 	);
 }
 
-type AppointmentSummary = {
-	_id: Id<"appointments">;
-	title: string;
-	startTime: number;
-	driver: DriverSummary | null;
-};
-
 function DroppableAppointment({
 	appointment,
 	active,
 	onSelect,
 	timeFmt,
 }: {
-	appointment: AppointmentSummary;
+	appointment: RangeRow;
 	active: boolean;
-	onSelect: (id: Id<"appointments">) => void;
+	onSelect: (appointment: RangeRow) => void;
 	timeFmt: Intl.DateTimeFormat;
 }) {
 	const { isOver, setNodeRef } = useDroppable({
 		id: `appt-${appointment._id}`,
-		data: { appointmentId: appointment._id },
+		data: {
+			appointmentId: appointment._id,
+			virtual: appointment.virtual,
+			seriesId: appointment.seriesId,
+			startTime: appointment.startTime,
+		},
 	});
 	return (
 		<button
 			ref={setNodeRef}
 			type="button"
-			onClick={() => onSelect(appointment._id)}
+			onClick={() => onSelect(appointment)}
 			className={cn(
 				"text-left rounded-lg p-2 bg-paper transition-colors",
 				isOver
@@ -115,8 +115,11 @@ function DroppableAppointment({
 						: "ring-1 ring-foreground/10 hover:ring-foreground/20",
 			)}
 		>
-			<div className="text-xs text-ink-soft font-medium">
-				{timeFmt.format(new Date(appointment.startTime))}
+			<div className="flex items-center gap-1 text-xs text-ink-soft font-medium">
+				{appointment.virtual ? (
+					<Repeat aria-hidden className="size-3 opacity-70" />
+				) : null}
+				<span>{timeFmt.format(new Date(appointment.startTime))}</span>
 			</div>
 			<div className="text-sm text-ink truncate mt-0.5">
 				{appointment.title}
@@ -144,22 +147,18 @@ type Props = {
 	weekStartMs: number;
 	onPrevWeek: () => void;
 	onNextWeek: () => void;
-	activeId?: Id<"appointments"> | null;
-	onSelect: (id: Id<"appointments">) => void;
+	activeId?: string | null;
+	onSelect: (appointment: RangeRow) => void;
 };
 
 export function WeekGrid(props: Props) {
-	// Defer date-locale rendering until after client mount. Server and client
-	// can disagree on Intl.DateTimeFormat output (e.g. "apr" vs "Apr"), same
-	// root cause as the SidebarWeekCalendar + WeekStrip fixes.
-	const [mounted, setMounted] = useState(false);
-	useEffect(() => {
-		setMounted(true);
-	}, []);
-	if (!mounted) {
-		return <div className="flex flex-col gap-4 min-h-96" aria-hidden />;
-	}
-	return <WeekGridContent {...props} />;
+	return (
+		<ClientOnly
+			fallback={<div className="flex flex-col gap-4 min-h-96" aria-hidden />}
+		>
+			<WeekGridContent {...props} />
+		</ClientOnly>
+	);
 }
 
 function WeekGridContent({
@@ -171,9 +170,14 @@ function WeekGridContent({
 }: Props) {
 	const locale = useLocale();
 	const t = useTranslations("timar.weekGrid");
-	const appointments = useQuery(api.appointments.byWeek, { weekStartMs });
+	const weekEndMs = weekStartMs + 7 * DAY_MS;
+	const appointments = useQuery(api.appointments.byRange, {
+		startMs: weekStartMs,
+		endMs: weekEndMs,
+	});
 	const users = useQuery(api.users.list);
 	const update = useMutation(api.appointments.update);
+	const materialize = useMutation(api.appointments.materializeOccurrence);
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
 		useSensor(KeyboardSensor),
@@ -203,13 +207,30 @@ function WeekGridContent({
 
 	async function handleDragEnd(ev: DragEndEvent) {
 		const userId = ev.active.data.current?.userId as Id<"users"> | undefined;
-		const appointmentId = ev.over?.data.current?.appointmentId as
-			| Id<"appointments">
+		const overData = ev.over?.data.current as
+			| {
+					appointmentId: string;
+					virtual: boolean;
+					seriesId: Id<"recurringSeries"> | null;
+					startTime: number;
+			  }
 			| undefined;
 		setDraggingUserId(null);
-		if (!userId || !appointmentId) return;
+		if (!userId || !overData) return;
 		try {
-			await update({ id: appointmentId, driverId: userId });
+			// If the drop target is a virtual occurrence, materialize it first
+			// (turns the computed slot into a real appointment row), then assign.
+			let targetId: Id<"appointments">;
+			if (overData.virtual) {
+				if (!overData.seriesId) return;
+				targetId = await materialize({
+					seriesId: overData.seriesId,
+					startTimeMs: overData.startTime,
+				});
+			} else {
+				targetId = overData.appointmentId as Id<"appointments">;
+			}
+			await update({ id: targetId, driverId: userId });
 		} catch (err) {
 			console.error(err);
 		}

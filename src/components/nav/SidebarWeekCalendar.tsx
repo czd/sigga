@@ -2,8 +2,8 @@
 
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 import { api } from "@/../convex/_generated/api";
+import { ClientOnly } from "@/components/shared/ClientOnly";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
@@ -31,24 +31,18 @@ function isoDate(d: Date): string {
 	return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
-// Render an empty skeleton on the server so the client's locale/date rendering
-// can't mismatch the SSR output. The fully-populated calendar appears after
-// client mount — a flash of empty cells for a few ms is fine and avoids the
-// hydration error that was crashing the app.
 export function SidebarWeekCalendar() {
-	const [mounted, setMounted] = useState(false);
-	useEffect(() => {
-		setMounted(true);
-	}, []);
-
-	if (!mounted) {
-		return (
-			<div className="px-4 pb-4 pt-4 border-t border-divider mt-4">
-				<div className="grid grid-cols-7 gap-1 h-10" aria-hidden />
-			</div>
-		);
-	}
-	return <SidebarWeekCalendarContent />;
+	return (
+		<ClientOnly
+			fallback={
+				<div className="px-4 pb-4 pt-4 border-t border-divider mt-4">
+					<div className="grid grid-cols-7 gap-1 h-10" aria-hidden />
+				</div>
+			}
+		>
+			<SidebarWeekCalendarContent />
+		</ClientOnly>
+	);
 }
 
 function SidebarWeekCalendarContent() {

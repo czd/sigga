@@ -260,3 +260,185 @@ export const byWeek = query({
 		return Promise.all(inWeek.map((row) => withDriver(ctx, row)));
 	},
 });
+
+/**
+ * A row returned by byRange is either a real materialized appointment or a
+ * virtual future occurrence computed from an active recurring series. Calendar
+ * UIs branch on `virtual` — for virtuals, driver assignment / edit / cancel
+ * go through appointments.materializeOccurrence first to turn them into real
+ * rows.
+ */
+type RangeRow = {
+	_id: string;
+	virtual: boolean;
+	title: string;
+	startTime: number;
+	endTime: number | null;
+	location: string | null;
+	notes: string | null;
+	status: "upcoming" | "completed" | "cancelled";
+	driverId: Id<"users"> | null;
+	driver: UserSummary | null;
+	seriesId: Id<"recurringSeries"> | null;
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function parseTimeOfDay(timeOfDay: string): { hours: number; minutes: number } {
+	const [h, m] = timeOfDay.split(":").map((s) => Number.parseInt(s, 10));
+	return { hours: h ?? 0, minutes: m ?? 0 };
+}
+
+/**
+ * For a given series, emit every occurrence whose startTime falls in
+ * [startMs, endMs). Purely computed — does not touch the database.
+ */
+function virtualOccurrencesForSeries(
+	series: Doc<"recurringSeries">,
+	startMs: number,
+	endMs: number,
+): Array<{ startTime: number }> {
+	if (!series.isActive) return [];
+	const { hours, minutes } = parseTimeOfDay(series.timeOfDay);
+	const daysOfWeek = new Set(series.daysOfWeek);
+	const out: Array<{ startTime: number }> = [];
+	// Walk the window day by day — simple, fast enough for 6-week windows.
+	const firstDay = new Date(startMs);
+	firstDay.setUTCHours(0, 0, 0, 0);
+	for (let ts = firstDay.getTime(); ts < endMs; ts += DAY_MS) {
+		const d = new Date(ts);
+		if (!daysOfWeek.has(d.getUTCDay())) continue;
+		const start = Date.UTC(
+			d.getUTCFullYear(),
+			d.getUTCMonth(),
+			d.getUTCDate(),
+			hours,
+			minutes,
+		);
+		if (start < startMs || start >= endMs) continue;
+		out.push({ startTime: start });
+	}
+	return out;
+}
+
+export const byRange = query({
+	args: { startMs: v.number(), endMs: v.number() },
+	handler: async (ctx, args): Promise<RangeRow[]> => {
+		await requireAuth(ctx);
+
+		// Real materialized rows in the window — over-fetch on startTime,
+		// filter to window. Include cancelled so calendars show them too
+		// (virtuals won't overlap with cancelled because the series id +
+		// startTime pair matches when materialized, and we exclude that pair).
+		const rawRows = await ctx.db
+			.query("appointments")
+			.withIndex("by_startTime", (q) => q.gte("startTime", args.startMs))
+			.collect();
+		const realRows = rawRows
+			.filter((r) => r.startTime < args.endMs && r.status !== "completed")
+			.sort((a, b) => a.startTime - b.startTime);
+
+		// Materialized series+startTime pairs — virtuals skip these so a series
+		// that's already been materialized for a given slot doesn't double-show.
+		const materialized = new Set<string>();
+		for (const r of realRows) {
+			if (r.seriesId) materialized.add(`${r.seriesId}:${r.startTime}`);
+		}
+
+		const realOut: RangeRow[] = await Promise.all(
+			realRows.map(async (r) => ({
+				_id: r._id,
+				virtual: false,
+				title: r.title,
+				startTime: r.startTime,
+				endTime: r.endTime ?? null,
+				location: r.location ?? null,
+				notes: r.notes ?? null,
+				status: r.status,
+				driverId: r.driverId ?? null,
+				driver: await resolveUser(ctx, r.driverId),
+				seriesId: r.seriesId ?? null,
+			})),
+		);
+
+		// Virtuals from every active series.
+		const activeSeries = await ctx.db
+			.query("recurringSeries")
+			.withIndex("by_active", (q) => q.eq("isActive", true))
+			.collect();
+
+		const virtualOut: RangeRow[] = [];
+		for (const series of activeSeries) {
+			const occs = virtualOccurrencesForSeries(
+				series,
+				args.startMs,
+				args.endMs,
+			);
+			for (const occ of occs) {
+				const key = `${series._id}:${occ.startTime}`;
+				if (materialized.has(key)) continue;
+				virtualOut.push({
+					_id: `virtual:${series._id}:${occ.startTime}`,
+					virtual: true,
+					title: series.title,
+					startTime: occ.startTime,
+					endTime: series.durationMinutes
+						? occ.startTime + series.durationMinutes * 60_000
+						: null,
+					location: series.location ?? null,
+					notes: series.notes ?? null,
+					status: "upcoming",
+					driverId: null,
+					driver: null,
+					seriesId: series._id,
+				});
+			}
+		}
+
+		return [...realOut, ...virtualOut].sort(
+			(a, b) => a.startTime - b.startTime,
+		);
+	},
+});
+
+/**
+ * Turn a virtual future occurrence into a real appointments row. Idempotent —
+ * if a row already exists at the same (seriesId, startTime) it returns that
+ * row's id instead of inserting a duplicate. Used by the detail pane's
+ * assign-driver / edit / cancel paths when acting on a virtual.
+ */
+export const materializeOccurrence = mutation({
+	args: {
+		seriesId: v.id("recurringSeries"),
+		startTimeMs: v.number(),
+	},
+	handler: async (ctx, args): Promise<Id<"appointments">> => {
+		const userId = await requireAuth(ctx);
+		const series = await ctx.db.get(args.seriesId);
+		if (!series) throw new ConvexError("Röð fannst ekki.");
+
+		const existing = await ctx.db
+			.query("appointments")
+			.withIndex("by_series_and_startTime", (q) =>
+				q.eq("seriesId", args.seriesId).eq("startTime", args.startTimeMs),
+			)
+			.first();
+		if (existing) return existing._id;
+
+		const now = Date.now();
+		return await ctx.db.insert("appointments", {
+			title: series.title,
+			startTime: args.startTimeMs,
+			endTime: series.durationMinutes
+				? args.startTimeMs + series.durationMinutes * 60_000
+				: undefined,
+			location: series.location,
+			notes: series.notes,
+			status: "upcoming",
+			seriesId: series._id,
+			createdBy: userId,
+			updatedAt: now,
+			updatedBy: userId,
+		});
+	},
+});

@@ -123,8 +123,15 @@
 		"title": "Tímar",
 		"new": "Nýr tími",
 		"view": {
+			"month": "Mánuður",
 			"week": "Vika",
 			"list": "Listi"
+		},
+		"calendar": {
+			"prev": "Fyrri",
+			"next": "Næsta",
+			"today": "Í dag",
+			"recurringLink": "Reglulegir tímar →"
 		},
 		"weekGrid": {
 			"prev": "Fyrri vika",
@@ -133,8 +140,17 @@
 			"dragHint": "Dragðu nafn á tíma til að skipa skutlara.",
 			"noAppointments": "Engir tímar þessa viku."
 		},
+		"monthGrid": {
+			"more": "+{count} til viðbótar"
+		},
 		"detail": {
-			"noSelection": "Veldu tíma til að skoða."
+			"noSelection": "Veldu tíma til að skoða.",
+			"paneLabel": "Tímaupplýsingar",
+			"close": "Loka tímaupplýsingum",
+			"recurring": "Reglulegur tími",
+			"virtualHint": "Þessi tími er úr reglulegum tíma — hann verður vistaður um leið og þú skutlar, breytir eða hættir við.",
+			"cancelledStatus": "Hætt við",
+			"cancel": "Hætta við þennan tíma"
 		},
 		"createTitle": "Nýr tími",
 		"editTitle": "Breyta tíma",

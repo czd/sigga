@@ -1,69 +1,128 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { CalendarClock, Pencil, X } from "lucide-react";
+import { useMutation } from "convex/react";
+import { CalendarClock, Pencil, Repeat, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
-import type { Id } from "@/../convex/_generated/dataModel";
+import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 import { DriverPicker } from "@/components/appointments/DriverPicker";
 import { Button } from "@/components/ui/button";
 import { formatAbsoluteWithTime } from "@/lib/formatDate";
+import type { RangeRow } from "./MonthGrid";
 
 type Props = {
-	id: Id<"appointments">;
-	onClose?: () => void;
+	appointment: RangeRow;
+	/**
+	 * Called after a virtual occurrence was materialized into a real row.
+	 * Parent should swap its selected-state to the real row so subsequent
+	 * interactions (edit, cancel, rendering) have the real id.
+	 */
+	onMaterialized?: (row: RangeRow) => void;
 };
 
-export function TimarDetail({ id, onClose }: Props) {
+export function TimarDetail({ appointment, onMaterialized }: Props) {
 	const t = useTranslations("timar");
 	const tCommon = useTranslations("common");
 	const locale = useLocale();
-	const appointment = useQuery(api.appointments.get, { id });
 	const update = useMutation(api.appointments.update);
+	const materialize = useMutation(api.appointments.materializeOccurrence);
 	const [editOpen, setEditOpen] = useState(false);
+	const [pending, setPending] = useState(false);
 
-	if (appointment === undefined) {
-		return <p className="text-ink-faint">{tCommon("loading")}</p>;
-	}
-	if (appointment === null) {
-		return <p className="text-ink-faint">{t("detail.noSelection")}</p>;
+	const isVirtual = appointment.virtual;
+
+	async function realize(): Promise<Id<"appointments"> | null> {
+		if (!isVirtual) return appointment._id as Id<"appointments">;
+		if (!appointment.seriesId) return null;
+		const newId = await materialize({
+			seriesId: appointment.seriesId,
+			startTimeMs: appointment.startTime,
+		});
+		// Tell the parent to swap to the materialized row. Construct a synthetic
+		// RangeRow for the new real appointment so the UI updates immediately;
+		// the next Convex tick will deliver the authoritative row.
+		onMaterialized?.({
+			...appointment,
+			_id: newId,
+			virtual: false,
+		});
+		return newId;
 	}
 
-	const statusLabel =
-		appointment.status === "cancelled"
-			? tCommon("cancelled") || "cancelled"
-			: appointment.status === "completed"
-				? tCommon("completed") || "completed"
-				: "";
+	async function handleDriverChange(driverId: Id<"users"> | null) {
+		setPending(true);
+		try {
+			const id = await realize();
+			if (!id) return;
+			await update({ id, driverId });
+		} finally {
+			setPending(false);
+		}
+	}
+
+	async function handleCancel() {
+		setPending(true);
+		try {
+			const id = await realize();
+			if (!id) return;
+			await update({ id, status: "cancelled" });
+		} finally {
+			setPending(false);
+		}
+	}
+
+	async function handleEdit() {
+		// Ensure the appointment is real before opening the edit sheet.
+		if (isVirtual) {
+			await realize();
+			// Give the Convex tick a beat to deliver the real row; parent will
+			// swap selected and the next render will have a real _id.
+		}
+		setEditOpen(true);
+	}
+
+	// AppointmentForm's edit path reads only fields present on RangeRow; the
+	// other Doc fields (_creationTime, createdBy/updatedBy, updatedAt) are not
+	// read during edit. Safe to cast for the form's purposes.
+	const editTarget = isVirtual
+		? null
+		: ({
+				_id: appointment._id as Id<"appointments">,
+				title: appointment.title,
+				startTime: appointment.startTime,
+				endTime: appointment.endTime ?? undefined,
+				location: appointment.location ?? undefined,
+				notes: appointment.notes ?? undefined,
+				driverId: appointment.driverId ?? undefined,
+				status: appointment.status,
+				seriesId: appointment.seriesId ?? undefined,
+			} as unknown as Doc<"appointments">);
 
 	return (
 		<div className="flex flex-col gap-5">
-			<header className="flex items-start gap-3">
-				<div className="flex-1 min-w-0">
-					<div className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-faint">
-						<CalendarClock size={14} aria-hidden className="inline mr-1" />
-						{formatAbsoluteWithTime(appointment.startTime, locale)}
-					</div>
-					<h2 className="font-serif text-[1.6rem] leading-tight mt-1 text-ink">
-						{appointment.title}
-					</h2>
-					{statusLabel ? (
-						<div className="text-sm text-ink-faint mt-1 italic">
-							{statusLabel}
-						</div>
+			<header>
+				<div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-ink-faint">
+					<CalendarClock size={14} aria-hidden />
+					<span>{formatAbsoluteWithTime(appointment.startTime, locale)}</span>
+					{isVirtual ? (
+						<span
+							className="inline-flex items-center gap-1 rounded-full bg-paper-deep px-2 py-0.5 text-[0.65rem] text-ink-soft normal-case tracking-normal"
+							title={t("detail.virtualHint")}
+						>
+							<Repeat aria-hidden size={11} />
+							{t("detail.recurring")}
+						</span>
 					) : null}
 				</div>
-				{onClose ? (
-					<Button
-						variant="ghost"
-						size="touch-icon"
-						onClick={onClose}
-						aria-label={tCommon("close")}
-					>
-						<X aria-hidden />
-					</Button>
+				<h2 className="font-serif text-[1.6rem] leading-tight mt-1 text-ink">
+					{appointment.title}
+				</h2>
+				{appointment.status === "cancelled" ? (
+					<div className="text-sm text-ink-faint mt-1 italic">
+						{t("detail.cancelledStatus")}
+					</div>
 				) : null}
 			</header>
 
@@ -82,9 +141,8 @@ export function TimarDetail({ id, onClose }: Props) {
 				</div>
 				<DriverPicker
 					value={appointment.driverId ?? null}
-					onChange={async (driverId) => {
-						await update({ id: appointment._id, driverId });
-					}}
+					onChange={handleDriverChange}
+					disabled={pending}
 				/>
 			</div>
 
@@ -99,18 +157,37 @@ export function TimarDetail({ id, onClose }: Props) {
 				</div>
 			) : null}
 
-			<div className="flex items-center gap-2 pt-2">
-				<Button variant="ghost" size="touch" onClick={() => setEditOpen(true)}>
+			<div className="flex items-center gap-2 pt-2 flex-wrap">
+				<Button
+					variant="ghost"
+					size="touch"
+					onClick={handleEdit}
+					disabled={pending}
+				>
 					<Pencil aria-hidden />
 					<span>{tCommon("edit")}</span>
 				</Button>
+				{appointment.status === "upcoming" ? (
+					<Button
+						variant="ghost"
+						size="touch"
+						onClick={handleCancel}
+						disabled={pending}
+						className="text-destructive"
+					>
+						<Trash2 aria-hidden />
+						<span>{t("detail.cancel")}</span>
+					</Button>
+				) : null}
 			</div>
 
-			<AppointmentForm
-				open={editOpen}
-				onOpenChange={setEditOpen}
-				editAppointment={appointment}
-			/>
+			{editTarget ? (
+				<AppointmentForm
+					open={editOpen}
+					onOpenChange={setEditOpen}
+					editAppointment={editTarget}
+				/>
+			) : null}
 		</div>
 	);
 }
