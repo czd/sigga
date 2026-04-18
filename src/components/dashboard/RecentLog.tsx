@@ -7,6 +7,7 @@ import type { api } from "@/../convex/_generated/api";
 import { LogEntryForm } from "@/components/log/LogEntryForm";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { classifyRelative, formatAbsolute } from "@/lib/formatDate";
+import { cn } from "@/lib/utils";
 
 type LogEntry = FunctionReturnType<typeof api.logEntries.recent>[number];
 
@@ -32,10 +33,19 @@ function useRelativeLabel(timestamp: number): string {
 	}
 }
 
+// Heuristic for "long enough to warrant a Sýna meira affordance". Tuned so
+// 2–3 line quick entries show fully but the synthesised chat summaries get
+// collapsed.
+function isLongEntry(content: string): boolean {
+	return content.length > 220 || content.split("\n").length > 4;
+}
+
 function LogPreviewInner({ entry }: { entry: LogEntry }) {
 	const t = useTranslations("dashboard.recentLog");
 	const when = useRelativeLabel(entry._creationTime);
 	const authorName = entry.author?.name ?? entry.author?.email ?? null;
+	const [expanded, setExpanded] = useState(false);
+	const showToggle = isLongEntry(entry.content);
 
 	return (
 		<>
@@ -46,11 +56,26 @@ function LogPreviewInner({ entry }: { entry: LogEntry }) {
 					{when.toLowerCase()}
 				</span>
 			</div>
-			<blockquote className="font-serif text-[1.3rem] leading-[1.45] text-ink text-balance whitespace-pre-wrap line-clamp-4">
+			<blockquote
+				className={cn(
+					"font-serif text-[1.3rem] leading-[1.45] text-ink text-balance whitespace-pre-wrap",
+					showToggle && !expanded && "line-clamp-4",
+				)}
+			>
 				{"„"}
 				{entry.content}
 				{"”"}
 			</blockquote>
+			{showToggle ? (
+				<button
+					type="button"
+					onClick={() => setExpanded((v) => !v)}
+					aria-expanded={expanded}
+					className="self-start text-sm font-medium text-sage-deep outline-none transition-colors hover:text-sage-shadow focus-visible:ring-2 focus-visible:ring-ring/50 rounded-md"
+				>
+					{expanded ? t("showLess") : t("showMore")}
+				</button>
+			) : null}
 			{authorName ? (
 				<div className="flex items-center gap-2.5 text-sm text-ink-faint">
 					<UserAvatar

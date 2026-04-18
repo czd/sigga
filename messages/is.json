@@ -63,7 +63,9 @@
 			"eyebrow": "Dagbók · síðasta færsla",
 			"empty": "Engar færslur í dagbók ennþá",
 			"write": "Skrifa í dagbók…",
-			"author": "{name} skrifaði"
+			"author": "{name} skrifaði",
+			"showMore": "Sýna alla færsluna",
+			"showLess": "Sýna minna"
 		}
 	},
 	"dagbok": {

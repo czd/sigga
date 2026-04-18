@@ -63,7 +63,9 @@
 			"eyebrow": "Log · latest entry",
 			"empty": "No log entries yet",
 			"write": "Write in the log…",
-			"author": "{name} wrote"
+			"author": "{name} wrote",
+			"showMore": "Show full entry",
+			"showLess": "Show less"
 		}
 	},
 	"dagbok": {

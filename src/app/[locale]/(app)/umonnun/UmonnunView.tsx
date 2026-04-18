@@ -7,6 +7,7 @@ import { MedicationTable } from "@/components/info/MedicationTable";
 import { LogEntryForm } from "@/components/log/LogEntryForm";
 import { LogFeed } from "@/components/log/LogFeed";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function UmonnunView() {
 	const t = useTranslations();
@@ -14,7 +15,7 @@ export function UmonnunView() {
 
 	return (
 		<>
-			<div className="px-6 pt-4 pb-28 flex flex-col gap-10">
+			<div className="px-6 pt-4 pb-28 flex flex-col gap-6">
 				<header className="flex flex-col gap-2">
 					<div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-faint">
 						{t("umonnun.title")}
@@ -24,35 +25,35 @@ export function UmonnunView() {
 					</h2>
 				</header>
 
-				<section aria-label={t("umonnun.sections.lyf")}>
-					<MedicationTable />
-				</section>
+				<Tabs defaultValue="dagbok" className="gap-6">
+					<TabsList className="h-12 w-full">
+						<TabsTrigger
+							value="dagbok"
+							className="h-full text-base font-medium"
+						>
+							{t("umonnun.sections.dagbok")}
+						</TabsTrigger>
+						<TabsTrigger value="lyf" className="h-full text-base font-medium">
+							{t("umonnun.sections.lyf")}
+						</TabsTrigger>
+					</TabsList>
 
-				<section
-					aria-labelledby="umonnun-dagbok-heading"
-					className="flex flex-col gap-4"
-				>
-					<h3
-						id="umonnun-dagbok-heading"
-						className="font-serif text-[1.4rem] font-normal tracking-tight text-ink"
-					>
-						{t("umonnun.sections.dagbok")}
-					</h3>
-					<LogFeed />
-				</section>
-			</div>
-			<div
-				className="fixed inset-x-0 bottom-24 z-20 flex justify-end px-6 pb-2"
-				style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
-			>
-				<Button
-					size="touch"
-					onClick={() => setCreateOpen(true)}
-					className="shadow-lg rounded-full"
-				>
-					<Pencil aria-hidden />
-					<span>{t("dagbok.write")}</span>
-				</Button>
+					<TabsContent value="dagbok" className="flex flex-col gap-4">
+						<Button
+							size="touch"
+							onClick={() => setCreateOpen(true)}
+							className="w-full"
+						>
+							<Pencil aria-hidden />
+							<span>{t("dagbok.write")}</span>
+						</Button>
+						<LogFeed />
+					</TabsContent>
+
+					<TabsContent value="lyf">
+						<MedicationTable />
+					</TabsContent>
+				</Tabs>
 			</div>
 			<LogEntryForm open={createOpen} onOpenChange={setCreateOpen} />
 		</>
