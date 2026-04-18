@@ -188,6 +188,18 @@ export function EntitlementKanban() {
 			const list = map.get(e.status);
 			if (list) list.push(e);
 		}
+		// Urgent items (BRÝNT in notes) sort to the top of each column;
+		// within the urgent and non-urgent groups, preserve insertion order
+		// (stable sort — newest entitlements keep their relative position).
+		for (const s of COLUMN_ORDER) {
+			const list = map.get(s);
+			if (!list) continue;
+			list.sort((a, b) => {
+				const aUrgent = isUrgent(a.notes) ? 1 : 0;
+				const bUrgent = isUrgent(b.notes) ? 1 : 0;
+				return bUrgent - aUrgent;
+			});
+		}
 		return map;
 	}, [entitlements]);
 
