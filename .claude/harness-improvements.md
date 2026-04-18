@@ -48,12 +48,6 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 **Suggested action:** Add a Convex conventions check to `.claude/agents/qa.md`: "Grep `convex/` for `crons\.daily(`, `crons\.hourly(`, `crons\.weekly(` — any match is a FAIL; the Convex guidelines require only `crons.interval` or `crons.cron`."
 Note: The code violation was fixed in commit 58856bc (uses `crons.cron` throughout). This item remains Open because the *harness rule* (grep in QA agent) has not yet been added.
 
-### 2026-04-17 · qa · `ensureNextOccurrence` algorithm diverges from spec — blocked-slot walk not documented
-
-**Context:** Phase 7-8 fix pass — skip-occurrence feature. `convex/recurringSeries.ts` `ensureNextOccurrence` now builds a `blockedStartTimes` set from existing cancelled/completed rows and walks forward one matching-slot at a time (up to 14 iterations) until it finds a free slot.
-**Observation:** `docs/spec.md` line 693 still describes the old algorithm: "walk forward from `now` one UTC day at a time (max 8 iterations) until a day in `daysOfWeek` is found with `startTime > now`". The new code is a materially different and more correct algorithm (slot-by-slot walk, 14-iteration cap, blocked-set check), but the spec is not updated to reflect it.
-**Suggested action:** Route to `docs-sync` to update the `ensureNextOccurrence` algorithm description in `docs/spec.md`. Also note that the `upcoming` query now accepts an optional `includeCancelled` parameter (merging upcoming + cancelled future rows, filtering out completed) — the spec's query contract for `upcoming` at line 672 should document this variant.
-
 ### 2026-04-18 · docs-sync · `recurring.pauseToast` / `recurring.resumeToast` i18n keys exist but are not consumed
 
 **Context:** Phase 8.5 recurring appointments. `messages/is.json` and `messages/en.json` both define `recurring.pauseToast` and `recurring.resumeToast`, but no UI component uses them — no toast is shown when pausing or resuming a series.
@@ -61,9 +55,20 @@ Note: The code violation was fixed in commit 58856bc (uses `crons.cron` througho
 **Suggested action:** Decide: (a) implement the toast in `SeriesCard.setActive` handler (need sonner or shadcn toast primitive installed), or (b) mark the keys as "reserved for future use" and document the deferral. Either way, `docs/spec.md` should not describe these toasts as implemented until the code fires them.
 **Resolution:** 2026-04-18 · code · Took option (b) with cleanup — the orphan keys were removed from both `messages/is.json` and `messages/en.json` in the Phase 8 polish commit. No consumer existed; no toast is planned for v1. The error state in `SeriesCard` (inline `<p role="alert">`) now covers the failure-feedback gap instead.
 
+### 2026-04-18 · docs-sync · Nav/route architecture diverged substantially from the original plan with no intermediate docs update
+
+**Context:** Full reconciliation sweep. The original plan described four bottom-nav tabs: Í dag / Dagbók / Tímar / Upplýsingar. The shipped app has: Í dag / Umönnun / Fólk / Pappírar. Dagbók moved to a tab inside Umönnun. Tímar is reachable only via dashboard link. The four-tab Upplýsingar view was split into standalone Folk and Pappirar routes plus the Umönnun/Lyf tab.
+**Observation:** This is a large intentional design pivot that happened without an intermediate docs-sync. Both `docs/spec.md` and `docs/implementation-plan.md` described the old architecture until this sweep. The drift accumulated across multiple commits. CLAUDE.md's "Current Repo State" section was also stale ("Phase 0 not yet started") — but that file is out of scope for docs-sync.
+**Suggested action:** Consider adding a harness rule or CLAUDE.md convention: when a phase involves route renames or bottom-nav changes, the implementer should invoke docs-sync immediately rather than deferring it. The nav is a high-impact, high-visibility piece of the architecture and stale docs here are especially confusing.
+
 ---
 
 ## Resolved
+
+### 2026-04-17 · qa · `ensureNextOccurrence` algorithm diverges from spec — blocked-slot walk not documented
+
+**Context:** Phase 7-8 fix pass — skip-occurrence feature.
+**Resolution:** 2026-04-18 · docs-sync · Updated `ensureNextOccurrence` algorithm description in `docs/spec.md` to describe the slot-by-slot walk with 14-iteration cap and `blockedStartTimes` set. Also updated the `appointments.upcoming` function contract to document the `includeCancelled: boolean` variant.
 
 ### 2026-04-17 · qa · `--color-divider` / `--color-divider-strong` missing from `@theme inline` block — `border-divider` class may silently no-op in Tailwind v4
 

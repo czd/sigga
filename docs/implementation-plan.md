@@ -275,13 +275,13 @@ Fill out the rest as each view is built.
    - `AuthGate` component — redirects to login if not authenticated
    - The warm color palette is declared inline in `src/app/globals.css` via shadcn's `:root` CSS variable scheme (Tailwind v4 idiom — no JS config file). The layout just imports `globals.css` once.
 
-2. Build `BottomNav.tsx` — fixed bottom, 4 tabs:
-   | Icon (Lucide) | Label | Route |
+2. Build `BottomNav.tsx` — fixed bottom, 4 tabs (routes evolved during implementation; see Phase 12 for final layout):
+   | Icon (BookIcon kind) | Label | Route |
    |---|---|---|
-   | Home or CalendarDays | Í dag | `/` |
-   | BookOpen | Dagbók | `/dagbok` |
-   | Clock | Tímar | `/timar` |
-   | Info or ClipboardList | Upplýsingar | `/upplysingar` |
+   | `today` | Í dag | `/` |
+   | `care` | Umönnun | `/umonnun` |
+   | `people` | Fólk | `/folk` |
+   | `docs` | Pappírar | `/pappirar` |
 
 3. Design rules (non-negotiable for the 60+ users):
    - Tap targets: **56px+ height** for nav items, **48px minimum** everywhere else
@@ -297,20 +297,7 @@ Fill out the rest as each view is built.
    - **Borders/cards:** Rounded corners 12–16px, light shadows
    - **Typography:** Humanist sans-serif that renders Icelandic characters well (ð, þ, æ, ö)
 
-   Example shape (the actual file under `src/app/globals.css` is the source of truth):
-   ```css
-   @import "tailwindcss";
-
-   @theme inline {
-     --color-background: #faf6ef;
-     --color-foreground: #2c2520;
-     --color-accent: #4a8278;
-     --color-warning: #c08838;
-     --color-danger: #b85a5a;
-     --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-     --radius-card: 1rem;
-   }
-   ```
+   The shipped palette uses `:root` for raw values and `@theme inline` to expose them as Tailwind utilities. Key tokens: `--page` (#f5f1e8), `--paper` (#faf7f0), `--ink` (#2e342b), `--sage-deep` (#6b7f5c), `--wheat` (#c9b896), `--amber-ink` (#8a6b3a). Fonts: Source Serif 4 (`--font-serif`) + Source Sans 3 (`--font-sans`) via `next/font/google`. The actual file `src/app/globals.css` is the source of truth.
 
 5. Build header component: "Sigga" as app title, user avatar + name top-right, sign-out in dropdown.
 
@@ -319,14 +306,18 @@ Fill out the rest as each view is built.
 ### Files to create/modify
 
 - `src/app/[locale]/layout.tsx`
-- `src/app/[locale]/page.tsx` (dashboard shell)
-- `src/app/[locale]/dagbok/page.tsx` (empty shell)
-- `src/app/[locale]/timar/page.tsx` (empty shell)
-- `src/app/[locale]/upplysingar/page.tsx` (empty shell)
+- `src/app/[locale]/(app)/layout.tsx` — app shell (Header + BottomNav)
+- `src/app/[locale]/(app)/page.tsx` (dashboard shell)
+- `src/app/[locale]/(app)/umonnun/page.tsx` (empty shell, later populated in Phase 6)
+- `src/app/[locale]/(app)/timar/page.tsx` (empty shell)
+- `src/app/[locale]/(app)/folk/page.tsx` (empty shell, later populated in Phase 9)
+- `src/app/[locale]/(app)/pappirar/page.tsx` (empty shell, later populated in Phase 12)
 - `src/components/nav/BottomNav.tsx`
+- `src/components/shared/Header.tsx`
 - `src/components/shared/UserAvatar.tsx`
-- `src/app/globals.css` — design tokens via `@theme inline` (Tailwind v4 — no JS config file)
-- `src/lib/convex.ts` — ConvexProvider setup
+- `src/components/shared/BookIcon.tsx` — custom icon kit for nav
+- `src/app/globals.css` — Bókasafn palette tokens via `:root` + `@theme inline` (Tailwind v4 — no JS config file)
+- `src/components/ConvexClientProvider.tsx` — ConvexProvider setup
 
 ### Exit criteria
 
@@ -381,28 +372,30 @@ The landing page answers: "What's happening with amma right now?"
 - Quick actions navigate correctly
 - Relative dates display in Icelandic
 
-### Status (2026-04-17)
+### Status (2026-04-17, revised 2026-04-18)
 
-Code complete (commit 1be5a4b). All implementation tasks done:
+Code complete and subsequently redesigned. The original Phase 5 plan described a `QuickActions` row and a 3-entry `RecentLog`. The shipped dashboard evolved into a different layout before/during Phase 8.5:
 
-- [x] `convex/appointments.ts` — `list`, `upcoming`, `get`, `create`, `update`, `remove`, `volunteerToDrive` shipped. `upcoming` uses `.withIndex("by_status_and_startTime", q => q.eq("status","upcoming").gte("startTime", now))` for efficient dashboard queries; the schema index was updated from `by_status` to the composite `by_status_and_startTime` (prefix subsumes the old single-field index).
+- [x] `convex/appointments.ts` — `list`, `upcoming` (now also accepts `includeCancelled: boolean` for the dashboard's cancelled-slot display), `get`, `create`, `update`, `remove`, `volunteerToDrive` shipped.
 - [x] `convex/logEntries.ts` — `list`, `recent`, `add`, `update` shipped. `update` enforces `authorId === currentUser`.
-- [x] `NextAppointments.tsx`, `RecentLog.tsx`, `QuickActions.tsx` components shipped.
 - [x] `src/components/shared/EmptyState.tsx` shipped.
-- [x] Icelandic relative-date helper (`src/lib/formatDate.ts`) — justNow / minutesAgo / hoursAgo / today / yesterday / daysAgo / absolute.
-- [x] Translation keys added under `dashboard.*` and `common.*` in `messages/is.json` + `messages/en.json`.
-- [x] "Skrifa í dagbók" buttons in RecentLog and QuickActions ship as `<Link href="/dagbok">` (form deferred to Phase 6).
+- [x] Icelandic relative-date helper (`src/lib/formatDate.ts`).
+- [x] Translation keys added under `dashboard.*` and `common.*`.
+- [x] `QuickActions.tsx` was shipped in Phase 5 then **removed** in later redesign.
+- [x] Dashboard redesigned: greeting heading + `AttentionCard` (unowned entitlements, amber) + `DrivingCta` (unassigned appointments, amber) + `NextAppointments` (3 upcoming, includes cancelled slots) + `RecentLog` (single latest entry with inline expand + in-place `LogEntryForm` sheet). `QuickActions` removed.
 
 The following exit-criteria items require user browser verification post-deploy (the agent cannot complete Google OAuth to reach authenticated routes):
 
-- [ ] Warm palette renders correctly at 375×812 (cream background, teal accent) — visual check
-- [ ] Relative dates display in Icelandic in the browser (e.g., "í dag", "í gær", "fyrir 2 dögum")
+- [ ] Warm palette renders correctly at 375×812 — visual check
+- [ ] Relative dates display in Icelandic in the browser
 - [ ] Real-time two-tab update — open dashboard in two tabs, add a log entry in one, confirm it appears in the other without refresh
 - [ ] Volunteer button flow — "Ég get!" on an appointment without a driver sets the current user as driver in one tap
 
 ---
 
-## Phase 6: Dagbók (Log)
+## Phase 6: Dagbók (Log) — now a tab inside `/umonnun`
+
+**Note:** The standalone `/dagbok` route was removed. Dagbók is now the first tab inside the Umönnun view (`/umonnun`). The `LogFeed` and `LogEntryForm` components are unchanged; they just render inside `UmonnunView.tsx` (shadcn `Tabs`, defaultValue="dagbok") instead of a dedicated page.
 
 ### What to do
 
@@ -430,7 +423,8 @@ Reverse-chronological care journal. Keep the entry form dead simple — text box
 
 ### Files to create/modify
 
-- `src/app/[locale]/dagbok/page.tsx`
+- `src/app/[locale]/(app)/umonnun/page.tsx` — server wrapper (replaces the planned `/dagbok/page.tsx`)
+- `src/app/[locale]/(app)/umonnun/UmonnunView.tsx` — client component with Dagbók + Lyf tabs
 - `src/components/log/LogFeed.tsx`
 - `src/components/log/LogEntryForm.tsx`
 
@@ -441,15 +435,15 @@ Reverse-chronological care journal. Keep the entry form dead simple — text box
 - Cannot edit others' entries
 - Pagination works
 
-### Status (2026-04-17)
+### Status (2026-04-17, revised 2026-04-18)
 
-Code complete (commit 59ee3e0). All implementation tasks done, plus shadcn retrofit of Phase 4/5 components:
+Code complete (commit 59ee3e0). Dagbók subsequently moved from `/dagbok` to a tab inside `/umonnun` (combined with Lyf tab). All implementation tasks done:
 
-- [x] `LogFeed` — paginated via `usePaginatedQuery` (20/page). "Sýna eldri" button loads 20 more. Each card: author avatar + name, relative date, full content, "Breytt" badge when `editedAt` is set, author-only edit button (pencil, `size="touch-icon"`), linked appointment chip rendered server-side via a resolver in `logEntries.ts`.
+- [x] `LogFeed` — paginated via `usePaginatedQuery` (20/page). "Sýna eldri" button loads 20 more. Each card: author avatar + name, relative date, full content, "Breytt" badge when `editedAt` is set, author-only edit button (pencil, `size="touch-icon"`), linked appointment chip.
 - [x] `LogEntryForm` — shadcn `Sheet` from bottom (`side="bottom"`, rounded top, `max-h-[92vh]`). Shared create/edit flow: pre-fills content and `relatedAppointmentId` when `editEntry` prop is present. Appointment link dropdown uses `appointments.list` (limit 50). Supports `preselectedAppointmentId` prop for "Skrá í dagbók" jump from Tímar.
 - [x] Author-only edit enforcement in `logEntries.update` mutation — throws `ConvexError("Ekki innskráður")` if `authorId !== currentUser`.
-- [x] `components.json` and `src/components/ui/` (avatar, button, card, dialog, dropdown-menu, input, label, select, sheet, textarea) added; Phase 4/5 components (`Header`, `BottomNav`, `UserAvatar`, `NextAppointments`, `RecentLog`, `QuickActions`) retrofitted to use shadcn primitives.
-- [x] `QuickActions` aria fix: replaced `aria-label={t("newAppointment")}` on the `<section>` with `aria-labelledby` pointing to a visually-hidden `<h2>` using the new `dashboard.quickActions.title` = "Flýtileiðir" key.
+- [x] `components.json` and `src/components/ui/` (avatar, button, card, dialog, dropdown-menu, input, label, select, sheet, textarea) added; Phase 4/5 components (`Header`, `BottomNav`, `UserAvatar`, `NextAppointments`, `RecentLog`) retrofitted to use shadcn primitives.
+- [x] `UmonnunView.tsx` created — wraps Dagbók + Lyf tabs (Lyf content added in Phase 8).
 
 The following exit-criteria items require user browser verification post-deploy:
 
@@ -557,7 +551,7 @@ Code complete. All implementation tasks done:
 - [x] `MedicationTable` — collapsed rows show name, dose + schedule, purpose. Tap row to expand; expanded reveals prescriber, notes, updatedAt + updatedByUser avatar/name, and an "Breyta" button. "Sýna eldri lyf" / "Fela eldri lyf" toggle renders only when there are inactive medications. "Bæta við lyfi" button opens the create sheet.
 - [x] `MedicationForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Shared create/edit flow, pre-fills fields on edit. Active checkbox shown only when editing (new medications default to active on the server). Placeholder strings ("1 tafla", "Á morgnana") guide free-text dose/schedule input.
 - [x] Translation keys added under `medications.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, showInactive/hideInactive, fields.*, placeholders.*, errors.*).
-- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — renders `MedicationTable` directly. The tab container scaffolding for Lyf | Símaskrá | Réttindi | Skjöl lands in Phase 12.
+- [x] `MedicationTable` now renders as the "Lyf" tab inside `UmonnunView.tsx` (`/umonnun`). There is no standalone Upplýsingar page; the container arrangement was redesigned in Phase 12 (see below).
 
 Dependencies added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
 
@@ -671,7 +665,7 @@ Code complete. All implementation tasks done:
 - [x] `ContactList` — groups contacts by category in fixed order (emergency → medical → municipal → family → other); empty categories are hidden. Each card: name, role, tappable phone (`tel:` prefixed chip with phone icon and `min-h-12`), tappable email (`mailto:` chip), notes, per-row edit button (`touch-icon` size). Phone href normalisation: short codes (≤ 4 digits) preserved (`112`, `1770`); numbers already starting with `+` or `354` kept; other Icelandic numbers get `+354` prefix and non-digits stripped.
 - [x] `ContactForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Shared create/edit flow. Category chosen via shadcn `Select`; phone uses `type="tel"` + `inputMode="tel"`, email uses `type="email"` + `inputMode="email"`. Edit mode adds a destructive delete button that opens a shadcn `Dialog` confirmation ("Ertu viss? Þetta er ekki hægt að afturkalla.", `showCloseButton={false}`).
 - [x] Translation keys added under `contacts.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, deleteConfirm, categories.*, fields.*, placeholders.*, errors.*).
-- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — renders `ContactList` below `MedicationTable`. The tab container scaffolding for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+- [x] `ContactList` and `EmergencyTiles` now render on the `/folk` page (`src/app/[locale]/(app)/folk/page.tsx`). There is no shared Upplýsingar container; contacts are a standalone route — see Phase 12 for the final layout.
 
 `convex/contacts` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
 
@@ -725,7 +719,7 @@ Code complete. All implementation tasks done:
 - [x] `EntitlementList` — status-grouped display with Icelandic section headers; empty statuses hidden. Each card carries a color-coded status pill (teal `in_progress`, amber `not_applied`, emerald `approved`, muted `denied`) with a matching Lucide icon. Urgency surfaces via a regex check on `notes` for the word "brýnt" (case-insensitive) — matching cards get an orange BRÝNT pill and a warning-tinted border. Cards show title, appliedTo, description, notes, owner avatar + name, and last-updated footer.
 - [x] `EntitlementForm` — shadcn `Sheet` from bottom (`side="bottom"`, `rounded-t-2xl`, `max-h-[95vh]`). Fields: title, status `Select`, appliedTo, owner `Select` (populated from `api.users.list` with a "None selected" option), description, notes. Edit mode pre-fills all fields and surfaces a destructive delete behind a shadcn `Dialog` confirmation.
 - [x] Translation keys added under `entitlements.*` in `messages/is.json` + `messages/en.json` (title, add, createTitle/editTitle, empty, urgent, owner, deleteConfirm, statuses.*, fields.*, placeholders.*, errors.*).
-- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — renders `EntitlementList` below `ContactList`. Tab container for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+- [x] `EntitlementList` now renders as the "Réttindi" tab inside `PappirarTabs` (`/pappirar`). See Phase 12 for the final layout.
 
 `convex/entitlements` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
 
@@ -783,7 +777,7 @@ Code complete. All implementation tasks done:
 - [x] `DocumentList` — one card per document: file icon in a teal tile, title, `fileName · size`, category pill, notes, primary "Opna" button that opens the signed URL in a new tab, destructive delete (`touch-icon`) that opens a shadcn `Dialog` confirmation. Footer row shows `addedByUser` avatar + upload date (`Intl.DateTimeFormat(locale)`).
 - [x] `DocumentUpload` — shadcn `Sheet` from bottom. Native `<input type="file">`. Title auto-fills from the filename (sans extension) until the user edits it; a `titleDirty` flag stops further autofill so edits aren't clobbered. Category uses a native `<datalist>` with 5 Icelandic suggestions (Lyfseðill / Blóðprufa / Bréf frá lækni / Umsókn / Vottorð) — mobile-safe, free-text fallback. Notes field. Two-step upload: `generateUploadUrl` → `fetch(POST, body=file)` → `save({ storageId, metadata })`. Errors are surfaced in Icelandic.
 - [x] Translation keys added under `documents.*` in `messages/is.json` + `messages/en.json` (title, upload, uploading, uploadTitle, download, unavailable, empty, emptyHint, deleteConfirm, fields.*, placeholders.*, errors.*).
-- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — renders `DocumentList` below `EntitlementList`. Tab container for Lyf | Símaskrá | Réttindi | Skjöl still lands in Phase 12.
+- [x] `DocumentList` now renders as the "Skjöl" tab inside `PappirarTabs` (`/pappirar`). See Phase 12 for the final layout.
 
 `convex/documents` added to `convex/_generated/api.d.ts` manually (local codegen needs Convex auth which isn't available in this session). Schema was already in place from Phase 3.
 
@@ -796,43 +790,52 @@ The following exit-criteria items require user browser verification post-deploy 
 
 ---
 
-## Phase 12: Upplýsingar — Container Page
+## Phase 12: Info Container — Redesigned Layout
 
-### What to do
+### What was originally planned
 
-The `/upplysingar` page needs a tab bar or segmented control to switch between the 4 sub-sections built in Phases 8–11.
+A single `/upplysingar` page with a 4-tab bar (Lyf | Símaskrá | Réttindi | Skjöl).
 
-- Tab bar at top: **Lyf | Símaskrá | Réttindi | Skjöl**
-- Default to Lyf (or whichever tab the family uses most — can be adjusted)
-- Tabs should be large, tappable, clearly indicate active state
-- Consider using URL query params or local state for tab selection (not separate routes — keep it simple)
+### What was shipped (revised design)
 
-### Files to create/modify
+The info content was reorganised across **three** distinct routes matching the bottom-nav redesign. There is no `/upplysingar` route.
 
-- `src/app/[locale]/upplysingar/page.tsx` — Tab container wiring the 4 components
+**`/umonnun` (Umönnun tab)** — contains `UmonnunView.tsx` with:
+- Tab "Dagbók" — `LogFeed` + `LogEntryForm`
+- Tab "Lyf" — `MedicationTable` + `MedicationForm`
+
+**`/folk` (Fólk tab)** — server page with:
+- `EmergencyTiles` — large tappable tel: tiles for top 3 emergency contacts
+- `ContactList` — all other contacts grouped by category
+
+**`/pappirar` (Pappírar tab)** — contains `PappirarTabs.tsx` with:
+- Tab "Réttindi" — `EntitlementList` + `EntitlementForm`; URL `?tab=rettindi` (default, no param set)
+- Tab "Skjöl" — `DocumentList` + `DocumentUpload`; URL `?tab=skjol`
+
+### Files created/modified
+
+- `src/components/ui/tabs.tsx` — shadcn Tabs primitive
+- `src/app/[locale]/(app)/umonnun/UmonnunView.tsx` — Dagbók + Lyf tabs
+- `src/app/[locale]/(app)/folk/page.tsx` — contacts standalone page
+- `src/app/[locale]/(app)/pappirar/PappirarTabs.tsx` — Réttindi + Skjöl tabs
+- `src/components/info/EmergencyTiles.tsx` — emergency contact tiles
+- `src/components/nav/BottomNav.tsx` — updated to use new routes + `BookIcon` kit
 
 ### Exit criteria
 
-- Can switch between all 4 tabs
-- State within tabs persists during tab switches (don't remount/refetch unnecessarily)
+- [x] Bottom nav routes to correct views (Í dag, Umönnun, Fólk, Pappírar)
+- [x] Umönnun Dagbók tab: add/edit log entries, pagination
+- [x] Umönnun Lyf tab: medication CRUD
+- [x] Fólk: tappable emergency tiles + full contact list with tappable phone numbers
+- [x] Pappírar Réttindi tab: entitlement CRUD; URL `?tab=rettindi`
+- [x] Pappírar Skjöl tab: document upload/list/delete; URL `?tab=skjol`
+- [x] State preservation: tab-content forceMount so Convex subscriptions stay active
 
-### Status (2026-04-17)
+The following exit-criteria items require user browser verification post-deploy:
 
-Code complete. All implementation tasks done:
-
-- [x] `src/components/ui/tabs.tsx` — shadcn Tabs primitive installed via `bunx shadcn@latest add tabs` (Radix UI Tabs).
-- [x] `src/components/info/UpplysingarTabs.tsx` — client component wrapping the four Upplýsingar sub-sections (`MedicationTable`, `ContactList`, `EntitlementList`, `DocumentList`) in a shadcn `Tabs` with variant="default" (rounded bg-muted pill). Triggers are min-h-12 + text-base + font-semibold (meets the 48px+ tap-target rule). The TabsList is `sticky top-0 z-10` so the tab bar stays visible while the user scrolls through a long list. Tab order: Lyf | Símaskrá | Réttindi | Skjöl. Default tab: `lyf`.
-- [x] URL persistence via `?tab=` query param (e.g. `/upplysingar?tab=simaskra`). Default tab (`lyf`) does not set the param — keeps URLs clean. Reading uses `useSearchParams` from `next/navigation`; writing uses next-intl's locale-aware `useRouter().replace` with `scroll: false`. An unknown `tab=` value falls back to the default.
-- [x] State preservation: all four `TabsContent` regions use `forceMount` + `data-[state=inactive]:hidden` so components are mounted once and toggled via CSS. Local state (expanded medication rows, open sheets, form drafts) survives tab switches. Convex queries remain subscribed — no refetch on switch.
-- [x] Translation keys added under `upplysingar.tabs.*` in `messages/is.json` + `messages/en.json`. Token keys (`lyf`, `simaskra`, `rettindi`, `skjol`) are ASCII so they work as URL query values.
-- [x] `src/app/[locale]/(app)/upplysingar/page.tsx` — now renders `<UpplysingarTabs />` instead of the four stacked lists. The title heading stays at the top outside the tabs.
-
-The following exit-criteria items require user browser verification post-deploy (the agent cannot complete Google OAuth to reach authenticated routes):
-
-- [ ] Can switch between all 4 tabs — visual check
-- [ ] Tab state persists: open a medication row, switch to another tab, switch back — row still expanded
-- [ ] URL updates to `?tab=...` for non-default tabs and reflects back on reload
-- [ ] Active tab is obvious at 60+ contrast — visual check at 375×812
+- [ ] Tab switching and URL persistence — visual check at 375×812
+- [ ] Emergency tiles: tapping initiates a phone call on mobile (physical device check)
+- [ ] Active bottom-nav tab is obvious at 60+ contrast — visual check
 
 ---
 
@@ -876,6 +879,10 @@ The following exit-criteria items require user browser verification post-deploy 
 
 ## Phase 14: Backup Cron Job
 
+### Status: Not yet started
+
+`convex/backup.ts` does not exist. `convex/crons.ts` currently registers only the daily recurring-appointments cron (`"10 0 * * *"`). The weekly backup cron must be added as a second entry in the same file.
+
 ### What to do
 
 1. `convex/backup.ts` — `weeklyExport` internal action:
@@ -884,24 +891,19 @@ The following exit-criteria items require user browser verification post-deploy 
    - Stores as file in Convex storage
    - Deletes backups older than 4 weeks (keeps last 4)
 
-2. `convex/crons.ts`:
+2. Add weekly cron to `convex/crons.ts` (use `crons.cron`, NOT the deprecated `crons.weekly`):
    ```typescript
-   import { cronJobs } from "convex/server";
-   import { internal } from "./_generated/api";
-
-   const crons = cronJobs();
-   crons.weekly(
+   crons.cron(
      "weekly backup",
-     { dayOfWeek: "sunday", hourUTC: 3, minuteUTC: 0 },
+     "0 3 * * 0",   // Sunday 03:00 UTC
      internal.backup.weeklyExport,
    );
-   export default crons;
    ```
 
 ### Files to create/modify
 
-- `convex/backup.ts`
-- `convex/crons.ts`
+- `convex/backup.ts` — new file
+- `convex/crons.ts` — add weekly backup cron entry
 
 ### Exit criteria
 

@@ -30,7 +30,8 @@
 | i18n | `next-intl` | Confirmed Next.js 16 compatible. Uses `src/proxy.ts` for locale routing. Default locale `is` (Icelandic), secondary `en`. No locale prefix for default. |
 | UI | shadcn/ui + Tailwind CSS 4 | Mobile-first. Large tap targets. High contrast. |
 | Package manager | Bun | |
-| Hosting | Vercel | Auto-domain for v1. Default `.vercel.app` URL. |
+| Hosting | Vercel | Auto-domain for v1. Default `.vercel.app` URL. Production deploys via `git push` to `main` — Vercel CI also runs `npx convex deploy`. |
+| Analytics | `@vercel/analytics` | Page-view tracking only; no PII per Vercel's data policy. `<Analytics />` component added to root locale layout. |
 | Testing | Vitest (unit/integration) + Playwright (e2e) | |
 | File storage | Convex built-in file storage | Upload via `generateUploadUrl()`, serve via `storage.getUrl()`. No Google Drive dependency. |
 
@@ -56,7 +57,8 @@ sigga/
 │   ├── documents.ts
 │   ├── recurringSeries.ts        # Recurring appointment series CRUD + invariant helper
 │   ├── crons.ts                  # Daily cron: ensure next occurrences for active series
-│   ├── backup.ts                 # Scheduled weekly JSON export
+│   ├── backup.ts                 # Scheduled weekly JSON export (Phase 14 — not yet built)
+│   ├── users.ts                  # me + list queries
 │   └── seed.ts                   # Dev seed data
 ├── messages/
 │   ├── is.json                   # Icelandic translations (primary)
@@ -65,33 +67,40 @@ sigga/
 │   ├── proxy.ts                  # Was middleware.ts. Handles auth redirect + locale routing via next-intl. Must live next to `app/`, i.e. in `src/` (not project root) because `app/` is under `src/`.
 │   ├── i18n/
 │   │   ├── routing.ts            # next-intl routing config
-│   │   └── request.ts            # next-intl request config
+│   │   ├── request.ts            # next-intl request config
+│   │   └── navigation.ts         # createNavigation helpers (Link, usePathname, useRouter, redirect)
 │   ├── app/
 │   │   ├── [locale]/
-│   │   │   ├── layout.tsx        # Root layout: ConvexProvider + NextIntlClientProvider + auth gate
-│   │   │   ├── default.tsx       # Required in Next.js 16 for parallel routes
-│   │   │   ├── page.tsx          # Dashboard ("Í dag")
-│   │   │   ├── dagbok/
-│   │   │   │   └── page.tsx      # Log view
-│   │   │   ├── timar/
-│   │   │   │   ├── page.tsx      # Appointments view
-│   │   │   │   ├── TimarView.tsx # Client component wrapping tabs + SeriesEntryRow
-│   │   │   │   └── reglulegir/
-│   │   │   │       ├── page.tsx          # Server wrapper
-│   │   │   │       └── ReglulegirView.tsx # Client: recurring series management list
-│   │   │   ├── upplysingar/
-│   │   │   │   └── page.tsx      # Info hub (meds, contacts, entitlements, documents)
+│   │   │   ├── layout.tsx        # Root layout: ConvexProvider + NextIntlClientProvider + Vercel Analytics
+│   │   │   ├── (app)/            # Route group — authenticated routes only
+│   │   │   │   ├── layout.tsx    # App shell: Header + BottomNav wrapper
+│   │   │   │   ├── page.tsx      # Dashboard ("Í dag")
+│   │   │   │   ├── umonnun/
+│   │   │   │   │   ├── page.tsx       # Care view server wrapper
+│   │   │   │   │   └── UmonnunView.tsx # Client: Dagbók + Lyf tabs
+│   │   │   │   ├── timar/
+│   │   │   │   │   ├── page.tsx      # Appointments view server wrapper
+│   │   │   │   │   ├── TimarView.tsx # Client component wrapping SeriesEntryRow + tabs
+│   │   │   │   │   └── reglulegir/
+│   │   │   │   │       ├── page.tsx          # Server wrapper
+│   │   │   │   │       └── ReglulegirView.tsx # Client: recurring series management list
+│   │   │   │   ├── folk/
+│   │   │   │   │   └── page.tsx      # People view: EmergencyTiles + ContactList
+│   │   │   │   └── pappirar/
+│   │   │   │       ├── page.tsx        # Paperwork view server wrapper
+│   │   │   │       └── PappirarTabs.tsx # Client: Réttindi + Skjöl tabs
 │   │   │   └── login/
 │   │   │       └── page.tsx      # Login page (Google OAuth button)
-│   │   └── layout.tsx            # Bare html/body wrapper
+│   │   └── layout.tsx            # Bare html/body with fonts + analytics
 │   ├── components/
-│   │   ├── ui/                   # shadcn components
+│   │   ├── ui/                   # shadcn components (button, card, sheet, dialog, tabs, switch, …)
 │   │   ├── nav/
-│   │   │   └── BottomNav.tsx     # Fixed bottom nav (4 tabs)
+│   │   │   └── BottomNav.tsx     # Fixed bottom nav (4 tabs: Í dag / Umönnun / Fólk / Pappírar)
 │   │   ├── dashboard/
-│   │   │   ├── NextAppointments.tsx
-│   │   │   ├── RecentLog.tsx
-│   │   │   └── QuickActions.tsx
+│   │   │   ├── NextAppointments.tsx  # Next 3 upcoming appointments (with driver + volunteer)
+│   │   │   ├── RecentLog.tsx         # Latest log entry with inline expand
+│   │   │   ├── AttentionCard.tsx     # Amber card: unowned in-progress/not-applied entitlements
+│   │   │   └── DrivingCta.tsx        # Amber CTA: one-tap volunteer for unassigned appointment
 │   │   ├── appointments/
 │   │   │   ├── AppointmentCard.tsx   # Single appointment card — borderless Bókasafn aesthetic
 │   │   │   ├── AppointmentList.tsx
@@ -115,14 +124,16 @@ sigga/
 │   │   │   ├── EntitlementList.tsx
 │   │   │   ├── EntitlementForm.tsx
 │   │   │   ├── DocumentList.tsx
-│   │   │   └── DocumentUpload.tsx
+│   │   │   ├── DocumentUpload.tsx
+│   │   │   └── EmergencyTiles.tsx    # Large tappable tel: tiles for top-3 emergency contacts
 │   │   └── shared/
-│   │       ├── AuthGate.tsx      # Redirects to /login if not authenticated
+│   │       ├── Header.tsx        # Sticky top bar: app name + user avatar + sign-out
 │   │       ├── UserAvatar.tsx
-│   │       └── EmptyState.tsx
+│   │       ├── EmptyState.tsx
+│   │       └── BookIcon.tsx      # Project icon kit (today/care/people/docs/pill/book/…)
 │   └── lib/
-│       ├── convex.ts             # ConvexProvider setup
-│       ├── utils.ts              # Shared utilities
+│       ├── utils.ts              # cn() and shared utilities
+│       ├── formatDate.ts         # Icelandic relative-date helpers
 │       └── formatRecurrence.ts  # formatDays, formatCadence, computeNextStartTime helpers
 ├── tests/
 │   ├── unit/                     # Vitest unit tests
@@ -137,7 +148,7 @@ sigga/
 │   └── fixtures/
 │       └── seed.ts               # Test data
 ├── public/
-│   ├── manifest.json             # PWA manifest
+│   ├── manifest.json             # PWA manifest (Phase 13 — not yet built)
 │   ├── icon-192.png
 │   └── icon-512.png
 └── playwright.config.ts
@@ -329,15 +340,32 @@ messages/
     "lastUpdated": "Síðast uppfært",
     "by": "af"
   },
+  "app": {
+    "name": "Sigga",
+    "tagline": "..."
+  },
   "nav": {
     "dashboard": "Í dag",
-    "log": "Dagbók",
-    "appointments": "Tímar",
-    "info": "Upplýsingar"
+    "care": "Umönnun",
+    "people": "Fólk",
+    "paperwork": "Pappírar"
   },
   "dashboard": { ... },
-  "appointments": { ... },
-  "log": { ... },
+  "timar": { ... },
+  "dagbok": { ... },
+  "umonnun": {
+    "title": "Umönnun",
+    "hvernig": "Hvernig Siggu líður.",
+    "sections": { "lyf": "Lyf", "dagbok": "Dagbók" }
+  },
+  "folk": {
+    "title": "Fólk",
+    "subtitle": "Sími, læknar, þjónusta."
+  },
+  "pappirar": {
+    "title": "Pappírar",
+    "tabs": { "rettindi": "Réttindi", "skjol": "Skjöl" }
+  },
   "medications": { ... },
   "contacts": { ... },
   "entitlements": { ... },
@@ -387,7 +415,9 @@ import { routing } from "./i18n/routing";
 export default createMiddleware(routing);
 
 export const config = {
-  matcher: ["/((?!api|trpc|_next|_vercel|convex|.*\\..*).*)" ]
+  // Do NOT exclude `api` — Convex Auth POSTs to `/api/auth` and needs the middleware.
+  // Excluding `api` causes sign-in to 404 (Safari: "string did not match expected pattern").
+  matcher: ["/((?!_next|_vercel|.*\\..*).*)" ]
 };
 ```
 
@@ -429,11 +459,19 @@ export const config = {
 
 ### Aesthetic Direction
 
-- **Tone:** Warm, soft, Scandinavian-minimal. Think "cozy cabin, not cold hospital."
-- **Color palette:** Warm neutrals (cream/off-white backgrounds), a muted teal or sage as the primary accent, soft amber/gold for warnings/attention, gentle red for emergencies/deletions. Avoid harsh blues or clinical whites. Tokens are declared inline in `src/app/globals.css` via Tailwind v4's `@theme inline { --color-... }` block — there is no `tailwind.config.ts` (Tailwind v4 reads design tokens from CSS).
-- **Typography:** Clean and highly readable. Generous font size (base 16px minimum, prefer 18px for body on mobile). Consider a humanist sans-serif that renders well in Icelandic (special characters: ð, þ, æ, ö, etc.).
-- **Borders and cards:** Soft rounded corners (12-16px). Light shadows. Cards for grouped content.
-- **Icons:** Lucide icons. Simple, recognizable. Paired with text labels always (no icon-only buttons for primary actions).
+- **Tone:** Warm, soft, Scandinavian-minimal. "Bókasafn aesthetic" — think old library, not cold hospital.
+- **Color palette ("Bókasafn palette"):** Tokens are declared in `src/app/globals.css` using Tailwind v4's `:root` + `@theme inline` pattern (no `tailwind.config.ts`). Key tokens:
+  - `--page` (#f5f1e8) — warm parchment page background
+  - `--paper` (#faf7f0) / `--paper-deep` (#f1ecdf) — card surfaces
+  - `--ink` (#2e342b) / `--ink-soft` / `--ink-faint` — text hierarchy
+  - `--sage` (#8ba888) / `--sage-deep` (#6b7f5c) / `--sage-shadow` (#4f6243) — primary accent (sage green)
+  - `--wheat` (#c9b896) / `--wheat-deep` — secondary accent
+  - `--amber-bg-*` / `--amber-ink*` — attention / warning tone
+  - `--divider` / `--divider-strong` — border separators (rgba values)
+  - Semantic tokens map onto shadcn/ui CSS variable names (`--background`, `--primary`, `--muted`, etc.)
+- **Typography:** Source Serif 4 (`font-serif`) for headings/titles; Source Sans 3 (`font-sans`) for body. Both loaded via `next/font/google`. Base body text `text-lg` (18px).
+- **Borders and cards:** Borderless "Bókasafn" card style: `bg-paper ring-1 ring-foreground/10 rounded-2xl`. Interior row separators use `border-t border-divider`. Radius base token `--radius: 1rem`.
+- **Icons:** Custom `BookIcon` kit (`src/components/shared/BookIcon.tsx`) for bottom-nav icons (today/care/people/docs). Lucide icons used elsewhere. Always paired with text labels — no icon-only primary actions.
 
 ### PWA Configuration
 
@@ -451,52 +489,63 @@ The landing page. Answers: "What's happening with Sigga right now?"
 
 **Layout (top to bottom):**
 
-1. **Header:** "Sigga" as app title. User avatar + name in top-right. Sign-out in dropdown.
+1. **Sticky header** (`Header`): app name "sigga" (italic serif, faint), user avatar + sign-out dropdown (top-right).
 
-2. **Next appointments card:** Shows next 3 upcoming appointments. Each shows: date/time, title, location (if set), driver name (if assigned) or "Enginn skutlar" with a tap-to-volunteer button. If no upcoming appointments: friendly empty state "Engir tímar á næstunni."
+2. **Greeting:** "Góðan daginn, *Elin*." with `font-serif` large heading and today's date as an eyebrow.
 
-3. **Recent log entries:** Latest 3 entries from Dagbók. Each shows: date, author avatar + name, content (truncated to ~3 lines with "Lesa meira" link). "Skrifa í dagbók" button at the bottom → opens quick-add form (sheet/modal from bottom).
+3. **AttentionCard** (amber, conditional): Surfaces unowned entitlements with status `in_progress` or `not_applied`, sorted by urgency (BRÝNT pattern + status weight). Shows the top item's title + description; a count of additional items; links to `/pappirar`. Hidden when there are no unowned open entitlements.
 
-4. **Quick actions row:** 2-3 quick action buttons:
-   - "Nýr tími" (new appointment)
-   - "Skrifa í dagbók" (write log entry)
-   - Optionally: "Símaskrá" (quick link to contacts)
+4. **DrivingCta** (amber, conditional): If any upcoming appointment has no assigned driver, shows an amber CTA "Vantar skutlara" with a one-tap "Ég get skutlað" volunteer button. Hidden when all appointments have drivers.
 
-**Real-time:** Dashboard auto-updates via Convex subscriptions. If Helga adds a log entry while Elin is looking at the dashboard, it appears without refresh.
+5. **Next appointments card** (`NextAppointments`): Shows next 3 upcoming appointments (queried via `api.appointments.upcoming` with `limit: 5, includeCancelled: true`, then capped at 3 in the component). Each shows: date/time (Icelandic format), title, location, driver name or "Enginn skutlar" with volunteer button. Cancelled future slots render as a muted italic line. "Sjá alla" link → `/timar`.
+
+6. **Recent log entry** (`RecentLog`): The single latest Dagbók entry. Shows: eyebrow "Dagbók · síðasta færsla · *relative date*", author avatar + name, content with inline expand for long entries ("Sýna alla færsluna" / "Sýna minna"). "Skrifa í dagbók" button opens `LogEntryForm` sheet in-place (no navigation). Empty state: "Engar færslur í dagbók ennþá".
+
+**Real-time:** Dashboard auto-updates via Convex subscriptions. All data from `useQuery`.
 
 ---
 
-### View 2: Dagbók (Log) — `/dagbok`
+### View 2: Umönnun (Care) — `/umonnun`
+
+The care coordination view. Contains two tabs: **Dagbók** (care journal) and **Lyf** (medications).
+
+**Route:** `src/app/[locale]/(app)/umonnun/page.tsx` (server wrapper) + `UmonnunView.tsx` (client).
+
+**Tabs (shadcn `Tabs`):** "Dagbók" | "Lyf". Default: Dagbók.
+
+#### Dagbók tab
 
 A reverse-chronological feed of all care-relevant events.
 
-**Layout:**
+1. **"Skrifa í dagbók"** button (touch-sized, full-width) at the top of the Dagbók tab content — opens `LogEntryForm` sheet from bottom.
 
-1. **Floating action button (FAB)** or sticky top bar: "Skrifa" (Write) — opens the entry form.
-
-2. **Feed:** Entries sorted newest-first. Each entry card shows:
+2. **Feed (`LogFeed`):** Entries sorted newest-first, paginated (20/page). Each entry card shows:
    - Author avatar + name
    - Date + time (relative for recent: "í gær", "fyrir 3 dögum"; absolute for older)
    - Content (full text, no truncation in feed view)
    - "Breytt" badge if `editedAt` is set
-   - Edit button (pencil icon) — only visible to the original author
-   - Optional: linked appointment shown as a small chip
+   - Edit button (pencil, `touch-icon` size) — only visible to the original author
+   - Linked appointment shown as a small chip (if set)
 
 3. **Entry form (sheet from bottom):**
    - Multiline text input. Placeholder: "Hvað gerðist? Hvaða upplýsingar eru mikilvægar?"
    - Optional: link to an appointment (dropdown of recent/upcoming appointments)
    - "Vista" button
-   - No title field. No categories. No tags. Keep it dead simple — it's a text box with a save button.
+   - No title field. No categories. No tags — dead simple.
 
 4. **Edit flow:** Same form, pre-filled. Sets `editedAt` on save. No revision history in v1.
 
-**Pagination:** Load 20 entries initially. "Sýna eldri" button at bottom for more (or infinite scroll if it feels natural).
+**Pagination:** Load 20 entries initially. "Sýna eldri" button at bottom.
+
+#### Lyf tab
+
+See Medications section under Upplýsingar. `MedicationTable` component renders here, identical to its behavior in the standalone medications view.
 
 ---
 
 ### View 3: Tímar (Appointments) — `/timar`
 
-All appointments — upcoming and past.
+All appointments — upcoming and past. **Not in the bottom nav** — accessible via the "Sjá alla" link from `NextAppointments` on the dashboard and from the `SeriesEntryRow` back link on `/timar/reglulegir`.
 
 **Layout:**
 
@@ -522,7 +571,7 @@ All appointments — upcoming and past.
    - Driver (optional — dropdown of family members, or "Enginn enn")
    - "Vista" button
 
-5. **Edit/delete:** Edit pre-fills the form. Delete requires confirmation modal: "Ertu viss? Þetta er ekki hægt að afturkalla."
+5. **Edit/delete for series-bound appointments:** Editing an appointment that belongs to a series shows "Hlaupa yfir þennan tíma" instead of "Eyða". Confirming sets `status: "cancelled"` (keeps the slot visible in the list and allows `ensureNextOccurrence` to advance). Standalone appointments are deleted outright. Confirmation text differs: skip uses "Hlaupa yfir þennan tíma?"; delete uses "Ertu viss? Þetta er ekki hægt að afturkalla."
 
 **AppointmentCard aesthetic:** Cards use the borderless Bókasafn style — `bg-paper ring-1 ring-foreground/10 rounded-2xl` shell; `font-serif` title; `text-ink-faint`/`text-ink-soft` for secondary text instead of `text-muted-foreground`. Interior row separators use `border-t border-divider`.
 
@@ -561,17 +610,23 @@ Series management sub-page. Route: `src/app/[locale]/(app)/timar/reglulegir/page
 
 ---
 
-### View 4: Upplýsingar (Info Hub) — `/upplysingar`
+### Views 4 & 5: Fólk and Pappírar — `/folk` and `/pappirar`
 
-The reference section. Rarely changes, frequently consulted.
+The reference section is split across two bottom-nav tabs. Lyf (medications) moved into the Umönnun view (tab 2). The remaining reference content is:
 
-**Layout:** Tab bar at top with 4 sections (shipped via `UpplysingarTabs.tsx` using the shadcn `Tabs` primitive). Tab order: Lyf | Símaskrá | Réttindi | Skjöl. Default tab: Lyf. Tab selection persists in the URL via `?tab=` query param (e.g. `/upplysingar?tab=simaskra`). All four `TabsContent` regions are `forceMount`-ed and hidden via CSS so local state (expanded rows, open sheets) survives tab switches and Convex queries remain subscribed.
-- **Lyf** (Medications)
-- **Símaskrá** (Contacts)
-- **Réttindi** (Entitlements)
-- **Skjöl** (Documents)
+**View 4: Fólk (People) — `/folk`**
 
-#### Lyf (Medications) tab
+Contacts + emergency tiles. Route: `src/app/[locale]/(app)/folk/page.tsx` (server component, no client wrapper needed).
+
+**Layout:** Large `EmergencyTiles` row at top (tappable tel: tiles for the top 3 emergency contacts — Neyðarlína, Eitrunarmiðstöð, Læknavaktin), followed by `ContactList` for all other categories.
+
+**View 5: Pappírar (Paperwork) — `/pappirar`**
+
+Entitlements + Documents. Route: `src/app/[locale]/(app)/pappirar/page.tsx` (server wrapper) + `PappirarTabs.tsx` (client).
+
+**Layout:** Tab bar (`PappirarTabs` using shadcn `Tabs`). Tabs: **Réttindi** | **Skjöl**. Default: Réttindi. Tab selection persists in URL via `?tab=` query param. Tab header shows a contextual headline ("Réttindi í vinnslu." / "Skjöl í safninu." etc.) that updates based on the entitlement/document state. All `TabsContent` regions are mounted once and toggled via CSS.
+
+#### Lyf (Medications) — Umönnun tab, not a standalone section
 
 **Active medications table/list:**
 - Each row: Name, dose + schedule, purpose
@@ -587,17 +642,19 @@ The reference section. Rarely changes, frequently consulted.
 - Notes (optional)
 - Active toggle (default: on)
 
-#### Símaskrá (Contacts) tab
+#### Símaskrá (Contacts) — Fólk view (`/folk`)
+
+**Layout:** `EmergencyTiles` at top — large tappable tel: tiles for the top 3 emergency contacts (Neyðarlína, Eitrunarmiðstöð, Læknavaktin). Below: `ContactList` grouped by category.
 
 **Grouped by category:**
 - Section headers: Neyð, Læknar og heilsugæsla, Sveitarfélag og þjónusta, Fjölskylda, Annað
-- Each contact: Name, role (if set), phone (tappable `tel:` link), email (tappable `mailto:` link)
-- "Bæta við tengilið" button
-- Pre-seed emergency contacts: 112, Eitrunarmiðstöð (543 2222), Læknavaktin (1770)
+- Empty categories are hidden
+- Each contact: Name, role (if set), phone (tappable `tel:` chip with phone icon), email (tappable `mailto:` chip)
+- "Bæta við tengilið" button (ContactForm sheet)
 
 **Phone numbers must be tappable.** This is the #1 use case: someone needs a number fast, they open the app, find it, tap to call. Zero extra steps.
 
-#### Réttindi (Entitlements) tab
+#### Réttindi (Entitlements) — Pappírar tab
 
 **Status-grouped checklist:**
 - Section: "Í vinnslu" (In progress) — shown first, highlighted
@@ -622,7 +679,7 @@ Each item card:
 - Description (optional)
 - Notes (optional)
 
-#### Skjöl (Documents) tab
+#### Skjöl (Documents) — Pappírar tab
 
 **Simple file list:**
 - Each row: title, filename, category tag (if set), upload date, uploaded by
@@ -646,17 +703,19 @@ Each item card:
 
 ### Bottom Navigation
 
-Fixed at the bottom of every view. 4 tabs:
+Fixed at the bottom of every view. 4 tabs rendered by `BottomNav.tsx` using the custom `BookIcon` kit:
 
-| Icon | Label | Route |
-|------|-------|-------|
-| Home/Calendar icon | Í dag | `/` |
-| Book icon | Dagbók | `/dagbok` |
-| Clock icon | Tímar | `/timar` |
-| Info/Clipboard icon | Upplýsingar | `/upplysingar` |
+| Icon kind | Label | Route |
+|-----------|-------|-------|
+| `today` | Í dag | `/` |
+| `care` | Umönnun | `/umonnun` |
+| `people` | Fólk | `/folk` |
+| `docs` | Pappírar | `/pappirar` |
 
-Active tab: filled icon + accent color. Inactive: outline icon + muted.
-Label text always visible (not icon-only).
+Note: `/timar` (Appointments) is NOT in the bottom nav. It is reachable via the "Sjá alla" link in the `NextAppointments` card on the dashboard.
+
+Active tab: filled icon + `text-sage-shadow`. Inactive: `text-ink-faint`.
+Label text always visible (not icon-only). Bottom gradient fade + safe-area-inset padding.
 
 ---
 
@@ -670,7 +729,7 @@ Label text always visible (not icon-only).
 
 **appointments.ts:**
 - `list` — query: all appointments, ordered by startTime. Args: `{ status?: "upcoming" | "completed" | "cancelled" }`. Filter upcoming = startTime > now.
-- `upcoming` — query: dashboard-optimised. Uses `.withIndex("by_status_and_startTime", q => q.eq("status", "upcoming").gte("startTime", now)).order("asc").take(limit)`. Args: `{ limit?: number }` (default 3). Returns only future-dated upcoming appointments; consumed by the dashboard via `api.appointments.upcoming`. Series-spawned occurrences appear here automatically.
+- `upcoming` — query: dashboard-optimised. Args: `{ limit?: number, includeCancelled?: boolean }` (default limit 3, includeCancelled false). Without `includeCancelled`: uses `.withIndex("by_status_and_startTime", q => q.eq("status", "upcoming").gte("startTime", now)).order("asc").take(limit)`. With `includeCancelled: true`: over-fetches on `by_startTime` where `startTime >= now`, filters out `completed`, takes `limit` — used by the dashboard to show cancelled future slots (series skip-next slots) as muted lines. Series-spawned occurrences appear here automatically.
 - `past` — query: appointments whose `startTime < now`, ordered by `startTime` descending (most recent first). Uses `.withIndex("by_startTime", q => q.lt("startTime", now))`. Args: `{ limit?: number }` (default 50). Consumed by the Tímar past-tab via `api.appointments.past`.
 - `get` — query: single appointment by ID.
 - `create` — mutation: create appointment. Auto-set `createdBy`, `updatedBy`, `updatedAt`, `status: "upcoming"`.
@@ -690,7 +749,7 @@ The core invariant: every `recurringSeries` with `isActive === true` has at most
 - `remove` — mutation: `{ id }`. (1) Deletes upcoming occurrence. (2) Sets `seriesId = undefined` on all past occurrences so they survive as standalone history. (3) Deletes the series row.
 - `ensureNextOccurrences` — **internal** mutation (no public args). Iterates all active series and calls `ensureNextOccurrence` for each. Invoked by the daily cron.
 
-`ensureNextOccurrence(ctx, seriesId)` algorithm: load series; if inactive, return. Query `by_series_and_startTime` for upcoming rows with `startTime >= now`; if any `status === "upcoming"` row exists, return (invariant already holds). Otherwise walk forward from `now` one UTC day at a time (max 8 iterations) until a day in `daysOfWeek` is found with `startTime > now`; insert an `appointments` row copying `title`, `location`, `notes`, `seriesId`; `createdBy`/`updatedBy` = series `createdBy`.
+`ensureNextOccurrence(ctx, seriesId)` algorithm: load series; if inactive, return. Query `by_series_and_startTime` for all rows with `startTime >= now`; if any `status === "upcoming"` row exists, return (invariant already holds). Build a `blockedStartTimes` set of timestamps from existing `cancelled`/`completed` future rows (these are skip-next slots that must not be reused). Walk forward from `now` one candidate slot at a time — at each `daysOfWeek` match, compute the exact `startTime` for that day; skip if that timestamp is in `blockedStartTimes` — up to 14 iterations maximum. On finding a free slot, insert an `appointments` row copying `title`, `location`, `notes`, `seriesId`; `createdBy`/`updatedBy` = series `createdBy`.
 
 **convex/crons.ts:** daily job at 00:10 UTC:
 ```typescript
@@ -736,7 +795,7 @@ Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guideline
 - `me` — query: returns the authenticated user document, or `null` if unauthenticated.
 - `list` — query: returns all users as `{ _id, name, email, image }` summaries. Used by `DriverPicker` and entitlement owner pickers.
 
-**backup.ts:**
+**backup.ts:** (Phase 14 — not yet built)
 - `weeklyExport` — scheduled action (Convex cron): runs weekly. Queries all data, serializes to JSON, stores as a file in Convex storage. Keeps last 4 backups, deletes older ones.
 - Register in `convex/crons.ts` using `crons.cron` (the deprecated `crons.weekly` / `crons.daily` helpers must not be used — Convex guidelines require `crons.interval` or `crons.cron`):
   ```typescript
@@ -1058,24 +1117,27 @@ These are explicitly deferred. Do not build them now.
 
 ## Implementation Order
 
-Suggested build sequence for Claude Code:
+Phases 0–12 + 8.5 are complete as of 2026-04-18. Remaining: Phase 13 (PWA), Phase 14 (backup), Phase 15 (polish), Phase 16 (tests), Phase 17 (deploy/onboard).
 
-1. **Scaffold:** `create-next-app` with bun, add Convex, set up project structure
-2. **Auth:** Convex Auth + Google OAuth + whitelist + `src/proxy.ts` redirect (default export)
-3. **i18n:** next-intl setup with `is`/`en`, translation files, locale layout
-4. **Schema + seed:** Deploy Convex schema, write seed function
-5. **Bottom nav + layout shell:** The chrome that wraps everything
-6. **Dashboard view:** Queries for next appointments + recent log
-7. **Dagbók view:** Full CRUD for log entries
-8. **Tímar view:** Full CRUD for appointments + driver volunteering
-9. **Upplýsingar — Lyf tab:** Medication CRUD
-10. **Upplýsingar — Símaskrá tab:** Contacts CRUD with tappable phone links
-11. **Upplýsingar — Réttindi tab:** Entitlements CRUD
-12. **Upplýsingar — Skjöl tab:** File upload + list + download
-13. **PWA manifest + icons**
-14. **Backup cron job**
-15. **Tests**
-16. **Deploy to Vercel**
+Actual build sequence shipped:
+
+1. **Scaffold** — create-next-app, Convex, shadcn/ui, Biome (Phase 0)
+2. **Auth** — Convex Auth + Google OAuth + whitelist + `src/proxy.ts` (Phase 1)
+3. **i18n** — next-intl, `is`/`en`, locale layout (Phase 2)
+4. **Schema + seed** — full Convex schema + real seed data (Phase 3)
+5. **App shell** — bottom nav (Í dag / Umönnun / Fólk / Pappírar), header, layout (Phase 4)
+6. **Dashboard** — greeting + AttentionCard + DrivingCta + NextAppointments + RecentLog (Phase 5)
+7. **Umönnun/Dagbók** — log CRUD in Dagbók tab inside `/umonnun` (Phase 6)
+8. **Tímar** — appointments CRUD, driver volunteering (Phase 7; `/timar` reachable via dashboard link, not bottom nav)
+9. **Umönnun/Lyf** — medication CRUD in Lyf tab inside `/umonnun` (Phase 8)
+10. **Reglulegir tímar** — recurring series management + cron invariant (Phase 8.5)
+11. **Fólk** — emergency tiles + contacts CRUD on `/folk` (Phase 9)
+12. **Pappírar/Réttindi** — entitlements CRUD on `/pappirar` Réttindi tab (Phase 10)
+13. **Pappírar/Skjöl** — document upload/list/delete on `/pappirar` Skjöl tab (Phase 11)
+14. **Info container redesign** — UmonnunView + FolkPage + PappirarTabs replacing planned Upplýsingar page (Phase 12)
+15. **PWA manifest + icons** — Phase 13 (not yet built)
+16. **Backup cron job** — Phase 14 (not yet built)
+17. **Polish + tests + deploy** — Phases 15–17 (not yet built)
 
 ---
 
