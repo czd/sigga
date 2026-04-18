@@ -181,25 +181,21 @@ No new strings. The sidebar reuses the same `nav.dashboard / nav.care / nav.peop
 
 Follow `superpowers:test-driven-development` discipline where it applies. Most of the work here is layout/CSS, where TDD has limited leverage; the boundary tests live at the component level (does Sidebar render the right items, does it hide below `lg:`) and the e2e level (does the desktop shell behave end-to-end at 1440×900).
 
-**Component tests (`vitest`):**
+**Automated tests:**
 
-Skip — this project does not yet have a Vitest harness in place (Phase 16). Do not introduce one as part of this work; that's a separate phase.
+Skip in this work. The project does not yet have any test harness in place — neither Vitest nor Playwright is installed; there is no `tests/` directory and no `playwright.config.ts`. Standing up either is the scope of Phase 16 (Tests) and is out of scope here. When Phase 16 lands, the desktop-specific cases below should be added to its e2e suite alongside the mobile coverage.
 
-**Playwright e2e — add a desktop viewport project:**
+**Manual browser verification — the gate for this work:**
 
-The current Playwright config tests at 375×812 (mobile). Add a second project at 1440×900 (desktop) and parametrise the test suite so the existing flows run at both viewports. Most existing tests pass on desktop unchanged; a few will need viewport-conditional selectors (e.g., bottom-nav vs. sidebar).
+The plan must include explicit smoke verification at three viewports before the branch is offered for review. Run `bun dev`, sign in, and walk through every authenticated route at each viewport.
 
-New desktop-specific e2e cases:
+- **375×812 (mobile baseline):** verify nothing on mobile changed. Bottom nav still fixed and visible. Sticky header still present. Bottom sheets still slide up from the bottom. Tap targets unchanged.
+- **1024×768 (the `lg:` boundary):** sidebar appears, bottom nav and mobile header disappear. The 248-px sidebar + 96-px gutter + 608-px column fits with ~72 px right margin. Pappírar uses the *narrow* (608 px) column at this width — the `xl:` widening to 720 px must NOT have triggered yet.
+- **1920×1080 (large desktop):** sidebar still 248 px on the left, content column still capped at 608 px (or 720 px on Pappírar — the `xl:` override is now active), large empty cream area on the right. The `xl:` boundary at exactly 1280 px is the moment Pappírar widens.
 
-- At 1440×900, the bottom nav is not visible and the sidebar is.
-- Clicking a sidebar nav item navigates to the right route and that item shows the active state.
-- The user-avatar dropdown in the sidebar opens and shows the same name/email/sign-out as the mobile header.
-- Opening any "+ add" sheet on desktop renders as a centered modal (visible at `lg:`), not a bottom sheet, and clicking the backdrop dismisses it.
-- The dashboard at 1440×900: greeting + cards stay in a single 608px column left-aligned with empty cream to the right. (Snapshot or width-check.)
-- Pappírar at 1440×900: column is wider (720px) than other views.
-- Real-time invariant at desktop: open two desktop browser contexts, mutate in one, see the change in the other.
+For each viewport, walk every route: Í dag (dashboard), Umönnun (both Dagbók and Lyf tabs), Fólk (incl. EmergencyTiles tap), Pappírar (both Réttindi and Skjöl tabs), Tímar (incl. opening "+", and Reglulegir tímar sub-route), and `login`. Open at least one sheet (the appointment "+" sheet on Tímar is easiest) at each desktop viewport and confirm it renders as a centered modal, not a bottom sheet.
 
-**Manual smoke at three viewports:** 375×812 (iPhone SE-ish), 1024×768 (smallest desktop — the `lg:` boundary), 1920×1080 (large desktop). All four tabs + Tímar + Reglulegir tímar + login. Verify nothing is cut off, nothing is comically wide, sheets behave, focus states work.
+Document findings in the PR description: which viewports, which routes, anything off. If anything looks broken, fix it inside this branch before opening the PR.
 
 ## Files to add / change
 
@@ -215,8 +211,7 @@ New desktop-specific e2e cases:
 - `src/components/ui/sheet.tsx` — responsive `side="bottom"` variant (centered modal at `lg:`).
 - `src/app/[locale]/login/page.tsx` — verify center layout works on desktop; tweak only if it breaks.
 - Each of `src/app/[locale]/(app)/page.tsx`, `umonnun/page.tsx`, `folk/page.tsx`, `pappirar/page.tsx`, `timar/page.tsx`, `timar/reglulegir/page.tsx` — wrap returned content in `<div className="lg:max-w-[704px]">{...}</div>` (and Pappírar uses `lg:max-w-[704px] xl:max-w-[816px]` instead). Width lives in the page wrapper, not the layout, not the View client component. Same wrapper everywhere except Pappírar.
-- `playwright.config.ts` — add a desktop project (1440×900).
-- `tests/e2e/*.spec.ts` — extend selected tests to run at desktop or add desktop-only checks (depending on what's currently in `tests/`).
+**No test infra changes** — Vitest and Playwright are not installed in this project; standing them up is Phase 16 work and is out of scope for desktop support. Manual smoke verification at three viewports (per the Testing section) is the gate.
 
 **No changes to:**
 
