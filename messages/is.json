@@ -240,7 +240,8 @@
 		"subtitle": "Sími, læknar, þjónusta.",
 		"headline": "Hver hringir, hver svarar.",
 		"emergencyLabel": "Neyð",
-		"afterHours": "utan dagvinnu"
+		"afterHours": "utan dagvinnu",
+		"selectHint": "Veldu manneskju til að skoða."
 	},
 	"pappirar": {
 		"title": "Pappírar",

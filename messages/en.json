@@ -240,7 +240,8 @@
 		"subtitle": "Phone, doctors, services.",
 		"headline": "Who to call, who picks up.",
 		"emergencyLabel": "Emergency",
-		"afterHours": "after hours"
+		"afterHours": "after hours",
+		"selectHint": "Select a contact to view."
 	},
 	"pappirar": {
 		"title": "Paperwork",
