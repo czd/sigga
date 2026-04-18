@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation } from "./_generated/server";
+import { ensureNextOccurrence } from "./recurringSeries";
 
 type MedicationSeed = Omit<
 	Doc<"medications">,
@@ -332,6 +333,176 @@ export const run = internalMutation({
 			medications: MEDICATIONS.length,
 			contacts: CONTACTS.length,
 			entitlements: ENTITLEMENTS.length,
+		};
+	},
+});
+
+/**
+ * Additive seed — April 2026 family-chat summary.
+ *
+ * Imports real data synthesised from the Messenger chat:
+ * - 7 log entries (notes).
+ * - 4 one-off appointments (Ljósið viðtal, LSH blóðprufa, Eirberg mælingar,
+ *   andhormónasprauta).
+ * - 1 recurring series (Virkni og Vellíðan — Tue+Fri 09:15).
+ *
+ * Idempotent: if the Lyfjaskammtar log entry already exists we skip entirely
+ * so a re-run doesn't duplicate.
+ *
+ * All rows are attributed to the resolved user (first user in the DB, or
+ * `args.userId` if passed). Iceland is UTC+0 — `Date.UTC` arguments are the
+ * wall-clock time the family uses.
+ */
+
+const LOG_ENTRIES_APRIL_2026: string[] = [
+	`Lyfjaskammtar staðfestir
+
+Helga staðfesti skammta og tímasetningu lyfja:
+
+Morgnar: 3 Kisqali, 1 Eliquis, 2 WhiteEyes, 1 Retina Clear.
+Kvöld: 1 Eliquis.`,
+	`Andhormónasprauta á 2ja vikna fresti
+
+Amma fær andhormónasprautu á Brjóstamiðstöð á tveggja vikna fresti. Nafn lyfsins er enn óstaðfest — Helga man það ekki. Næsta sprauta er 7. maí. Stefnt er að því að heimahjúkrun taki við þessum sprautum ásamt blóðprufum og lyfjaeftirliti þegar vottorðið frá Brjóstamiðstöð er komið í gegn, en það er ekki komið í gagnið ennþá.`,
+	`Plan Helgu fyrir næstu daga (frá 17. apríl)
+
+Helga lagði fram yfirlit yfir komandi tíma og verkefni:
+
+- 21. apríl: viðtal við Guðrúnu iðjuþjálfa í Ljósinu.
+- 24. apríl: blóðprufa og hjartalínurit á LSH (Hringbraut eða Fossvogi — sveigjanlegur opnunartími á föstudögum).
+- 27. apríl kl. 10: mælingar á hendi hjá Ingibjörgu í Eirberg, Stórhöfða.
+- Sama dag: hringja í Brjóstamiðstöð (543 9560) og athuga stöðu vottorðanna.
+- Ef vottorðin eru tilbúin: sækja um akstursþjónustu og hafa samband við heimahjúkrun.`,
+	`Vottorðin hjá Brjóstamiðstöð — staða óviss
+
+Hera á Brjóstamiðstöðinni var beðin um að útbúa tvö vottorð fyrir ömmu: annað fyrir heimahjúkrun, hitt fyrir akstursþjónustu aldraðra. Ekki er staðfest hvort þau séu tilbúin. Þetta þarf að kanna í síma — stefnt er að því 27. apríl þegar amma er hvort sem er á ferðinni í Eirberg. Þessi vottorð eru lykillinn að því að mörg önnur úrræði komist á koppinn (sprautur heima, blóðprufur heima, akstur til Ljósins og Brjóstamiðstöðvar).`,
+	`Staða í Ljósinu
+
+Amma er nýbyrjuð í Ljósinu. Fyrsta viðtal er við Guðrúnu iðjuþjálfa 21. apríl, síðan kemur viðtal við sjúkraþjálfara seinna. Eftir þau viðtöl kemur í ljós hvað hún getur nýtt sér þar. Ljósið býður upp á ýmislegt — snyrtingu, stólaleikfimi og æfingar í tækjasal. Amma er enn á biðlista í sogæðanuddi hjá Kolbrúnu.`,
+	`Bati sjúkraþjálfun — langur biðlisti, ný leið
+
+Amma er í forgangi á biðlista hjá Bata sjúkraþjálfun, en biðlistinn er samt mjög langur. Marjolein sjúkraþjálfari hjá Bata benti á að sækja um heimasjúkraþjálfun í staðinn. Helga ætlar að athuga næsta skref í því ferli.`,
+	`Virkni og Vellíðan byrjar aftur
+
+Helga og amma eru skráðar í Virkni og Vellíðan í Fífunni. Starfið hefur legið niðri eftir að amma datt og rifbeinsbrotnaði. Tímar eru á þriðjudögum og föstudögum kl. 9:15. Þær reikna með að byrja aftur föstudaginn 24. apríl.`,
+];
+
+type AppointmentSeed = {
+	title: string;
+	startTime: number;
+	location?: string;
+	notes?: string;
+};
+
+const APPOINTMENTS_APRIL_2026: AppointmentSeed[] = [
+	{
+		title: "Viðtal við Guðrúnu iðjuþjálfa",
+		// Tue 21 Apr 2026 10:00 UTC — exact time not confirmed in the chat.
+		startTime: Date.UTC(2026, 3, 21, 10, 0, 0),
+		location: "Ljósið — Guðrúnartún 1",
+		notes: "Tími ekki staðfestur — leiðréttu ef nákvæmur tími kemur í ljós.",
+	},
+	{
+		title: "Blóðprufa og hjartalínurit",
+		// Fri 24 Apr 2026 13:00 UTC — LSH has flexible Friday hours; keeping it
+		// after the 09:15 Virkni og Vellíðan slot so they don't collide.
+		startTime: Date.UTC(2026, 3, 24, 13, 0, 0),
+		location: "LSH — Hringbraut eða Fossvogur",
+		notes:
+			"Sveigjanlegur opnunartími á föstudögum — hægt að fara þegar hentar.",
+	},
+	{
+		title: "Mælingar á hendi hjá Ingibjörgu",
+		// Mon 27 Apr 2026 10:00 UTC — time explicit in chat.
+		startTime: Date.UTC(2026, 3, 27, 10, 0, 0),
+		location: "Eirberg, Stórhöfða",
+	},
+	{
+		title: "Andhormónasprauta",
+		// Thu 7 May 2026 10:00 UTC — exact time not confirmed in the chat.
+		startTime: Date.UTC(2026, 4, 7, 10, 0, 0),
+		location: "Brjóstamiðstöð Landspítala — Eiríksgata 5",
+		notes:
+			"Á 2ja vikna fresti. Stefnt er að því að heimahjúkrun taki við þessum sprautum þegar vottorðið er komið í gegn. Tími ekki staðfestur.",
+	},
+];
+
+export const runApril2026Additions = internalMutation({
+	args: { userId: v.optional(v.id("users")) },
+	handler: async (ctx, args) => {
+		let userId: Id<"users">;
+		if (args.userId) {
+			const user = await ctx.db.get(args.userId);
+			if (!user) {
+				throw new ConvexError(`Notandi með ID ${args.userId} fannst ekki.`);
+			}
+			userId = user._id;
+		} else {
+			const firstUser = await ctx.db.query("users").first();
+			if (!firstUser) {
+				throw new ConvexError(
+					"Enginn notandi til. Skráðu þig inn í gegnum /login fyrst og keyrðu svo aftur.",
+				);
+			}
+			userId = firstUser._id;
+		}
+
+		// Idempotency: the first log entry's content is a stable marker.
+		// If it's already in the DB, skip the whole import.
+		const marker = LOG_ENTRIES_APRIL_2026[0];
+		const existingMarker = await ctx.db
+			.query("logEntries")
+			.filter((q) => q.eq(q.field("content"), marker))
+			.first();
+		if (existingMarker) {
+			return {
+				seeded: false,
+				reason: "April 2026 gögn þegar til staðar — sleppi imporrti.",
+			};
+		}
+
+		const now = Date.now();
+
+		for (const content of LOG_ENTRIES_APRIL_2026) {
+			await ctx.db.insert("logEntries", { content, authorId: userId });
+		}
+
+		for (const appt of APPOINTMENTS_APRIL_2026) {
+			await ctx.db.insert("appointments", {
+				title: appt.title,
+				startTime: appt.startTime,
+				location: appt.location,
+				notes: appt.notes,
+				status: "upcoming",
+				createdBy: userId,
+				updatedAt: now,
+				updatedBy: userId,
+			});
+		}
+
+		// Virkni og Vellíðan — Tue + Fri 09:15 Iceland time. createSeries helper
+		// would also call ensureNextOccurrence, but the helper is a public
+		// mutation (not callable from another mutation). Insert directly, then
+		// spawn via the shared helper.
+		const virkniId = await ctx.db.insert("recurringSeries", {
+			title: "Virkni og Vellíðan",
+			location: "Fífan, Kópavogi",
+			notes:
+				"Helga og Sigga skráðar. Starfið hefur legið niðri eftir fall — stefnt á endurkomu föstudaginn 24. apríl.",
+			daysOfWeek: [2, 5],
+			timeOfDay: "09:15",
+			isActive: true,
+			createdBy: userId,
+			updatedAt: now,
+			updatedBy: userId,
+		});
+		await ensureNextOccurrence(ctx, virkniId);
+
+		return {
+			seeded: true,
+			logEntries: LOG_ENTRIES_APRIL_2026.length,
+			appointments: APPOINTMENTS_APRIL_2026.length,
+			recurringSeries: 1,
 		};
 	},
 });
