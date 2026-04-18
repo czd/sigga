@@ -33,6 +33,9 @@
 		"paperwork": "Paperwork",
 		"attention": {
 			"badge": "{count, plural, one {1 item needs attention} other {# items need attention}}"
+		},
+		"miniCal": {
+			"today": "Today"
 		}
 	},
 	"dashboard": {

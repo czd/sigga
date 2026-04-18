@@ -20,6 +20,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { isActiveRoute, type NavItem, PRIMARY_ITEMS } from "./navItems";
 import { SidebarAttentionBadge } from "./SidebarAttentionBadge";
+import { SidebarWeekCalendar } from "./SidebarWeekCalendar";
 
 const LABEL_TO_COUNT_KEY: Record<
 	NavItem["labelKey"],
@@ -104,6 +105,8 @@ export function Sidebar() {
 					})}
 				</ul>
 			</nav>
+
+			<SidebarWeekCalendar />
 
 			<div className="mt-auto px-3 pb-6">
 				<DropdownMenu>

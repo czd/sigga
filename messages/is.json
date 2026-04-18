@@ -33,6 +33,9 @@
 		"paperwork": "Pappírar",
 		"attention": {
 			"badge": "{count, plural, one {1 atriði þarfnast athygli} other {# atriði þarfnast athygli}}"
+		},
+		"miniCal": {
+			"today": "Í dag"
 		}
 	},
 	"dashboard": {
