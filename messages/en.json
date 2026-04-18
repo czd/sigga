@@ -111,6 +111,20 @@
 	},
 	"timar": {
 		"title": "Appointments",
+		"view": {
+			"week": "Week",
+			"list": "List"
+		},
+		"weekGrid": {
+			"prev": "Previous week",
+			"next": "Next week",
+			"drivers": "Drivers",
+			"dragHint": "Drag a name onto an appointment to assign a driver.",
+			"noAppointments": "No appointments this week."
+		},
+		"detail": {
+			"noSelection": "Select an appointment to view."
+		},
 		"new": "New appointment",
 		"createTitle": "New appointment",
 		"editTitle": "Edit appointment",

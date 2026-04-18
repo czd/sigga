@@ -112,6 +112,20 @@
 	"timar": {
 		"title": "Tímar",
 		"new": "Nýr tími",
+		"view": {
+			"week": "Vika",
+			"list": "Listi"
+		},
+		"weekGrid": {
+			"prev": "Fyrri vika",
+			"next": "Næsta vika",
+			"drivers": "Skutlarar",
+			"dragHint": "Dragðu nafn á tíma til að skipa skutlara.",
+			"noAppointments": "Engir tímar þessa viku."
+		},
+		"detail": {
+			"noSelection": "Veldu tíma til að skoða."
+		},
 		"createTitle": "Nýr tími",
 		"editTitle": "Breyta tíma",
 		"volunteer": "Ég get!",
