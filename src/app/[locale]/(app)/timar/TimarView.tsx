@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import type { Id } from "@/../convex/_generated/dataModel";
@@ -16,35 +16,49 @@ import { cn } from "@/lib/utils";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
+function updateSearchParams(patch: Record<string, string | null>) {
+	if (typeof window === "undefined") return;
+	const url = new URL(window.location.href);
+	for (const [k, v] of Object.entries(patch)) {
+		if (v === null) url.searchParams.delete(k);
+		else url.searchParams.set(k, v);
+	}
+	window.history.replaceState(null, "", url.toString());
+}
+
 export function TimarView() {
 	const t = useTranslations("timar");
 	const [createOpen, setCreateOpen] = useState(false);
 	const searchParams = useSearchParams();
-	const router = useRouter();
 
-	const activeId = searchParams.get("id") as Id<"appointments"> | null;
-	const view = (searchParams.get("view") as "week" | "list" | null) ?? "week";
+	// URL is read once for initial state (deep-link-friendly) and updated via
+	// native history on each change, so clicks stay local and don't trigger
+	// Next's RSC refresh.
+	const [activeId, setActiveId] = useState<Id<"appointments"> | null>(
+		(searchParams.get("id") as Id<"appointments"> | null) ?? null,
+	);
+	const [view, setView] = useState<"week" | "list">(
+		(searchParams.get("view") as "week" | "list" | null) ?? "week",
+	);
 
 	// Week offset relative to the current week; 0 = this week, -1 = last, 1 = next
 	const [weekOffset, setWeekOffset] = useState(0);
 	const weekStartMs = startOfWeek(new Date()).getTime() + weekOffset * WEEK_MS;
 
-	const updateQuery = useCallback(
-		(patch: Record<string, string | null>) => {
-			const next = new URLSearchParams(searchParams.toString());
-			for (const [k, v] of Object.entries(patch)) {
-				if (v === null) next.delete(k);
-				else next.set(k, v);
-			}
-			const qs = next.toString();
-			router.replace(qs ? `?${qs}` : "?", { scroll: false });
-		},
-		[router, searchParams],
-	);
+	const handleSelect = useCallback((id: Id<"appointments">) => {
+		setActiveId(id);
+		updateSearchParams({ id });
+	}, []);
 
-	const handleSelect = (id: Id<"appointments">) => {
-		updateQuery({ id });
-	};
+	const handleCloseDetail = useCallback(() => {
+		setActiveId(null);
+		updateSearchParams({ id: null });
+	}, []);
+
+	const handleViewChange = useCallback((next: "week" | "list") => {
+		setView(next);
+		updateSearchParams({ view: next === "week" ? null : next });
+	}, []);
 
 	const listPane = (
 		<div className="px-4 py-6 pb-28 xl:px-6 xl:pb-8 flex flex-col gap-6">
@@ -65,13 +79,10 @@ export function TimarView() {
 	const detailPane = (
 		<div className="xl:px-8 xl:py-8 flex flex-col gap-6">
 			<div className="flex items-center justify-end gap-2">
-				<ViewToggle
-					view={view}
-					onChange={(v) => updateQuery({ view: v === "week" ? null : v })}
-				/>
+				<ViewToggle view={view} onChange={handleViewChange} />
 			</div>
 			{activeId ? (
-				<TimarDetail id={activeId} onClose={() => updateQuery({ id: null })} />
+				<TimarDetail id={activeId} onClose={handleCloseDetail} />
 			) : view === "week" ? (
 				<WeekGrid
 					weekStartMs={weekStartMs}

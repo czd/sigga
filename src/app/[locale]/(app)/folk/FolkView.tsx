@@ -2,29 +2,33 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { ContactDetail } from "@/components/info/ContactDetail";
 import { ContactList } from "@/components/info/ContactList";
 import { EmergencyTiles } from "@/components/info/EmergencyTiles";
-import { usePathname, useRouter } from "@/i18n/navigation";
 
 export function FolkView() {
 	const t = useTranslations();
-	const router = useRouter();
-	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const activeId = searchParams.get("contact") as Id<"contacts"> | null;
 
-	const handleSelect = useCallback(
-		(id: Id<"contacts">) => {
-			const params = new URLSearchParams(searchParams.toString());
-			params.set("contact", id);
-			const qs = params.toString();
-			router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-		},
-		[pathname, router, searchParams],
+	// Local state mirrors the URL, but clicks update only local state + native
+	// history. That way selecting a contact doesn't trigger Next's RSC refresh
+	// (which flashed the whole page). The URL-as-initial-state read here covers
+	// deep-linking: a share-link like /folk?contact=abc still populates correctly
+	// on page load.
+	const [activeId, setActiveId] = useState<Id<"contacts"> | null>(
+		(searchParams.get("contact") as Id<"contacts"> | null) ?? null,
 	);
+
+	const handleSelect = useCallback((id: Id<"contacts">) => {
+		setActiveId(id);
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			url.searchParams.set("contact", id);
+			window.history.replaceState(null, "", url.toString());
+		}
+	}, []);
 
 	return (
 		<>

@@ -2,6 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -44,6 +45,27 @@ function weekNumber(d: Date): number {
 }
 
 export function WeekStrip() {
+	// Defer date-locale rendering to post-mount — server and client can produce
+	// different Intl.DateTimeFormat output (e.g. "apr" vs "Apr") and that
+	// trips the hydration check. Server renders an empty skeleton; the fully-
+	// formatted strip appears a few ms after mount.
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+	if (!mounted) {
+		return (
+			<section
+				aria-labelledby="week-strip-heading"
+				className="grid grid-cols-7 gap-2 min-h-32"
+				aria-hidden
+			/>
+		);
+	}
+	return <WeekStripContent />;
+}
+
+function WeekStripContent() {
 	const locale = useLocale();
 	const t = useTranslations("dashboard.weekStrip");
 	const now = new Date();

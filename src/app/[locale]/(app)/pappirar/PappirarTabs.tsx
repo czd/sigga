@@ -3,14 +3,13 @@
 import { useQuery } from "convex/react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { DocumentDetail } from "@/components/info/DocumentDetail";
 import { DocumentList } from "@/components/info/DocumentList";
 import { EntitlementKanban } from "@/components/info/EntitlementKanban";
 import { EntitlementList } from "@/components/info/EntitlementList";
-import { usePathname, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 const TAB_VALUES = ["rettindi", "skjol"] as const;
@@ -21,32 +20,40 @@ function isTabValue(value: string | null): value is TabValue {
 	return value !== null && (TAB_VALUES as readonly string[]).includes(value);
 }
 
+function updateSearchParams(patch: Record<string, string | null>) {
+	if (typeof window === "undefined") return;
+	const url = new URL(window.location.href);
+	for (const [k, v] of Object.entries(patch)) {
+		if (v === null) url.searchParams.delete(k);
+		else url.searchParams.set(k, v);
+	}
+	window.history.replaceState(null, "", url.toString());
+}
+
 export function PappirarTabs() {
 	const t = useTranslations("pappirar");
-	const router = useRouter();
-	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
 	const rawTab = searchParams.get("tab");
-	const tab: TabValue = isTabValue(rawTab) ? rawTab : DEFAULT_TAB;
-	const activeDocId = searchParams.get("doc") as Id<"documents"> | null;
-
-	const handleDocSelect = useCallback(
-		(id: Id<"documents">) => {
-			const params = new URLSearchParams(searchParams.toString());
-			params.set("doc", id);
-			const qs = params.toString();
-			router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-		},
-		[pathname, router, searchParams],
+	// Local state for the controls that change often on desktop — avoids RSC
+	// refresh per click. URL is still the source of truth for deep-linking
+	// (useState initializer reads it on mount) and updated via native history.
+	const [tab, setTab] = useState<TabValue>(
+		isTabValue(rawTab) ? rawTab : DEFAULT_TAB,
+	);
+	const [activeDocId, setActiveDocId] = useState<Id<"documents"> | null>(
+		(searchParams.get("doc") as Id<"documents"> | null) ?? null,
 	);
 
+	const handleDocSelect = useCallback((id: Id<"documents">) => {
+		setActiveDocId(id);
+		updateSearchParams({ doc: id });
+	}, []);
+
 	const handleDocClear = useCallback(() => {
-		const params = new URLSearchParams(searchParams.toString());
-		params.delete("doc");
-		const qs = params.toString();
-		router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-	}, [pathname, router, searchParams]);
+		setActiveDocId(null);
+		updateSearchParams({ doc: null });
+	}, []);
 
 	const entitlements = useQuery(api.entitlements.list, {});
 	const documents = useQuery(api.documents.list, {});
@@ -60,20 +67,11 @@ export function PappirarTabs() {
 	const entitlementsTotal = entitlementCount ?? 0;
 	const entitlementsInProgress = entitlementsTotal - (entitlementsDone ?? 0);
 
-	const handleChange = useCallback(
-		(next: string) => {
-			if (!isTabValue(next)) return;
-			const params = new URLSearchParams(searchParams.toString());
-			if (next === DEFAULT_TAB) {
-				params.delete("tab");
-			} else {
-				params.set("tab", next);
-			}
-			const qs = params.toString();
-			router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-		},
-		[pathname, router, searchParams],
-	);
+	const handleChange = useCallback((next: string) => {
+		if (!isTabValue(next)) return;
+		setTab(next);
+		updateSearchParams({ tab: next === DEFAULT_TAB ? null : next });
+	}, []);
 
 	let headline: string;
 	if (tab === "skjol") {
