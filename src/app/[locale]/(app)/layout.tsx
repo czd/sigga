@@ -17,8 +17,8 @@ export default async function AppLayout({
 		<>
 			<Sidebar />
 			<Header />
-			<main className="flex-1 pb-32 lg:pb-12 lg:pl-[248px]">
-				<div className="lg:pl-24">{children}</div>
+			<main className="flex-1 pb-32 md:pb-12 md:pl-[248px]">
+				<div className="md:pl-24">{children}</div>
 			</main>
 			<BottomNav />
 		</>

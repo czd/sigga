@@ -122,3 +122,11 @@ export const remove = mutation({
 		await ctx.db.delete(args.id);
 	},
 });
+
+export const get = query({
+	args: { id: v.id("contacts") },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx);
+		return await ctx.db.get(args.id);
+	},
+});

@@ -1,37 +1,49 @@
 "use client";
 
+import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
+import { api } from "@/../convex/_generated/api";
 import { BookIcon } from "@/components/shared/BookIcon";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { isActiveRoute, type NavItem, PRIMARY_ITEMS } from "./navItems";
+import { SidebarAttentionBadge } from "./SidebarAttentionBadge";
 
-type IconKind = "today" | "care" | "people" | "docs";
-
-type NavItem = {
-	href: "/" | "/umonnun" | "/folk" | "/pappirar";
-	labelKey: "dashboard" | "care" | "people" | "paperwork";
-	icon: IconKind;
+const LABEL_TO_COUNT_KEY: Record<
+	NavItem["labelKey"],
+	"dashboard" | "care" | "paperwork" | null
+> = {
+	dashboard: "dashboard",
+	care: "care",
+	people: null,
+	paperwork: "paperwork",
+	appointments: null,
 };
 
-const ITEMS: NavItem[] = [
-	{ href: "/", labelKey: "dashboard", icon: "today" },
-	{ href: "/umonnun", labelKey: "care", icon: "care" },
-	{ href: "/folk", labelKey: "people", icon: "people" },
-	{ href: "/pappirar", labelKey: "paperwork", icon: "docs" },
-];
-
-function isActive(pathname: string, href: NavItem["href"]): boolean {
-	if (href === "/") return pathname === "/";
-	return pathname === href || pathname.startsWith(`${href}/`);
+function lastVisitCursor(userId: string | undefined): number {
+	if (!userId || typeof window === "undefined") {
+		return Date.now() - 3 * 24 * 60 * 60 * 1000;
+	}
+	const stored = window.localStorage.getItem(`sigga.lastVisit.${userId}`);
+	if (!stored) return Date.now() - 3 * 24 * 60 * 60 * 1000;
+	const parsed = Number.parseInt(stored, 10);
+	return Number.isFinite(parsed)
+		? parsed
+		: Date.now() - 3 * 24 * 60 * 60 * 1000;
 }
 
 export function BottomNav() {
 	const t = useTranslations("nav");
 	const pathname = usePathname();
+	const me = useQuery(api.users.me);
+	const counts = useQuery(api.users.attentionCounts);
+	const cursorMs = useMemo(() => lastVisitCursor(me?._id), [me?._id]);
+	const careCount = useQuery(api.activity.unreadLogCount, { cursorMs });
 
 	return (
 		<nav
-			className="fixed bottom-0 inset-x-0 z-30 pt-6 pb-5 pointer-events-none lg:hidden"
+			className="fixed bottom-0 inset-x-0 z-30 pt-6 pb-5 pointer-events-none md:hidden"
 			style={{
 				paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
 				background:
@@ -41,15 +53,22 @@ export function BottomNav() {
 			}}
 		>
 			<ul className="flex items-end justify-around pointer-events-auto font-sans">
-				{ITEMS.map(({ href, labelKey, icon }) => {
-					const active = isActive(pathname, href);
+				{PRIMARY_ITEMS.map(({ href, labelKey, icon }) => {
+					const active = isActiveRoute(pathname, href);
+					const countKey = LABEL_TO_COUNT_KEY[labelKey];
+					const count =
+						countKey === "care"
+							? (careCount ?? 0)
+							: countKey && counts
+								? counts[countKey]
+								: 0;
 					return (
 						<li key={href} className="flex-1">
 							<Link
 								href={href}
 								aria-current={active ? "page" : undefined}
 								className={cn(
-									"flex flex-col items-center justify-center gap-1.5 min-h-16 px-2 py-2 transition-colors",
+									"relative flex flex-col items-center justify-center gap-1.5 min-h-16 px-2 py-2 transition-colors",
 									active ? "text-sage-shadow" : "text-ink-faint",
 								)}
 							>
@@ -67,6 +86,7 @@ export function BottomNav() {
 								>
 									{t(labelKey)}
 								</span>
+								<SidebarAttentionBadge count={count} compact />
 							</Link>
 						</li>
 					);

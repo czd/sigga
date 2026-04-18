@@ -8,6 +8,9 @@ import { AttentionCard } from "@/components/dashboard/AttentionCard";
 import { DrivingCta } from "@/components/dashboard/DrivingCta";
 import { NextAppointments } from "@/components/dashboard/NextAppointments";
 import { RecentLog } from "@/components/dashboard/RecentLog";
+import { SinceLastVisit } from "@/components/dashboard/SinceLastVisit";
+import { WeekStrip } from "@/components/dashboard/WeekStrip";
+import { StackLayout } from "@/components/layout/StackLayout";
 import { formatAbsolute } from "@/lib/formatDate";
 
 const URGENT_PATTERN = /br[ýy]nt/i;
@@ -63,7 +66,7 @@ export default function DashboardPage() {
 		}));
 
 	return (
-		<div className="px-6 pt-8 pb-10 flex flex-col gap-8 lg:max-w-[704px]">
+		<StackLayout xlMaxWidth="xl:max-w-[1400px]" className="pt-8 pb-10 gap-8">
 			<header className="flex flex-col gap-3">
 				<div
 					className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
@@ -83,22 +86,52 @@ export default function DashboardPage() {
 				</h2>
 			</header>
 
-			<AttentionCard items={attention} />
+			{/* Mobile + tablet: the shipped single-column dashboard */}
+			<div className="xl:hidden flex flex-col gap-8">
+				<AttentionCard items={attention} />
+				{unassigned ? (
+					<DrivingCta
+						appointment={{
+							_id: unassigned._id,
+							title: unassigned.title,
+							startTime: unassigned.startTime,
+							location: unassigned.location,
+						}}
+					/>
+				) : null}
+				<NextAppointments appointments={appointments?.slice(0, 3)} />
+				<RecentLog entry={latestEntry} />
+			</div>
 
-			{unassigned ? (
-				<DrivingCta
-					appointment={{
-						_id: unassigned._id,
-						title: unassigned.title,
-						startTime: unassigned.startTime,
-						location: unassigned.location,
-					}}
-				/>
-			) : null}
-
-			<NextAppointments appointments={appointments?.slice(0, 3)} />
-
-			<RecentLog entry={latestEntry} />
-		</div>
+			{/* Desktop xl:+ : the Command Post layout */}
+			<div className="hidden xl:flex flex-col gap-8">
+				<WeekStrip />
+				<div className="grid grid-cols-[1fr_minmax(320px,400px)] gap-8">
+					<SinceLastVisit />
+					<aside
+						aria-labelledby="attention-column-heading"
+						className="flex flex-col gap-4"
+					>
+						<h2
+							id="attention-column-heading"
+							className="font-serif text-[1.4rem] text-ink font-normal tracking-tight"
+						>
+							{t("dashboard.attentionColumn.title")}
+						</h2>
+						<AttentionCard items={attention} />
+						{unassigned ? (
+							<DrivingCta
+								appointment={{
+									_id: unassigned._id,
+									title: unassigned.title,
+									startTime: unassigned.startTime,
+									location: unassigned.location,
+								}}
+							/>
+						) : null}
+					</aside>
+				</div>
+			</div>
+		</StackLayout>
 	);
 }

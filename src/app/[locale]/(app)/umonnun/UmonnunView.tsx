@@ -1,10 +1,14 @@
 "use client";
 
 import { Pencil } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import type { Id } from "@/../convex/_generated/dataModel";
 import { MedicationTable } from "@/components/info/MedicationTable";
+import { LogComposer } from "@/components/log/LogComposer";
 import { LogEntryForm } from "@/components/log/LogEntryForm";
+import { LogEntryReader } from "@/components/log/LogEntryReader";
 import { LogFeed } from "@/components/log/LogFeed";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,10 +16,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export function UmonnunView() {
 	const t = useTranslations();
 	const [createOpen, setCreateOpen] = useState(false);
+	const searchParams = useSearchParams();
+	const activeId = searchParams.get("id") as Id<"logEntries"> | null;
 
 	return (
 		<>
-			<div className="px-6 pt-4 pb-28 flex flex-col gap-6">
+			<div className="px-6 pt-4 pb-28 xl:pb-8 flex flex-col gap-6">
 				<header className="flex flex-col gap-2">
 					<div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-faint">
 						{t("umonnun.title")}
@@ -26,7 +32,7 @@ export function UmonnunView() {
 				</header>
 
 				<Tabs defaultValue="dagbok" className="gap-6">
-					<TabsList className="h-12 w-full">
+					<TabsList className="h-12 w-full xl:w-auto xl:self-start">
 						<TabsTrigger
 							value="dagbok"
 							className="h-full text-base font-medium"
@@ -39,15 +45,35 @@ export function UmonnunView() {
 					</TabsList>
 
 					<TabsContent value="dagbok" className="flex flex-col gap-4">
-						<Button
-							size="touch"
-							onClick={() => setCreateOpen(true)}
-							className="w-full"
-						>
-							<Pencil aria-hidden />
-							<span>{t("dagbok.write")}</span>
-						</Button>
-						<LogFeed />
+						{/* Mobile + tablet: unchanged */}
+						<div className="xl:hidden flex flex-col gap-4">
+							<Button
+								size="touch"
+								onClick={() => setCreateOpen(true)}
+								className="w-full"
+							>
+								<Pencil aria-hidden />
+								<span>{t("dagbok.write")}</span>
+							</Button>
+							<LogFeed />
+						</div>
+
+						{/* Desktop xl:+: two-pane */}
+						<div className="hidden xl:grid xl:grid-cols-[minmax(380px,1fr)_1.3fr] xl:gap-8">
+							<div className="min-w-0">
+								<LogFeed />
+							</div>
+							<aside className="flex flex-col gap-6 min-w-0">
+								<LogComposer />
+								{activeId ? (
+									<LogEntryReader id={activeId} />
+								) : (
+									<p className="text-ink-faint border-t border-divider pt-4">
+										{t("dagbok.detail.noSelection")}
+									</p>
+								)}
+							</aside>
+						</div>
 					</TabsContent>
 
 					<TabsContent value="lyf">

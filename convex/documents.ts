@@ -120,3 +120,17 @@ export const abandonUpload = mutation({
 		await ctx.storage.delete(args.storageId);
 	},
 });
+
+export const get = query({
+	args: { id: v.id("documents") },
+	handler: async (ctx, args): Promise<DocumentWithMeta | null> => {
+		await requireAuth(ctx);
+		const row = await ctx.db.get(args.id);
+		if (!row) return null;
+		const [url, addedByUser] = await Promise.all([
+			ctx.storage.getUrl(row.storageId),
+			resolveUser(ctx, row.addedBy),
+		]);
+		return { ...row, url, addedByUser };
+	},
+});

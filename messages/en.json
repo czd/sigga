@@ -30,12 +30,36 @@
 		"dashboard": "Today",
 		"care": "Care",
 		"people": "People",
-		"paperwork": "Paperwork"
+		"paperwork": "Paperwork",
+		"appointments": "Appointments",
+		"attention": {
+			"badge": "{count, plural, one {1 item needs attention} other {# items need attention}}"
+		},
+		"miniCal": {
+			"today": "Today"
+		}
 	},
 	"dashboard": {
 		"title": "Today",
 		"greeting": "Good morning, <em>{name}</em>.",
 		"greetingPlain": "Good morning.",
+		"weekStrip": {
+			"title": "Week {week} · {dateRange}",
+			"more": "+{count} more"
+		},
+		"sinceLastVisit": {
+			"title": "Since last visit",
+			"empty": "Nothing new since your last visit.",
+			"showOlder": "Show older",
+			"log": "{name} wrote a log entry",
+			"appointment": "New appointment: {title}",
+			"document": "{name} added a document: {fileName}",
+			"entitlementStatus": "Benefit '{title}' updated to {newStatus}"
+		},
+		"attentionColumn": {
+			"title": "Needs attention",
+			"noDriver": "No driver for this day"
+		},
 		"drivingCta": {
 			"eyebrow": "Needs a driver",
 			"volunteer": "I can drive"
@@ -70,6 +94,15 @@
 	},
 	"dagbok": {
 		"title": "Log",
+		"composer": {
+			"placeholder": "What happened?",
+			"submit": "Send",
+			"submitHint": "⌘+Enter",
+			"draftSaved": "Draft saved"
+		},
+		"detail": {
+			"noSelection": "Select an entry to read or write a new one above."
+		},
 		"write": "Write",
 		"empty": "No log entries yet",
 		"emptyHint": "Start by writing the first entry.",
@@ -88,6 +121,20 @@
 	},
 	"timar": {
 		"title": "Appointments",
+		"view": {
+			"week": "Week",
+			"list": "List"
+		},
+		"weekGrid": {
+			"prev": "Previous week",
+			"next": "Next week",
+			"drivers": "Drivers",
+			"dragHint": "Drag a name onto an appointment to assign a driver.",
+			"noAppointments": "No appointments this week."
+		},
+		"detail": {
+			"noSelection": "Select an appointment to view."
+		},
 		"new": "New appointment",
 		"createTitle": "New appointment",
 		"editTitle": "Edit appointment",
@@ -194,7 +241,8 @@
 		"subtitle": "Phone, doctors, services.",
 		"headline": "Who to call, who picks up.",
 		"emergencyLabel": "Emergency",
-		"afterHours": "after hours"
+		"afterHours": "after hours",
+		"selectHint": "Select a contact to view."
 	},
 	"pappirar": {
 		"title": "Paperwork",
@@ -205,6 +253,7 @@
 			"skjol": "Documents on file.",
 			"skjolEmpty": "No documents yet."
 		},
+		"skjolEmptyPane": "Select a document to view.",
 		"tabs": {
 			"rettindi": "Entitlements",
 			"skjol": "Documents"

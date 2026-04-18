@@ -242,3 +242,21 @@ export const volunteerToDrive = mutation({
 		});
 	},
 });
+
+export const byWeek = query({
+	args: { weekStartMs: v.number() },
+	handler: async (ctx, args): Promise<AppointmentWithDriver[]> => {
+		await requireAuth(ctx);
+		const weekEndMs = args.weekStartMs + 7 * 24 * 60 * 60 * 1000;
+		const rows = await ctx.db
+			.query("appointments")
+			.withIndex("by_status_and_startTime", (q) =>
+				q.eq("status", "upcoming").gte("startTime", args.weekStartMs),
+			)
+			.collect();
+		const inWeek = rows
+			.filter((r) => r.startTime < weekEndMs)
+			.sort((a, b) => a.startTime - b.startTime);
+		return Promise.all(inWeek.map((row) => withDriver(ctx, row)));
+	},
+});

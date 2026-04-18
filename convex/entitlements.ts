@@ -177,3 +177,11 @@ export const claim = mutation({
 		});
 	},
 });
+
+export const get = query({
+	args: { id: v.id("entitlements") },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx);
+		return await ctx.db.get(args.id);
+	},
+});

@@ -82,6 +82,8 @@
 	--color-divider: var(--divider);
 	--color-divider-strong: var(--divider-strong);
 
+	--text-body-dense: 16px;
+
 	--color-page: var(--page);
 	--color-paper: var(--paper);
 	--color-paper-deep: var(--paper-deep);

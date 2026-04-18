@@ -30,12 +30,36 @@
 		"dashboard": "Í dag",
 		"care": "Umönnun",
 		"people": "Fólk",
-		"paperwork": "Pappírar"
+		"paperwork": "Pappírar",
+		"appointments": "Tímar",
+		"attention": {
+			"badge": "{count, plural, one {1 atriði þarfnast athygli} other {# atriði þarfnast athygli}}"
+		},
+		"miniCal": {
+			"today": "Í dag"
+		}
 	},
 	"dashboard": {
 		"title": "Í dag",
 		"greeting": "Góðan daginn, <em>{name}</em>.",
 		"greetingPlain": "Góðan daginn.",
+		"weekStrip": {
+			"title": "Vika {week} · {dateRange}",
+			"more": "+{count} til viðbótar"
+		},
+		"sinceLastVisit": {
+			"title": "Síðan síðast",
+			"empty": "Ekkert nýtt frá síðustu heimsókn.",
+			"showOlder": "Sýna eldri",
+			"log": "{name} skrifaði færslu",
+			"appointment": "Nýr tími: {title}",
+			"document": "{name} bætti við skjali: {fileName}",
+			"entitlementStatus": "Réttindi '{title}' uppfærð í {newStatus}"
+		},
+		"attentionColumn": {
+			"title": "Þarf athygli",
+			"noDriver": "Enginn skutlar þennan dag"
+		},
 		"drivingCta": {
 			"eyebrow": "Vantar skutlara",
 			"volunteer": "Ég get skutlað"
@@ -71,6 +95,15 @@
 	"dagbok": {
 		"title": "Dagbók",
 		"write": "Skrifa",
+		"composer": {
+			"placeholder": "Hvað gerðist?",
+			"submit": "Senda",
+			"submitHint": "⌘+Enter",
+			"draftSaved": "Drög vistuð"
+		},
+		"detail": {
+			"noSelection": "Veldu færslu til að lesa eða skrifaðu nýja hér að ofan."
+		},
 		"empty": "Engar færslur í dagbók ennþá",
 		"emptyHint": "Byrjaðu á að skrifa fyrstu færsluna.",
 		"showOlder": "Sýna eldri",
@@ -89,6 +122,20 @@
 	"timar": {
 		"title": "Tímar",
 		"new": "Nýr tími",
+		"view": {
+			"week": "Vika",
+			"list": "Listi"
+		},
+		"weekGrid": {
+			"prev": "Fyrri vika",
+			"next": "Næsta vika",
+			"drivers": "Skutlarar",
+			"dragHint": "Dragðu nafn á tíma til að skipa skutlara.",
+			"noAppointments": "Engir tímar þessa viku."
+		},
+		"detail": {
+			"noSelection": "Veldu tíma til að skoða."
+		},
 		"createTitle": "Nýr tími",
 		"editTitle": "Breyta tíma",
 		"volunteer": "Ég get!",
@@ -194,7 +241,8 @@
 		"subtitle": "Sími, læknar, þjónusta.",
 		"headline": "Hver hringir, hver svarar.",
 		"emergencyLabel": "Neyð",
-		"afterHours": "utan dagvinnu"
+		"afterHours": "utan dagvinnu",
+		"selectHint": "Veldu manneskju til að skoða."
 	},
 	"pappirar": {
 		"title": "Pappírar",
@@ -205,6 +253,7 @@
 			"skjol": "Skjöl í safninu.",
 			"skjolEmpty": "Skjalasafnið er tómt."
 		},
+		"skjolEmptyPane": "Veldu skjal til að skoða.",
 		"tabs": {
 			"rettindi": "Réttindi",
 			"skjol": "Skjöl"

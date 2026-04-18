@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { StackLayout } from "@/components/layout/StackLayout";
 import { UmonnunView } from "./UmonnunView";
 
 export default async function UmonnunPage({
@@ -9,8 +10,8 @@ export default async function UmonnunPage({
 	const { locale } = await params;
 	setRequestLocale(locale);
 	return (
-		<div className="lg:max-w-[704px]">
+		<StackLayout>
 			<UmonnunView />
-		</div>
+		</StackLayout>
 	);
 }

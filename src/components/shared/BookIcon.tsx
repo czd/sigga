@@ -9,7 +9,8 @@ type IconKind =
 	| "plus"
 	| "chevron"
 	| "back"
-	| "sparkle";
+	| "sparkle"
+	| "time";
 
 type BookIconProps = {
 	kind: IconKind;
@@ -119,6 +120,13 @@ export function BookIcon({
 			return (
 				<svg {...svgProps} aria-hidden="true" strokeWidth={strokeWidth}>
 					<path d="M12 4v3M12 17v3M4 12h3M17 12h3M6.5 6.5l2 2M15.5 15.5l2 2M6.5 17.5l2-2M15.5 8.5l2-2" />
+				</svg>
+			);
+		case "time":
+			return (
+				<svg {...svgProps} aria-hidden="true" strokeWidth={strokeWidth}>
+					<circle cx="12" cy="12" r="9" />
+					<path d="M12 7v5l3 2" />
 				</svg>
 			);
 	}

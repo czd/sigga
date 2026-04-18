@@ -75,12 +75,14 @@ function ContactRow({
 	onToggle,
 	onEdit,
 	isLast,
+	active,
 }: {
 	contact: ContactDoc;
 	expanded: boolean;
 	onToggle: (id: Id<"contacts">) => void;
 	onEdit: (c: ContactDoc) => void;
 	isLast: boolean;
+	active?: boolean;
 }) {
 	const t = useTranslations("contacts");
 	const tCommon = useTranslations("common");
@@ -88,7 +90,12 @@ function ContactRow({
 	const detailsId = `contact-details-${contact._id}`;
 
 	return (
-		<li className={cn(!isLast && "border-b border-divider")}>
+		<li
+			className={cn(
+				!isLast && "border-b border-divider",
+				active && "bg-paper-deep/60",
+			)}
+		>
 			<div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3">
 				<button
 					type="button"
@@ -172,7 +179,16 @@ function ContactRow({
 	);
 }
 
-export function ContactList() {
+type ContactListProps = {
+	/**
+	 * When provided, clicking a contact calls this instead of toggling the
+	 * inline expanded details. Used by the desktop Fólk PaneLayout.
+	 */
+	onRowClick?: (id: Id<"contacts">) => void;
+	activeId?: Id<"contacts"> | null;
+};
+
+export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 	const t = useTranslations("contacts");
 	const tCommon = useTranslations("common");
 	const [createOpen, setCreateOpen] = useState(false);
@@ -284,10 +300,14 @@ export function ContactList() {
 										<ContactRow
 											key={c._id}
 											contact={c}
-											expanded={expandedId === c._id}
-											onToggle={toggleExpanded}
+											expanded={!onRowClick && expandedId === c._id}
+											onToggle={(id) => {
+												if (onRowClick) onRowClick(id);
+												else toggleExpanded(id);
+											}}
 											onEdit={setEditTarget}
 											isLast={i === rows.length - 1}
+											active={activeId === c._id}
 										/>
 									))}
 								</ul>
