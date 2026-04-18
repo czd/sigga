@@ -12,7 +12,7 @@ export function BottomNav() {
 
 	return (
 		<nav
-			className="fixed bottom-0 inset-x-0 z-30 pt-6 pb-5 pointer-events-none lg:hidden"
+			className="fixed bottom-0 inset-x-0 z-30 pt-6 pb-5 pointer-events-none md:hidden"
 			style={{
 				paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
 				background:

@@ -22,7 +22,7 @@ export function Header() {
 	const me = useQuery(api.users.me);
 
 	return (
-		<header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:hidden">
+		<header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
 			<div className="flex items-center justify-between px-6 pt-5 pb-2">
 				<h1 className="font-serif italic text-base font-normal text-ink-faint tracking-wide">
 					{t("app.name").toLowerCase()}

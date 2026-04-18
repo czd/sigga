@@ -31,7 +31,7 @@ export function Sidebar() {
 
 	return (
 		<aside
-			className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[248px] flex-col bg-page border-r border-divider"
+			className="hidden md:flex fixed inset-y-0 left-0 z-30 w-[248px] flex-col bg-page border-r border-divider"
 			aria-label={t("app.name")}
 		>
 			<div className="px-6 pt-7 pb-6">
