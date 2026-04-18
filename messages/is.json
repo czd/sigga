@@ -146,7 +146,11 @@
 		"detail": {
 			"noSelection": "Veldu tíma til að skoða.",
 			"paneLabel": "Tímaupplýsingar",
-			"close": "Loka tímaupplýsingum"
+			"close": "Loka tímaupplýsingum",
+			"recurring": "Reglulegur tími",
+			"virtualHint": "Þessi tími er úr reglulegum tíma — hann verður vistaður um leið og þú skutlar, breytir eða hættir við.",
+			"cancelledStatus": "Hætt við",
+			"cancel": "Hætta við þennan tíma"
 		},
 		"createTitle": "Nýr tími",
 		"editTitle": "Breyta tíma",

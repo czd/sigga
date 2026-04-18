@@ -145,7 +145,11 @@
 		"detail": {
 			"noSelection": "Select an appointment to view.",
 			"paneLabel": "Appointment details",
-			"close": "Close appointment details"
+			"close": "Close appointment details",
+			"recurring": "Recurring",
+			"virtualHint": "This occurrence comes from a recurring series — it'll be saved the moment you assign a driver, edit, or cancel it.",
+			"cancelledStatus": "Cancelled",
+			"cancel": "Cancel this occurrence"
 		},
 		"new": "New appointment",
 		"createTitle": "New appointment",

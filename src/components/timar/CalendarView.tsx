@@ -4,14 +4,13 @@ import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
-import type { Id } from "@/../convex/_generated/dataModel";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 import { AppointmentList } from "@/components/appointments/AppointmentList";
 import { ClientOnly } from "@/components/shared/ClientOnly";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { MonthGrid } from "./MonthGrid";
+import { MonthGrid, type RangeRow } from "./MonthGrid";
 import { TimarDetail } from "./TimarDetail";
 import { startOfWeek, WeekGrid } from "./WeekGrid";
 
@@ -46,20 +45,18 @@ export function CalendarView() {
 	})();
 
 	const [view, setView] = useState<ViewMode>(initialView);
-	const [activeId, setActiveId] = useState<Id<"appointments"> | null>(
-		(searchParams.get("id") as Id<"appointments"> | null) ?? null,
-	);
+	const [selected, setSelected] = useState<RangeRow | null>(null);
 	const [monthOffset, setMonthOffset] = useState(0);
 	const [weekOffset, setWeekOffset] = useState(0);
 	const [createOpen, setCreateOpen] = useState(false);
 
-	const handleSelect = useCallback((id: Id<"appointments">) => {
-		setActiveId(id);
-		updateSearchParams({ id });
+	const handleSelect = useCallback((appointment: RangeRow) => {
+		setSelected(appointment);
+		updateSearchParams({ id: appointment._id });
 	}, []);
 
 	const handleCloseDetail = useCallback(() => {
-		setActiveId(null);
+		setSelected(null);
 		updateSearchParams({ id: null });
 	}, []);
 
@@ -93,7 +90,8 @@ export function CalendarView() {
 	const navLabel =
 		view === "month" ? monthLabel : view === "week" ? weekLabel : null;
 
-	const showDetail = activeId !== null;
+	const showDetail = selected !== null;
+	const activeId = selected?._id ?? null;
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -164,7 +162,7 @@ export function CalendarView() {
 							<MonthGrid
 								monthStartMs={monthStart.getTime()}
 								activeId={activeId}
-								onSelectAppointment={handleSelect}
+								onSelect={handleSelect}
 								compact={showDetail}
 							/>
 						</ClientOnly>
@@ -183,7 +181,7 @@ export function CalendarView() {
 					)}
 				</div>
 
-				{showDetail && activeId ? (
+				{showDetail && selected ? (
 					<aside
 						aria-label={t("detail.paneLabel")}
 						className="bg-paper rounded-2xl ring-1 ring-foreground/10 p-5 min-w-0"
@@ -198,7 +196,10 @@ export function CalendarView() {
 								<X aria-hidden />
 							</Button>
 						</div>
-						<TimarDetail id={activeId} />
+						<TimarDetail
+							appointment={selected}
+							onMaterialized={(row) => setSelected(row)}
+						/>
 					</aside>
 				) : null}
 			</div>
