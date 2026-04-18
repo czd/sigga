@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
+		"build": "if [ -n \"$CONVEX_DEPLOY_KEY\" ]; then convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build'; else next build; fi",
 		"start": "next start",
 		"lint": "biome check",
 		"lint:fix": "biome check --write",
