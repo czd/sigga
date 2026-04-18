@@ -18,26 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-
-type IconKind = "today" | "care" | "people" | "docs";
-
-type NavItem = {
-	href: "/" | "/umonnun" | "/folk" | "/pappirar";
-	labelKey: "dashboard" | "care" | "people" | "paperwork";
-	icon: IconKind;
-};
-
-const ITEMS: NavItem[] = [
-	{ href: "/", labelKey: "dashboard", icon: "today" },
-	{ href: "/umonnun", labelKey: "care", icon: "care" },
-	{ href: "/folk", labelKey: "people", icon: "people" },
-	{ href: "/pappirar", labelKey: "paperwork", icon: "docs" },
-];
-
-function isActive(pathname: string, href: NavItem["href"]): boolean {
-	if (href === "/") return pathname === "/";
-	return pathname === href || pathname.startsWith(`${href}/`);
-}
+import { isActiveRoute, PRIMARY_ITEMS } from "./navItems";
 
 export function Sidebar() {
 	const t = useTranslations();
@@ -61,8 +42,8 @@ export function Sidebar() {
 
 			<nav className="flex-1 flex flex-col gap-1 px-3 font-sans">
 				<ul className="flex flex-col gap-1">
-					{ITEMS.map(({ href, labelKey, icon }) => {
-						const active = isActive(pathname, href);
+					{PRIMARY_ITEMS.map(({ href, labelKey, icon }) => {
+						const active = isActiveRoute(pathname, href);
 						return (
 							<li key={href}>
 								<Link
