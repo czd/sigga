@@ -63,7 +63,7 @@ export default function DashboardPage() {
 		}));
 
 	return (
-		<div className="px-6 pt-8 pb-10 flex flex-col gap-8">
+		<div className="px-6 pt-8 pb-10 flex flex-col gap-8 lg:max-w-[704px]">
 			<header className="flex flex-col gap-3">
 				<div
 					className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"

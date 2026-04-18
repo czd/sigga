@@ -21,11 +21,18 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 
 ## Current Repo State
 
-**Fresh `create-next-app` scaffold — Phase 0 of the implementation plan is not yet started.** The final project structure described in the spec (`src/app/[locale]/...`, `convex/`, `messages/`, `proxy.ts`, etc.) does not exist yet. What's here now:
+**Built out through Phase 12 + Phase 8.5 (recurring appointments).** The scaffold, auth, i18n, schema/seed, app shell, dashboard, Dagbók, Tímar (incl. recurring series), and all four Upplýsingar sub-pages (Lyf, Símaskrá, Réttindi, Skjöl) are shipped. Remaining phases: 13 (PWA config), 14 (backup cron — `convex/crons.ts` exists, cron handler in `convex/backup.ts` still to wire up), 15 (polish), 16 (tests), 17 (deploy & onboard). Consult `docs/implementation-plan.md` for the authoritative phase-by-phase status.
 
-- `app/layout.tsx`, `app/page.tsx` — default create-next-app boilerplate, to be replaced by `src/app/[locale]/...`
-- `next.config.ts`, `tsconfig.json` (path alias `@/*`), `eslint.config.mjs`
-- No Convex, no next-intl, no shadcn/ui installed yet
+What's in the tree now (high level):
+
+- `src/app/[locale]/(app)/{page,umonnun,folk,pappirar,timar}/page.tsx` — the five top-level tab routes (Dashboard, Umönnun/Dagbók, Fólk, Pappírar, Tímar). Note: four originally-separate "upplýsingar" sub-pages (Lyf, Símaskrá, Réttindi, Skjöl) were consolidated into tabs inside Umönnun / Fólk / Pappírar — there is no `upplysingar` route.
+- `src/app/[locale]/(app)/timar/reglulegir/` — recurring-series management (Phase 8.5).
+- `src/app/[locale]/login/` — public sign-in.
+- `convex/` — `schema.ts`, `auth.ts`, `auth.config.ts`, `http.ts`, plus per-table modules: `appointments.ts`, `contacts.ts`, `documents.ts`, `entitlements.ts`, `logEntries.ts`, `medications.ts`, `recurringSeries.ts`, `users.ts`, `seed.ts`, `crons.ts`.
+- `src/components/{appointments,dashboard,info,log,nav,recurringSeries,shared,timar,ui}/` — feature folders plus shadcn primitives under `ui/`.
+- `messages/{is,en}.json`, `src/i18n/`, `src/proxy.ts` — i18n + auth middleware wired together.
+- `src/app/globals.css` — Bókasafn palette tokens (paper/ink/sage/wheat/amber) declared inline via Tailwind v4 `@theme`. There is no `tailwind.config.ts`.
+- `biome.json` — Biome is the linter/formatter; ESLint was removed in Phase 0.
 
 ## Stack
 
@@ -33,7 +40,7 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 - **Convex** — backend, DB, real-time subscriptions, file storage, scheduled functions. Single source of truth for data.
 - **Convex Auth** (`@convex-dev/auth`) with Google OAuth. Whitelist enforced server-side via `ALLOWED_EMAILS` env var — no invite system.
 - **next-intl** for i18n. `is` default (no prefix), `en` at `/en/...`. Auth redirect + locale routing both live in `proxy.ts`.
-- **shadcn/ui + Tailwind CSS 4**, mobile-first. **No `tailwind.config.ts|js`** — v4 declares tokens inline in CSS via `@theme inline { --color-... }` in `src/app/globals.css`; that's where the warm palette lives. 48px min tap targets (56px+ preferred), 18px min body text, warm palette (cream backgrounds, sage/teal accent), Lucide icons always paired with text labels.
+- **shadcn/ui + Tailwind CSS 4**, mobile-first. **No `tailwind.config.ts|js`** — v4 declares tokens inline in CSS via `@theme inline { --color-... }` in `src/app/globals.css`; that's where the **Bókasafn palette** lives (paper/ink/sage/wheat/amber — paper cream backgrounds, muted sage accent, wheat/amber surfaces for callouts). 48px min tap targets (56px+ preferred), 18px min body text, Lucide icons always paired with text labels. When you need a border color token (e.g. `border-divider`), make sure the corresponding `--color-divider*` is registered in `@theme inline` — otherwise the Tailwind class silently no-ops.
 - **Bun** package manager. **Vercel** hosting — deploys are triggered by pushing to `main` on GitHub. **Never run `vercel deploy`, `vercel --prod`, or any Vercel MCP deploy tool from local.** The `main` branch on GitHub is the source of truth for what's in production; preview deployments for other branches happen automatically.
 - **Vitest** for unit/integration, **Playwright** for e2e at 375×812 viewport.
 
@@ -41,20 +48,23 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 
 ```bash
 bun install
-bun dev           # next dev (Turbopack)
-bun run build     # next build
-bun start         # next start
-bun run lint      # eslint
+bun dev            # next dev (Turbopack)
+bun run build      # next build (Vercel CI also runs `convex deploy` when CONVEX_DEPLOY_KEY is set)
+bun start          # next start
+bun run lint       # biome check
+bun run lint:fix   # biome check --write
+bun run format     # biome format --write
+bunx tsc --noEmit  # typecheck
 
-# Once Convex is added (Phase 0):
+# Convex
 npx convex dev     # dev backend, auto-writes CONVEX_DEPLOYMENT + NEXT_PUBLIC_CONVEX_URL to .env.local
-npx convex deploy  # prod deploy
 npx convex env set <KEY> "<value>"
+# Do NOT run `npx convex deploy` locally — prod deploys happen from Vercel CI on push to main.
 ```
 
-## Architecture Notes (once built out)
+## Architecture Notes
 
-- **Routing**: Authenticated routes live under `src/app/[locale]/(app)/` (an `(app)` route group); public routes (`login`) live directly under `src/app/[locale]/`. The four tab routes are `(app)/{page,dagbok,timar,upplysingar}/page.tsx`. Bottom nav is fixed and always visible.
+- **Routing**: Authenticated routes live under `src/app/[locale]/(app)/` (an `(app)` route group); public routes (`login`) live directly under `src/app/[locale]/`. The five tab routes are `(app)/{page,umonnun,folk,pappirar,timar}/page.tsx` — Dashboard ("Í dag"), Umönnun (Dagbók + Lyf tabs), Fólk (Símaskrá), Pappírar (Réttindi + Skjöl), Tímar (with `timar/reglulegir/` for recurring-series management). Bottom nav is fixed and always visible.
 - **`src/proxy.ts` is load-bearing**: it combines next-intl locale routing with Convex Auth redirect-to-login. The two concerns must not conflict — adapt `convexAuthNextjsMiddleware` and `export default` the wrapped middleware.
 - **Convex function naming**: `[table].[action]` (e.g., `appointments.volunteerToDrive`, `logEntries.add`). **Every mutation AND every data-returning query** calls the module-local `requireAuth(ctx)` helper (which uses `getAuthUserId` from `@convex-dev/auth/server`) and throws `ConvexError("Ekki innskráður")` if null. `NEXT_PUBLIC_CONVEX_URL` ships in the client bundle, so anyone who inspects the JS can call `api.*.list` directly — only server-side auth enforces the `ALLOWED_EMAILS` whitelist. The one documented exception is `users.me`, which returns `null` for unauthenticated callers by design so the header can render a signed-out state. No roles in v1 — any authenticated family member can do anything, except log-entry editing which checks `authorId === currentUser`.
 - **Real-time by default**: all reads are Convex `useQuery` subscriptions. Two tabs open → mutation in one appears in the other without refresh. E2E tests explicitly cover this.

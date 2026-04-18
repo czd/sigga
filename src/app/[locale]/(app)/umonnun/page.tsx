@@ -8,5 +8,9 @@ export default async function UmonnunPage({
 }) {
 	const { locale } = await params;
 	setRequestLocale(locale);
-	return <UmonnunView />;
+	return (
+		<div className="lg:max-w-[704px]">
+			<UmonnunView />
+		</div>
+	);
 }
