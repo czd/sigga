@@ -70,13 +70,14 @@ function KanbanCard({
 	const owner = entitlement.ownerUser;
 
 	return (
-		<article
+		<button
+			type="button"
 			ref={setNodeRef}
 			{...attributes}
 			{...listeners}
-			onDoubleClick={() => onEdit(entitlement)}
+			onClick={() => onEdit(entitlement)}
 			className={cn(
-				"relative overflow-hidden rounded-2xl bg-paper ring-1 ring-foreground/10 p-4 flex flex-col gap-2 cursor-grab active:cursor-grabbing",
+				"text-left relative overflow-hidden rounded-2xl bg-paper ring-1 ring-foreground/10 p-4 flex flex-col gap-2 cursor-grab active:cursor-grabbing hover:ring-foreground/20 transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-sage-deep",
 				isDragging && !isOverlay && "opacity-30",
 				isOverlay && "shadow-lg ring-2 ring-sage-deep",
 				urgent &&
@@ -112,7 +113,7 @@ function KanbanCard({
 					</span>
 				</div>
 			) : null}
-		</article>
+		</button>
 	);
 }
 

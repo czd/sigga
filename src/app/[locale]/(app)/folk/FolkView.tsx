@@ -54,7 +54,11 @@ export function FolkView() {
 					{activeId ? (
 						<ContactDetail id={activeId} />
 					) : (
-						<p className="text-ink-faint">{t("folk.selectHint")}</p>
+						<div className="flex items-center justify-center h-full min-h-[40vh]">
+							<p className="text-ink-faint text-base italic">
+								{t("folk.selectHint")}
+							</p>
+						</div>
 					)}
 				</div>
 			</div>
