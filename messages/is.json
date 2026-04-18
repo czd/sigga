@@ -94,6 +94,15 @@
 	"dagbok": {
 		"title": "Dagbók",
 		"write": "Skrifa",
+		"composer": {
+			"placeholder": "Hvað gerðist?",
+			"submit": "Senda",
+			"submitHint": "⌘+Enter",
+			"draftSaved": "Drög vistuð"
+		},
+		"detail": {
+			"noSelection": "Veldu færslu til að lesa eða skrifaðu nýja hér að ofan."
+		},
 		"empty": "Engar færslur í dagbók ennþá",
 		"emptyHint": "Byrjaðu á að skrifa fyrstu færsluna.",
 		"showOlder": "Sýna eldri",

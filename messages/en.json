@@ -93,6 +93,15 @@
 	},
 	"dagbok": {
 		"title": "Log",
+		"composer": {
+			"placeholder": "What happened?",
+			"submit": "Send",
+			"submitHint": "⌘+Enter",
+			"draftSaved": "Draft saved"
+		},
+		"detail": {
+			"noSelection": "Select an entry to read or write a new one above."
+		},
 		"write": "Write",
 		"empty": "No log entries yet",
 		"emptyHint": "Start by writing the first entry.",
