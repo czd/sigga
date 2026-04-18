@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ContactList } from "@/components/info/ContactList";
 import { EmergencyTiles } from "@/components/info/EmergencyTiles";
+import { StackLayout } from "@/components/layout/StackLayout";
 
 export default async function FolkPage({
 	params,
@@ -12,7 +13,7 @@ export default async function FolkPage({
 	const t = await getTranslations();
 
 	return (
-		<div className="px-6 pt-4 pb-28 flex flex-col gap-6 lg:max-w-[704px]">
+		<StackLayout className="pt-4 pb-28 gap-6">
 			<header className="flex flex-col gap-2">
 				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint">
 					{t("folk.title")}
@@ -23,6 +24,6 @@ export default async function FolkPage({
 			</header>
 			<EmergencyTiles />
 			<ContactList />
-		</div>
+		</StackLayout>
 	);
 }

@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { StackLayout } from "@/components/layout/StackLayout";
 import { TimarView } from "./TimarView";
 
 export default async function TimarPage({
@@ -9,8 +10,8 @@ export default async function TimarPage({
 	const { locale } = await params;
 	setRequestLocale(locale);
 	return (
-		<div className="lg:max-w-[704px]">
+		<StackLayout xlMaxWidth="xl:max-w-[1400px]">
 			<TimarView />
-		</div>
+		</StackLayout>
 	);
 }

@@ -8,6 +8,7 @@ import { AttentionCard } from "@/components/dashboard/AttentionCard";
 import { DrivingCta } from "@/components/dashboard/DrivingCta";
 import { NextAppointments } from "@/components/dashboard/NextAppointments";
 import { RecentLog } from "@/components/dashboard/RecentLog";
+import { StackLayout } from "@/components/layout/StackLayout";
 import { formatAbsolute } from "@/lib/formatDate";
 
 const URGENT_PATTERN = /br[ýy]nt/i;
@@ -63,7 +64,7 @@ export default function DashboardPage() {
 		}));
 
 	return (
-		<div className="px-6 pt-8 pb-10 flex flex-col gap-8 lg:max-w-[704px]">
+		<StackLayout xlMaxWidth="xl:max-w-[1400px]" className="pt-8 pb-10 gap-8">
 			<header className="flex flex-col gap-3">
 				<div
 					className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
@@ -99,6 +100,6 @@ export default function DashboardPage() {
 			<NextAppointments appointments={appointments?.slice(0, 3)} />
 
 			<RecentLog entry={latestEntry} />
-		</div>
+		</StackLayout>
 	);
 }
