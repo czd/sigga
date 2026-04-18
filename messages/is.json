@@ -42,6 +42,23 @@
 		"title": "Í dag",
 		"greeting": "Góðan daginn, <em>{name}</em>.",
 		"greetingPlain": "Góðan daginn.",
+		"weekStrip": {
+			"title": "Vika {week} · {dateRange}",
+			"more": "+{count} til viðbótar"
+		},
+		"sinceLastVisit": {
+			"title": "Síðan síðast",
+			"empty": "Ekkert nýtt frá síðustu heimsókn.",
+			"showOlder": "Sýna eldri",
+			"log": "{name} skrifaði færslu",
+			"appointment": "Nýr tími: {title}",
+			"document": "{name} bætti við skjali: {fileName}",
+			"entitlementStatus": "Réttindi '{title}' uppfærð í {newStatus}"
+		},
+		"attentionColumn": {
+			"title": "Þarf athygli",
+			"noDriver": "Enginn skutlar þennan dag"
+		},
 		"drivingCta": {
 			"eyebrow": "Vantar skutlara",
 			"volunteer": "Ég get skutlað"

@@ -42,6 +42,23 @@
 		"title": "Today",
 		"greeting": "Good morning, <em>{name}</em>.",
 		"greetingPlain": "Good morning.",
+		"weekStrip": {
+			"title": "Week {week} · {dateRange}",
+			"more": "+{count} more"
+		},
+		"sinceLastVisit": {
+			"title": "Since last visit",
+			"empty": "Nothing new since your last visit.",
+			"showOlder": "Show older",
+			"log": "{name} wrote a log entry",
+			"appointment": "New appointment: {title}",
+			"document": "{name} added a document: {fileName}",
+			"entitlementStatus": "Benefit '{title}' updated to {newStatus}"
+		},
+		"attentionColumn": {
+			"title": "Needs attention",
+			"noDriver": "No driver for this day"
+		},
 		"drivingCta": {
 			"eyebrow": "Needs a driver",
 			"volunteer": "I can drive"
