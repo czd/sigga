@@ -86,10 +86,12 @@ function DocRow({
 	doc,
 	onOpen,
 	isLast,
+	active,
 }: {
 	doc: DocumentWithMeta;
 	onOpen: (d: DocumentWithMeta) => void;
 	isLast: boolean;
+	active?: boolean;
 }) {
 	const locale = useLocale();
 	const kind = thumbKindOf(doc.fileType);
@@ -105,7 +107,10 @@ function DocRow({
 			<button
 				type="button"
 				onClick={() => onOpen(doc)}
-				className="flex w-full items-center gap-4 px-4 py-3 text-left outline-none focus-visible:bg-paper-deep/60"
+				className={cn(
+					"flex w-full items-center gap-4 px-4 py-3 text-left outline-none focus-visible:bg-paper-deep/60",
+					active && "bg-paper-deep/60",
+				)}
 			>
 				<span
 					aria-hidden
@@ -285,7 +290,17 @@ function DocumentDetail({
 	);
 }
 
-export function DocumentList() {
+type DocumentListProps = {
+	/**
+	 * When provided, clicking a row calls this handler with the document id
+	 * instead of opening the internal detail Sheet. Used by the desktop
+	 * PaneLayout which renders a detail pane separately.
+	 */
+	onRowClick?: (id: Id<"documents">) => void;
+	activeId?: Id<"documents"> | null;
+};
+
+export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 	const t = useTranslations("documents");
 	const tCommon = useTranslations("common");
 	const locale = useLocale();
@@ -402,8 +417,12 @@ export function DocumentList() {
 											<DocRow
 												key={d._id}
 												doc={d}
-												onOpen={setDetailTarget}
+												onOpen={(doc) => {
+													if (onRowClick) onRowClick(doc._id);
+													else setDetailTarget(doc);
+												}}
 												isLast={i === rows.length - 1}
+												active={activeId === d._id}
 											/>
 										))}
 									</ul>

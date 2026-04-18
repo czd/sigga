@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import { api } from "@/../convex/_generated/api";
+import type { Id } from "@/../convex/_generated/dataModel";
+import { DocumentDetail } from "@/components/info/DocumentDetail";
 import { DocumentList } from "@/components/info/DocumentList";
 import { EntitlementKanban } from "@/components/info/EntitlementKanban";
 import { EntitlementList } from "@/components/info/EntitlementList";
@@ -27,6 +29,24 @@ export function PappirarTabs() {
 
 	const rawTab = searchParams.get("tab");
 	const tab: TabValue = isTabValue(rawTab) ? rawTab : DEFAULT_TAB;
+	const activeDocId = searchParams.get("doc") as Id<"documents"> | null;
+
+	const handleDocSelect = useCallback(
+		(id: Id<"documents">) => {
+			const params = new URLSearchParams(searchParams.toString());
+			params.set("doc", id);
+			const qs = params.toString();
+			router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+		},
+		[pathname, router, searchParams],
+	);
+
+	const handleDocClear = useCallback(() => {
+		const params = new URLSearchParams(searchParams.toString());
+		params.delete("doc");
+		const qs = params.toString();
+		router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+	}, [pathname, router, searchParams]);
 
 	const entitlements = useQuery(api.entitlements.list, {});
 	const documents = useQuery(api.documents.list, {});
@@ -120,7 +140,19 @@ export function PappirarTabs() {
 				</div>
 			</div>
 			<div className={cn(tab === "skjol" ? "" : "hidden")}>
-				<DocumentList />
+				<div className="xl:hidden">
+					<DocumentList />
+				</div>
+				<div className="hidden xl:grid xl:grid-cols-[minmax(320px,380px)_1fr] xl:gap-6">
+					<DocumentList onRowClick={handleDocSelect} activeId={activeDocId} />
+					<div className="bg-paper rounded-2xl p-6 min-h-[40vh]">
+						{activeDocId ? (
+							<DocumentDetail id={activeDocId} onAfterDelete={handleDocClear} />
+						) : (
+							<p className="text-ink-faint">{t("skjolEmptyPane")}</p>
+						)}
+					</div>
+				</div>
 			</div>
 		</div>
 	);
