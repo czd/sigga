@@ -21,10 +21,14 @@ function telHref(raw: string): string {
 export function ContactDetail({ id }: { id: Id<"contacts"> }) {
 	const t = useTranslations("contacts");
 	const tCommon = useTranslations("common");
-	const contact = useQuery(api.contacts.get, { id });
+	// Read from the list query so we reuse the cache ContactList already
+	// populated — Convex dedupes identical subscriptions, so this is free
+	// and has no "loading" flash when switching selection.
+	const contacts = useQuery(api.contacts.list, {});
+	const contact = contacts?.find((c) => c._id === id) ?? null;
 	const [editOpen, setEditOpen] = useState(false);
 
-	if (contact === undefined) {
+	if (contacts === undefined) {
 		return <p className="text-ink-faint">{tCommon("loading")}</p>;
 	}
 	if (contact === null) {

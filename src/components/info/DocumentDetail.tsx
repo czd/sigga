@@ -33,12 +33,16 @@ export function DocumentDetail({
 	const t = useTranslations("documents");
 	const tCommon = useTranslations("common");
 	const locale = useLocale();
-	const doc = useQuery(api.documents.get, { id });
+	// Read from the list query so we reuse the cache DocumentList already
+	// populated. Convex dedupes identical subscriptions; no loading flash
+	// between selections.
+	const documents = useQuery(api.documents.list, {});
+	const doc = documents?.find((d) => d._id === id) ?? null;
 	const remove = useMutation(api.documents.remove);
 	const [deleting, setDeleting] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
-	if (doc === undefined) {
+	if (documents === undefined) {
 		return <p className="text-ink-faint">{tCommon("loading")}</p>;
 	}
 	if (doc === null) {
