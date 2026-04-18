@@ -1,14 +1,44 @@
 "use client";
 
+import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
+import { api } from "@/../convex/_generated/api";
 import { BookIcon } from "@/components/shared/BookIcon";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { isActiveRoute, PRIMARY_ITEMS } from "./navItems";
+import { isActiveRoute, type NavItem, PRIMARY_ITEMS } from "./navItems";
+import { SidebarAttentionBadge } from "./SidebarAttentionBadge";
+
+const LABEL_TO_COUNT_KEY: Record<
+	NavItem["labelKey"],
+	"dashboard" | "care" | "paperwork" | null
+> = {
+	dashboard: "dashboard",
+	care: "care",
+	people: null,
+	paperwork: "paperwork",
+};
+
+function lastVisitCursor(userId: string | undefined): number {
+	if (!userId || typeof window === "undefined") {
+		return Date.now() - 3 * 24 * 60 * 60 * 1000;
+	}
+	const stored = window.localStorage.getItem(`sigga.lastVisit.${userId}`);
+	if (!stored) return Date.now() - 3 * 24 * 60 * 60 * 1000;
+	const parsed = Number.parseInt(stored, 10);
+	return Number.isFinite(parsed)
+		? parsed
+		: Date.now() - 3 * 24 * 60 * 60 * 1000;
+}
 
 export function BottomNav() {
 	const t = useTranslations("nav");
 	const pathname = usePathname();
+	const me = useQuery(api.users.me);
+	const counts = useQuery(api.users.attentionCounts);
+	const careCount = useQuery(api.activity.unreadLogCount, {
+		cursorMs: lastVisitCursor(me?._id),
+	});
 
 	return (
 		<nav
@@ -24,13 +54,20 @@ export function BottomNav() {
 			<ul className="flex items-end justify-around pointer-events-auto font-sans">
 				{PRIMARY_ITEMS.map(({ href, labelKey, icon }) => {
 					const active = isActiveRoute(pathname, href);
+					const countKey = LABEL_TO_COUNT_KEY[labelKey];
+					const count =
+						countKey === "care"
+							? (careCount ?? 0)
+							: countKey && counts
+								? counts[countKey]
+								: 0;
 					return (
 						<li key={href} className="flex-1">
 							<Link
 								href={href}
 								aria-current={active ? "page" : undefined}
 								className={cn(
-									"flex flex-col items-center justify-center gap-1.5 min-h-16 px-2 py-2 transition-colors",
+									"relative flex flex-col items-center justify-center gap-1.5 min-h-16 px-2 py-2 transition-colors",
 									active ? "text-sage-shadow" : "text-ink-faint",
 								)}
 							>
@@ -48,6 +85,7 @@ export function BottomNav() {
 								>
 									{t(labelKey)}
 								</span>
+								<SidebarAttentionBadge count={count} compact />
 							</Link>
 						</li>
 					);

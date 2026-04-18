@@ -18,7 +18,30 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { isActiveRoute, PRIMARY_ITEMS } from "./navItems";
+import { isActiveRoute, type NavItem, PRIMARY_ITEMS } from "./navItems";
+import { SidebarAttentionBadge } from "./SidebarAttentionBadge";
+
+const LABEL_TO_COUNT_KEY: Record<
+	NavItem["labelKey"],
+	"dashboard" | "care" | "paperwork" | null
+> = {
+	dashboard: "dashboard",
+	care: "care",
+	people: null,
+	paperwork: "paperwork",
+};
+
+function lastVisitCursor(userId: string | undefined): number {
+	if (!userId || typeof window === "undefined") {
+		return Date.now() - 3 * 24 * 60 * 60 * 1000;
+	}
+	const stored = window.localStorage.getItem(`sigga.lastVisit.${userId}`);
+	if (!stored) return Date.now() - 3 * 24 * 60 * 60 * 1000;
+	const parsed = Number.parseInt(stored, 10);
+	return Number.isFinite(parsed)
+		? parsed
+		: Date.now() - 3 * 24 * 60 * 60 * 1000;
+}
 
 export function Sidebar() {
 	const t = useTranslations();
@@ -28,6 +51,10 @@ export function Sidebar() {
 	const me = useQuery(api.users.me);
 
 	const displayName = me?.name?.trim() || me?.email || "";
+	const counts = useQuery(api.users.attentionCounts);
+	const careCount = useQuery(api.activity.unreadLogCount, {
+		cursorMs: lastVisitCursor(me?._id),
+	});
 
 	return (
 		<aside
@@ -44,6 +71,13 @@ export function Sidebar() {
 				<ul className="flex flex-col gap-1">
 					{PRIMARY_ITEMS.map(({ href, labelKey, icon }) => {
 						const active = isActiveRoute(pathname, href);
+						const countKey = LABEL_TO_COUNT_KEY[labelKey];
+						const count =
+							countKey === "care"
+								? (careCount ?? 0)
+								: countKey && counts
+									? counts[countKey]
+									: 0;
 						return (
 							<li key={href}>
 								<Link
@@ -62,7 +96,8 @@ export function Sidebar() {
 										strokeWidth={active ? 2 : 1.6}
 										filled={active && icon === "today"}
 									/>
-									<span>{navT(labelKey)}</span>
+									<span className="flex-1">{navT(labelKey)}</span>
+									<SidebarAttentionBadge count={count} />
 								</Link>
 							</li>
 						);

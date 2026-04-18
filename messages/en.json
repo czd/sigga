@@ -30,7 +30,10 @@
 		"dashboard": "Today",
 		"care": "Care",
 		"people": "People",
-		"paperwork": "Paperwork"
+		"paperwork": "Paperwork",
+		"attention": {
+			"badge": "{count, plural, one {1 item needs attention} other {# items need attention}}"
+		}
 	},
 	"dashboard": {
 		"title": "Today",

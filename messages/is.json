@@ -30,7 +30,10 @@
 		"dashboard": "Í dag",
 		"care": "Umönnun",
 		"people": "Fólk",
-		"paperwork": "Pappírar"
+		"paperwork": "Pappírar",
+		"attention": {
+			"badge": "{count, plural, one {1 atriði þarfnast athygli} other {# atriði þarfnast athygli}}"
+		}
 	},
 	"dashboard": {
 		"title": "Í dag",
