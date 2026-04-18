@@ -2,6 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import { api } from "@/../convex/_generated/api";
 import { BookIcon } from "@/components/shared/BookIcon";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -36,9 +37,8 @@ export function BottomNav() {
 	const pathname = usePathname();
 	const me = useQuery(api.users.me);
 	const counts = useQuery(api.users.attentionCounts);
-	const careCount = useQuery(api.activity.unreadLogCount, {
-		cursorMs: lastVisitCursor(me?._id),
-	});
+	const cursorMs = useMemo(() => lastVisitCursor(me?._id), [me?._id]);
+	const careCount = useQuery(api.activity.unreadLogCount, { cursorMs });
 
 	return (
 		<nav

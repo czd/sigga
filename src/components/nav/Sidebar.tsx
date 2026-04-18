@@ -4,6 +4,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { ChevronUp, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import { api } from "@/../convex/_generated/api";
 import { BookIcon } from "@/components/shared/BookIcon";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -53,9 +54,8 @@ export function Sidebar() {
 
 	const displayName = me?.name?.trim() || me?.email || "";
 	const counts = useQuery(api.users.attentionCounts);
-	const careCount = useQuery(api.activity.unreadLogCount, {
-		cursorMs: lastVisitCursor(me?._id),
-	});
+	const cursorMs = useMemo(() => lastVisitCursor(me?._id), [me?._id]);
+	const careCount = useQuery(api.activity.unreadLogCount, { cursorMs });
 
 	return (
 		<aside

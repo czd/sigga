@@ -2,6 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -9,11 +10,10 @@ import { cn } from "@/lib/utils";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function startOfWeek(now: Date): Date {
-	// Monday as start of week. Iceland has no DST so UTC math is safe.
 	const d = new Date(
 		Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
 	);
-	const dow = d.getUTCDay(); // 0 = Sun, 1 = Mon, ...
+	const dow = d.getUTCDay();
 	const offset = dow === 0 ? -6 : 1 - dow;
 	d.setUTCDate(d.getUTCDate() + offset);
 	return d;
@@ -31,7 +31,27 @@ function isoDate(d: Date): string {
 	return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
+// Render an empty skeleton on the server so the client's locale/date rendering
+// can't mismatch the SSR output. The fully-populated calendar appears after
+// client mount — a flash of empty cells for a few ms is fine and avoids the
+// hydration error that was crashing the app.
 export function SidebarWeekCalendar() {
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	if (!mounted) {
+		return (
+			<div className="px-4 pb-4 pt-4 border-t border-divider mt-4">
+				<div className="grid grid-cols-7 gap-1 h-10" aria-hidden />
+			</div>
+		);
+	}
+	return <SidebarWeekCalendarContent />;
+}
+
+function SidebarWeekCalendarContent() {
 	const locale = useLocale();
 	const t = useTranslations("nav.miniCal");
 	const now = new Date();
