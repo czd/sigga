@@ -16,6 +16,7 @@ type AppointmentWithDriver = FunctionReturnType<
 const WEEKDAY_FMT: Record<string, Intl.DateTimeFormatOptions> = {
 	weekday: { weekday: "short" },
 	day: { day: "numeric" },
+	month: { month: "short" },
 	time: { hour: "2-digit", minute: "2-digit", hour12: false },
 };
 
@@ -25,8 +26,26 @@ function useAppointmentDateParts(timestamp: number, locale: string) {
 		.format(d)
 		.replace(/\.$/, "");
 	const day = new Intl.DateTimeFormat(locale, WEEKDAY_FMT.day).format(d);
+	const month = new Intl.DateTimeFormat(locale, WEEKDAY_FMT.month)
+		.format(d)
+		.replace(/\.$/, "");
 	const time = new Intl.DateTimeFormat(locale, WEEKDAY_FMT.time).format(d);
-	return { weekday, day, time };
+	return { weekday, day, month, time };
+}
+
+function CancelledRow({ appointment }: { appointment: AppointmentWithDriver }) {
+	const t = useTranslations("dashboard.nextAppointments");
+	const locale = useLocale();
+	const { day, month } = useAppointmentDateParts(appointment.startTime, locale);
+	return (
+		<p className="py-3 text-sm text-ink-faint italic">
+			{t("cancelledLine", {
+				day,
+				month,
+				title: appointment.title,
+			})}
+		</p>
+	);
 }
 
 function AppointmentRow({
@@ -142,11 +161,15 @@ export function NextAppointments({
 							className="border-0"
 							style={{ borderTopColor: "var(--divider)" }}
 						>
-							<AppointmentRow
-								appointment={apt}
-								onVolunteer={handleVolunteer}
-								pending={pendingId === apt._id}
-							/>
+							{apt.status === "cancelled" ? (
+								<CancelledRow appointment={apt} />
+							) : (
+								<AppointmentRow
+									appointment={apt}
+									onVolunteer={handleVolunteer}
+									pending={pendingId === apt._id}
+								/>
+							)}
 						</li>
 					))}
 				</ul>

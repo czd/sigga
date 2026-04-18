@@ -56,7 +56,8 @@
 			"youAreDriving": "You are driving",
 			"driver": "Driver",
 			"time": "{time}",
-			"driving": "{name} is driving"
+			"driving": "{name} is driving",
+			"cancelledLine": "{day} {month} — {title} — skipped"
 		},
 		"recentLog": {
 			"eyebrow": "Log · latest entry",
@@ -91,6 +92,9 @@
 		"volunteer": "I can!",
 		"logEntry": "Log entry",
 		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"skip": "Skip this occurrence",
+		"skipShort": "Skip",
+		"skipConfirm": "Skip this occurrence? It will be marked as skipped and the next appointment will be created automatically.",
 		"tabs": {
 			"upcoming": "Upcoming",
 			"past": "Past"

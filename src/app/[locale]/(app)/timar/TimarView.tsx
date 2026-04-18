@@ -17,20 +17,15 @@ export function TimarView() {
 			<div className="px-4 py-6 pb-28 flex flex-col gap-6">
 				<h2 className="text-3xl font-semibold">{t("title")}</h2>
 				<SeriesEntryRow />
-				<AppointmentList />
-			</div>
-			<div
-				className="fixed inset-x-0 bottom-16 z-20 flex justify-end px-4 pb-2"
-				style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
-			>
 				<Button
 					size="touch"
 					onClick={() => setCreateOpen(true)}
-					className="shadow-lg"
+					className="w-full"
 				>
 					<Plus aria-hidden />
 					<span>{t("new")}</span>
 				</Button>
+				<AppointmentList />
 			</div>
 			<AppointmentForm open={createOpen} onOpenChange={setCreateOpen} />
 		</>

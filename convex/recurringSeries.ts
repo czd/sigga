@@ -105,11 +105,31 @@ export async function ensureNextOccurrence(
 		.collect();
 	if (existing.some((row) => row.status === "upcoming")) return null;
 
-	const startTime = computeNextStartTime({
-		daysOfWeek: series.daysOfWeek,
-		timeOfDay: series.timeOfDay,
-		now,
-	});
+	// Slots already occupied by any row (cancelled, completed) are blocked —
+	// the user explicitly skipped them, so we must not re-spawn into the same
+	// datetime. Walk forward from `now` one matching-slot at a time until we
+	// find a free one. Bound the loop so pathological data never loops forever.
+	const blockedStartTimes = new Set(existing.map((row) => row.startTime));
+	let cursor = now;
+	let startTime: number | null = null;
+	for (let attempt = 0; attempt < 14; attempt++) {
+		const candidate = computeNextStartTime({
+			daysOfWeek: series.daysOfWeek,
+			timeOfDay: series.timeOfDay,
+			now: cursor,
+		});
+		if (!blockedStartTimes.has(candidate)) {
+			startTime = candidate;
+			break;
+		}
+		cursor = candidate + 1;
+	}
+	if (startTime === null) {
+		throw new ConvexError(
+			"Of margir yfirhlaupnir tímar — fann ekki laust bil.",
+		);
+	}
+
 	const endTime =
 		series.durationMinutes !== undefined
 			? startTime + series.durationMinutes * 60_000

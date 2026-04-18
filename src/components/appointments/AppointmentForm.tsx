@@ -138,7 +138,17 @@ export function AppointmentForm({
 		if (!editAppointment) return;
 		setSaving(true);
 		try {
-			await remove({ id: editAppointment._id });
+			if (editAppointment.seriesId) {
+				// Series-bound appointment: cancel instead of delete so the
+				// skipped slot is preserved and ensureNextOccurrence can advance
+				// past it. The status-change hook spawns the next occurrence.
+				await update({
+					id: editAppointment._id,
+					status: "cancelled",
+				});
+			} else {
+				await remove({ id: editAppointment._id });
+			}
 			setConfirmDelete(false);
 			onOpenChange(false);
 		} catch (err) {
@@ -148,6 +158,8 @@ export function AppointmentForm({
 			setSaving(false);
 		}
 	}
+
+	const isSeries = editAppointment?.seriesId !== undefined;
 
 	return (
 		<>
@@ -287,7 +299,7 @@ export function AppointmentForm({
 								className="self-start"
 							>
 								<Trash2 aria-hidden />
-								<span>{tCommon("delete")}</span>
+								<span>{isSeries ? t("skipShort") : tCommon("delete")}</span>
 							</Button>
 						) : null}
 					</form>
@@ -297,9 +309,11 @@ export function AppointmentForm({
 			<Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
 				<DialogContent className="max-w-sm" showCloseButton={false}>
 					<DialogHeader>
-						<DialogTitle className="text-xl">{tCommon("delete")}?</DialogTitle>
+						<DialogTitle className="text-xl">
+							{isSeries ? t("skip") : `${tCommon("delete")}?`}
+						</DialogTitle>
 						<DialogDescription className="text-base">
-							{t("deleteConfirm")}
+							{isSeries ? t("skipConfirm") : t("deleteConfirm")}
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter className="flex-col gap-2 sm:flex-col">
@@ -309,7 +323,7 @@ export function AppointmentForm({
 							onClick={handleDelete}
 							disabled={saving}
 						>
-							{tCommon("delete")}
+							{isSeries ? t("skipShort") : tCommon("delete")}
 						</Button>
 						<Button
 							variant="outline"

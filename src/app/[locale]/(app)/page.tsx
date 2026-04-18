@@ -29,7 +29,10 @@ export default function DashboardPage() {
 	const t = useTranslations();
 	const locale = useLocale();
 	const me = useQuery(api.users.me);
-	const appointments = useQuery(api.appointments.upcoming, { limit: 5 });
+	const appointments = useQuery(api.appointments.upcoming, {
+		limit: 5,
+		includeCancelled: true,
+	});
 	const recentEntries = useQuery(api.logEntries.recent, { count: 1 });
 	const entitlements = useQuery(api.entitlements.list);
 
@@ -39,7 +42,9 @@ export default function DashboardPage() {
 	}, [locale]);
 
 	const firstName = me?.name?.trim().split(/\s+/)[0] ?? null;
-	const unassigned = appointments?.find((apt) => !apt.driver) ?? null;
+	const unassigned =
+		appointments?.find((apt) => !apt.driver && apt.status === "upcoming") ??
+		null;
 	const latestEntry =
 		recentEntries === undefined ? undefined : (recentEntries[0] ?? null);
 	const attention = entitlements

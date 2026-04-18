@@ -56,7 +56,8 @@
 			"youAreDriving": "Þú keyrir",
 			"driver": "Skutlari",
 			"time": "kl. {time}",
-			"driving": "{name} skutlar"
+			"driving": "{name} skutlar",
+			"cancelledLine": "{day}. {month}. — {title} — sleppt"
 		},
 		"recentLog": {
 			"eyebrow": "Dagbók · síðasta færsla",
@@ -91,6 +92,9 @@
 		"volunteer": "Ég get!",
 		"logEntry": "Skrá í dagbók",
 		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"skip": "Hlaupa yfir þennan tíma",
+		"skipShort": "Hlaupa yfir",
+		"skipConfirm": "Hlaupa yfir þennan tíma? Tíminn verður sýndur sem sleppt og næsti tími verður til sjálfkrafa.",
 		"tabs": {
 			"upcoming": "Næstu tímar",
 			"past": "Liðnir tímar"

@@ -79,17 +79,34 @@ export const list = query({
 });
 
 export const upcoming = query({
-	args: { limit: v.optional(v.number()) },
+	args: {
+		limit: v.optional(v.number()),
+		includeCancelled: v.optional(v.boolean()),
+	},
 	handler: async (ctx, args) => {
 		await requireAuth(ctx);
 		const now = Date.now();
+		const limit = args.limit ?? 3;
+		if (args.includeCancelled) {
+			// Merge upcoming + cancelled future rows, ordered by startTime.
+			// Over-fetch on the by_startTime range then filter out completed.
+			const rows = await ctx.db
+				.query("appointments")
+				.withIndex("by_startTime", (q) => q.gte("startTime", now))
+				.order("asc")
+				.take(limit * 3);
+			const kept = rows
+				.filter((row) => row.status !== "completed")
+				.slice(0, limit);
+			return Promise.all(kept.map((row) => withDriver(ctx, row)));
+		}
 		const rows = await ctx.db
 			.query("appointments")
 			.withIndex("by_status_and_startTime", (q) =>
 				q.eq("status", "upcoming").gte("startTime", now),
 			)
 			.order("asc")
-			.take(args.limit ?? 3);
+			.take(limit);
 		return Promise.all(rows.map((row) => withDriver(ctx, row)));
 	},
 });

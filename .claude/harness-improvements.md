@@ -48,6 +48,12 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 **Suggested action:** Add a Convex conventions check to `.claude/agents/qa.md`: "Grep `convex/` for `crons\.daily(`, `crons\.hourly(`, `crons\.weekly(` — any match is a FAIL; the Convex guidelines require only `crons.interval` or `crons.cron`."
 Note: The code violation was fixed in commit 58856bc (uses `crons.cron` throughout). This item remains Open because the *harness rule* (grep in QA agent) has not yet been added.
 
+### 2026-04-17 · qa · `ensureNextOccurrence` algorithm diverges from spec — blocked-slot walk not documented
+
+**Context:** Phase 7-8 fix pass — skip-occurrence feature. `convex/recurringSeries.ts` `ensureNextOccurrence` now builds a `blockedStartTimes` set from existing cancelled/completed rows and walks forward one matching-slot at a time (up to 14 iterations) until it finds a free slot.
+**Observation:** `docs/spec.md` line 693 still describes the old algorithm: "walk forward from `now` one UTC day at a time (max 8 iterations) until a day in `daysOfWeek` is found with `startTime > now`". The new code is a materially different and more correct algorithm (slot-by-slot walk, 14-iteration cap, blocked-set check), but the spec is not updated to reflect it.
+**Suggested action:** Route to `docs-sync` to update the `ensureNextOccurrence` algorithm description in `docs/spec.md`. Also note that the `upcoming` query now accepts an optional `includeCancelled` parameter (merging upcoming + cancelled future rows, filtering out completed) — the spec's query contract for `upcoming` at line 672 should document this variant.
+
 ### 2026-04-18 · docs-sync · `recurring.pauseToast` / `recurring.resumeToast` i18n keys exist but are not consumed
 
 **Context:** Phase 8.5 recurring appointments. `messages/is.json` and `messages/en.json` both define `recurring.pauseToast` and `recurring.resumeToast`, but no UI component uses them — no toast is shown when pausing or resuming a series.
