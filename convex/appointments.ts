@@ -260,3 +260,20 @@ export const byWeek = query({
 		return Promise.all(inWeek.map((row) => withDriver(ctx, row)));
 	},
 });
+
+export const byRange = query({
+	args: { startMs: v.number(), endMs: v.number() },
+	handler: async (ctx, args): Promise<AppointmentWithDriver[]> => {
+		await requireAuth(ctx);
+		const rows = await ctx.db
+			.query("appointments")
+			.withIndex("by_status_and_startTime", (q) =>
+				q.eq("status", "upcoming").gte("startTime", args.startMs),
+			)
+			.collect();
+		const inRange = rows
+			.filter((r) => r.startTime < args.endMs)
+			.sort((a, b) => a.startTime - b.startTime);
+		return Promise.all(inRange.map((row) => withDriver(ctx, row)));
+	},
+});

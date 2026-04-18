@@ -122,8 +122,15 @@
 	"timar": {
 		"title": "Appointments",
 		"view": {
+			"month": "Month",
 			"week": "Week",
 			"list": "List"
+		},
+		"calendar": {
+			"prev": "Previous",
+			"next": "Next",
+			"today": "Today",
+			"recurringLink": "Recurring appointments →"
 		},
 		"weekGrid": {
 			"prev": "Previous week",
@@ -132,8 +139,13 @@
 			"dragHint": "Drag a name onto an appointment to assign a driver.",
 			"noAppointments": "No appointments this week."
 		},
+		"monthGrid": {
+			"more": "+{count} more"
+		},
 		"detail": {
-			"noSelection": "Select an appointment to view."
+			"noSelection": "Select an appointment to view.",
+			"paneLabel": "Appointment details",
+			"close": "Close appointment details"
 		},
 		"new": "New appointment",
 		"createTitle": "New appointment",

@@ -15,9 +15,10 @@ import {
 import { useMutation, useQuery } from "convex/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
+import { ClientOnly } from "@/components/shared/ClientOnly";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -149,17 +150,13 @@ type Props = {
 };
 
 export function WeekGrid(props: Props) {
-	// Defer date-locale rendering until after client mount. Server and client
-	// can disagree on Intl.DateTimeFormat output (e.g. "apr" vs "Apr"), same
-	// root cause as the SidebarWeekCalendar + WeekStrip fixes.
-	const [mounted, setMounted] = useState(false);
-	useEffect(() => {
-		setMounted(true);
-	}, []);
-	if (!mounted) {
-		return <div className="flex flex-col gap-4 min-h-96" aria-hidden />;
-	}
-	return <WeekGridContent {...props} />;
+	return (
+		<ClientOnly
+			fallback={<div className="flex flex-col gap-4 min-h-96" aria-hidden />}
+		>
+			<WeekGridContent {...props} />
+		</ClientOnly>
+	);
 }
 
 function WeekGridContent({
