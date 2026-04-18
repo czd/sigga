@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import { api } from "@/../convex/_generated/api";
 import { DocumentList } from "@/components/info/DocumentList";
+import { EntitlementKanban } from "@/components/info/EntitlementKanban";
 import { EntitlementList } from "@/components/info/EntitlementList";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -111,7 +112,12 @@ export function PappirarTabs() {
 			</div>
 
 			<div className={cn(tab === "rettindi" ? "" : "hidden")}>
-				<EntitlementList />
+				<div className="xl:hidden">
+					<EntitlementList />
+				</div>
+				<div className="hidden xl:block">
+					<EntitlementKanban />
+				</div>
 			</div>
 			<div className={cn(tab === "skjol" ? "" : "hidden")}>
 				<DocumentList />
