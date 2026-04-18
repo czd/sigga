@@ -8,5 +8,9 @@ export default async function ReglulegirPage({
 }) {
 	const { locale } = await params;
 	setRequestLocale(locale);
-	return <ReglulegirView />;
+	return (
+		<div className="lg:max-w-[704px]">
+			<ReglulegirView />
+		</div>
+	);
 }

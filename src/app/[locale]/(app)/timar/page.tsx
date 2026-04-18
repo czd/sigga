@@ -8,5 +8,9 @@ export default async function TimarPage({
 }) {
 	const { locale } = await params;
 	setRequestLocale(locale);
-	return <TimarView />;
+	return (
+		<div className="lg:max-w-[704px]">
+			<TimarView />
+		</div>
+	);
 }
