@@ -176,7 +176,151 @@ Any learning from Phase D that changes a canonical answer gets back-ported to `d
 
 ## Remediation backlog
 
-*Populated at the end of Phase C. Empty for now.*
+*Drafted 2026-04-19 from the signed-off rulebook (`docs/ux-patterns.md`) + Phase A audit findings. Organised into three tiers; within each tier, tasks are ordered by the plan's prioritisation criteria. Sizes: **S** = ≤1 day, **M** = 1–3 days, **L** = 3+ days (likely a small sub-plan of its own). Each task is one PR = one cohesive slice. **Pattern N** refs point to `docs/ux-patterns.md`.*
+
+### Tier 1 — Blockers and systemic root-cause fixes
+
+Do these first. Token-level fixes cascade through the whole app, so later tasks assume they've landed.
+
+**C1. Fix MedicationForm 20 px checkbox.** Pattern 7, 18 · a11y **blocker** (fails WCAG 2.5.8 24 px minimum).
+- *Files:* `src/components/info/MedicationForm.tsx` (native `<input type="checkbox">`).
+- *Exit:* Replace with shadcn `<Checkbox>` sized to ≥48×48 tap area (label + control). A11y audit item cleared.
+- *Size:* S · *Deps:* none.
+
+**C2. Repoint `--muted-foreground` token and sweep text-bearing usage.** Pattern 7, 18 · a11y systemic #1 (2.87:1 → 5.97:1).
+- *Files:* `src/app/globals.css` (token definition), ~30 `text-ink-faint` call sites across dashboard/timar/umonnun/folk/pappirar.
+- *Exit:* `--muted-foreground` points to `ink-soft`; every `text-ink-faint` used as body or meta text swapped to `text-ink-soft`; decorative-only icon tints may stay. Spot-measure contrast on three sample views at 375 px.
+- *Size:* M · *Deps:* none.
+
+**C3. Fix `--input` border + `focus-visible:ring-ring/50`.** Pattern 18 · a11y systemic #2 (form boundaries + focus rings invisible).
+- *Files:* `src/app/globals.css` input/ring tokens; `src/components/ui/button.tsx` + `src/components/ui/input.tsx` default variants.
+- *Exit:* Form boundaries ≥3:1 against paper; focus rings at full alpha, never `/50`; keyboard navigation leaves an obvious trail on every interactive control.
+- *Size:* S · *Deps:* none.
+
+**C4. Deprecate sub-48 px shadcn button variants + fix dialog/sheet close X.** Pattern 7, 18 · a11y systemic #3 (every dialog/sheet has a sub-floor control today).
+- *Files:* `src/components/ui/button.tsx` (re-size or remove `xs`/`sm`/`default`/`icon-sm`); `src/components/ui/dialog.tsx:74`, `src/components/ui/sheet.tsx:75` (`icon-sm` → `touch-icon`); 10+ call-site changes.
+- *Exit:* No shadcn button variant under 48 px remains in the codebase. QA grep for `size="sm"` or `size="icon-sm"` returns zero.
+- *Size:* L · *Deps:* none — but batch with C2/C3 since they share primitives.
+
+**C5. Localise primitive sr-only labels.** Pattern 17, 18.
+- *Files:* `src/components/ui/dialog.tsx`, `src/components/ui/sheet.tsx`.
+- *Exit:* `DialogContent` / `SheetContent` read `tCommon("close")` = "Loka"; no English sr-only string in `src/components/ui/`. QA grep clean.
+- *Size:* S · *Deps:* none.
+
+### Tier 2 — Core pattern alignment
+
+The substance of the initiative. **C6 introduces the `<ConfirmDialog>` primitive — several later tasks depend on it.**
+
+**C6. Introduce `<ConfirmDialog>` primitive.** Pattern 2, 19.
+- *Files:* `src/components/ui/confirm-dialog.tsx` (new).
+- *Exit:* One component accepting `{title, body, confirmLabel, confirmVariant, onConfirm, onCancel}` encapsulates the destroy and commitment dialog layouts per rulebook Pattern 2 & 19. All existing destroy + claim dialogs migrate to use it in subsequent tasks.
+- *Size:* M · *Deps:* C4 (close X fixed).
+
+**C7. Add commitment confirmation to every volunteer/assign surface.** Pattern 19 — **addresses user-reported pain (accidental self-assignment).**
+- *Files:* `src/components/dashboard/DrivingCta.tsx`, `src/components/dashboard/NextAppointments.tsx`, `src/components/appointments/AppointmentCard.tsx`, `src/components/timar/TimarDetail.tsx` driver `Select`. Week-grid drag-to-assign (`src/components/timar/WeekGrid.tsx:208-237`) is exempt per rulebook.
+- *Exit:* 4 of 5 instant-commit surfaces route through `<ConfirmDialog>`; new `driving.confirm.{title,body,action,assignOtherTitle,assignOtherAction}` keys in both locales with feminine-first copy; no `try/finally` error-swallowing (errors surface per Pattern 13).
+- *Size:* M · *Deps:* C6.
+
+**C8. Remove Tímar desktop cancel-without-confirm bypass.** Pattern 2 — **single highest-risk UX finding (one misclick = cancelled appointment).**
+- *Files:* `src/components/timar/TimarDetail.tsx:170-181`.
+- *Exit:* Cancel button routes through `<ConfirmDialog>` with `variant="destructive"` and the standard destroy copy template; keyboard-reachable; Escape dismisses (fixes the related cross-cutting observation).
+- *Size:* S · *Deps:* C6.
+
+**C9. Unify destroy confirm copy.** Pattern 2.
+- *Files:* `messages/{is,en}.json` (new keys `common.deleteConfirm.{title,body}` + per-subject override keys), plus per-subject consumers.
+- *Exit:* Two canonical templates per rulebook: "standard destroy" (Ertu viss? Þetta er ekki hægt að afturkalla.) and "destroy-with-context" (subject-specific body). Skjöl's stronger copy moves to the context template.
+- *Size:* S · *Deps:* C6.
+
+**C10. Feminine-first Icelandic sweep.** Pattern 17.
+- *Files:* `messages/is.json` (`rettindi.claim.confirmBody` and any other `skráð(ur)` / `viss(ur)` / parenthetical gender patterns).
+- *Exit:* No parenthetical gender forms remain; English mirror untouched.
+- *Size:* S · *Deps:* none.
+
+**C11. Curly-quote sweep.** Pattern 17.
+- *Files:* `messages/is.json` `entitlements.claim.confirmBody` (currently `\"{title}\"` straight — breaks ICU in principle, reads inconsistent with `activity.entitlementStatus` which uses `„…"`).
+- *Exit:* All confirm/prompt copy uses Icelandic curly quotes; grep for `\\\"` in is.json returns only non-interpolated literal contexts.
+- *Size:* S · *Deps:* none.
+
+**C12. Unify edit affordance to tap-card-opens-detail.** Pattern 1.
+- *Files:* list components with pencil-in-corner: `src/components/info/ContactList.tsx`, `src/components/info/EntitlementList.tsx`, `src/components/info/MedicationTable.tsx`, `src/components/info/DocumentList.tsx`, `src/components/appointments/AppointmentCard.tsx` (where edit icons appear today). Kanban cards keep their own treatment.
+- *Exit:* Every list row opens detail on tap; edit lives inside the detail/sheet; no pencil-icon-in-corner on cards. Contact row's 3-target layout collapses to one tap target.
+- *Size:* L · *Deps:* C4 (touch targets), C6 (ConfirmDialog for destroy inside detail).
+
+**C13. Unify create affordance.** Pattern 3.
+- *Files:* `src/components/timar/CalendarView.tsx` (drop `size="sm"` toolbar button), `src/components/info/ContactList.tsx` (replace `size-10` + button), `src/components/info/EntitlementKanban.tsx` (enlarge `size-6` per-column +), plus any other non-canonical creates surfaced by the matrix.
+- *Exit:* Every "add X" uses the full-width touch button at a predictable position OR, for kanban, uses per-column adds at ≥48 px. No `size="sm"` create button remains.
+- *Size:* M · *Deps:* C4.
+
+**C14. Finish list-detail responsive pattern uniformly.** Pattern 8.
+- *Files:* any route not yet on `PaneLayout` + `?id=` URL param at `md:`. Resolve the DocumentList/DocumentDetail duplication (two separate detail implementations) by consolidating to one.
+- *Exit:* Mobile = full-page routes with back; desktop `md:` = list-detail via `PaneLayout`; kanban stays as the Réttindi-only third pattern. Single DocumentDetail component used for both mobile sheet and desktop pane.
+- *Size:* M · *Deps:* C12.
+
+### Tier 3 — Polish and consolidation
+
+Visual and semantic tightening once the primitives and affordances are canonical.
+
+**C15. Heading hierarchy: one `<h1>` per page + skip-link.** Pattern 6, 18 · a11y major.
+- *Files:* `src/app/[locale]/(app)/layout.tsx` (skip-link); every route page head.
+- *Exit:* Lighthouse/axe reports exactly one `<h1>` per page; Tab from page load reaches the skip-link first; skip-link jumps to `<main>`.
+- *Size:* S · *Deps:* none.
+
+**C16. Consolidate headline scale.** Pattern 6.
+- *Files:* every route page head + EmptyState headlines.
+- *Exit:* Two sizes — `text-[2.5rem]` for page `<h1>`, `text-[1.4rem]` for section `<h2>`. `text-balance` on both. Dashboard greeting scales down to match the other page heads.
+- *Size:* S · *Deps:* C15.
+
+**C17. Empty-state restyle to Bókasafn surface.** Pattern 5.
+- *Files:* `src/components/shared/EmptyState.tsx`.
+- *Exit:* `bg-paper ring-1 ring-foreground/10` replaces `bg-muted/40 border-dashed`. All consumers render the new surface without further per-caller changes.
+- *Size:* S · *Deps:* none.
+
+**C18. Replace silent error swallowing with inline banners + live-region.** Pattern 11, 13 · a11y major.
+- *Files:* `src/app/[locale]/(app)/layout.tsx` (polite live-region landmark); mutation-call sites in DrivingCta/NextAppointments/AppointmentCard, dnd-kit drag handlers (`WeekGrid.tsx:208-237`, `EntitlementKanban.tsx`), document delete paths. Delete the unused `recurring.pauseToast`/`resumeToast` keys.
+- *Exit:* No `try/finally` that swallows mutation errors; every failure surfaces inline or via live-region; save/delete success announced through the live-region.
+- *Size:* M · *Deps:* C7 (overlaps on DrivingCta).
+
+**C19. Relative vs absolute date formatting consolidation.** Pattern 9.
+- *Files:* activity feed (`SinceLastVisit`), appointment cards, dagbók entries, document list, entitlement cards.
+- *Exit:* Relative for events within 7 days, absolute otherwise; every rendering calls `formatDate.ts` helpers. `<time>` wrappers + sr-only absolute per a11y audit.
+- *Size:* S · *Deps:* C15/C16 if they revise heading structure nearby.
+
+**C20. Colour-semantics audit + inline-hex purge.** Pattern 16.
+- *Files:* `src/components/dashboard/AttentionCard.tsx`, `src/components/dashboard/DrivingCta.tsx` (inline hex), any other surface where sage/amber/sage-deep usage doesn't match the rulebook's semantic meaning.
+- *Exit:* No inline hex remains; every sage/amber usage is semantically correct (sage = handled, amber = needs attention, sage-deep = selected). Spot-check BRÝNT pill contrast on real entitlement data.
+- *Size:* M · *Deps:* C2 (token-level contrast may already cascade).
+
+**C21. Loading-state standardisation.** Pattern 12.
+- *Files:* any surface using spinners or skeletons.
+- *Exit:* "Hleð…" text only; no spinners below 1 s round-trips; no skeletons.
+- *Size:* S · *Deps:* none.
+
+**C22. Actor-attribution sweep.** Pattern 10.
+- *Files:* any log-event rendering not already subject-first (`SinceLastVisit.appointment` still omits actor per rulebook).
+- *Exit:* Every actor-relevant event row reads "{name} verb …" subject-first; new `appointment` key adds actor per rulebook.
+- *Size:* S · *Deps:* none.
+
+**C23. Hoist author/date semantics to proper headings + time elements.** Pattern 6, 18 · a11y minor.
+- *Files:* Dagbók entry author `<div>`s that should be `<h3>`; timestamp `<div>`s that should be `<time>`; reduced-motion respected on Sheet/Dialog animations.
+- *Exit:* Axe reports no heading-hierarchy or semantic-role issues on Dagbók; reduced-motion honoured in primitives.
+- *Size:* S · *Deps:* C15 (establishes h1 baseline).
+
+---
+
+### Suggested execution order
+
+One PR per task, in this sequence:
+
+`C1 → C2 → C3 → C4 → C5` (Tier 1, can partly parallelise)
+`→ C6` (primitive)
+`→ C7 · C8 · C9` (confirm-dialog consumers, parallelisable)
+`→ C10 · C11` (copy sweeps, parallelisable)
+`→ C12 → C13 → C14` (affordances and list-detail)
+`→ C15 → C16 → C17 → C18 → C19 → C20 → C21 → C22 → C23` (polish)
+
+Expected total effort: ~3–5 weeks of focused work if sequential; ~2 weeks if C-tier items parallelise where their deps allow.
+
+**Exit gate for Phase C (per plan):** Nic approves this ordered backlog. Phase D execution begins with C1.
 
 ---
 
