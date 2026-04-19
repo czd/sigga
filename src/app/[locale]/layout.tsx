@@ -1,6 +1,6 @@
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { Analytics } from "@vercel/analytics/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -34,8 +34,22 @@ export async function generateMetadata({
 	return {
 		title: t("name"),
 		description: t("tagline"),
+		manifest: "/manifest.json",
+		applicationName: t("name"),
+		appleWebApp: {
+			capable: true,
+			title: t("name"),
+			statusBarStyle: "default",
+		},
+		formatDetection: {
+			telephone: true,
+		},
 	};
 }
+
+export const viewport: Viewport = {
+	themeColor: "#6b7f5c",
+};
 
 export function generateStaticParams() {
 	return routing.locales.map((locale) => ({ locale }));
