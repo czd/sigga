@@ -21,7 +21,7 @@ export function AttentionCard({
 	items: AttentionItem[] | undefined;
 }) {
 	const t = useTranslations("dashboard.attention");
-	const tClaim = useTranslations("rettindi.claim");
+	const tClaim = useTranslations("entitlements.claim");
 	const claim = useMutation(api.entitlements.claim);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	if (!items || items.length === 0) return null;
