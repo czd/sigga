@@ -23,7 +23,7 @@ export function TimarView() {
 	return (
 		<>
 			{/* Mobile + tablet */}
-			<div className="xl:hidden px-4 py-6 pb-28 flex flex-col gap-6">
+			<div className="xl:hidden flex flex-col gap-6">
 				<h2 className="text-3xl font-semibold">{t("title")}</h2>
 				<SeriesEntryRow />
 				<Button

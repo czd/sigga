@@ -21,7 +21,7 @@ export function UmonnunView() {
 
 	return (
 		<>
-			<div className="px-6 pt-4 pb-28 xl:pb-8 flex flex-col gap-6">
+			<div className="flex flex-col gap-6">
 				<header className="flex flex-col gap-2">
 					<div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
 						{t("umonnun.title")}
