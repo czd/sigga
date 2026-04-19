@@ -16,12 +16,17 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
 	// "Expected RSC response, got text/html".
 	const intlResponse = intlMiddleware(request);
 
-	// RSC prefetch requests (from <Link> hover/visible) must never be redirected
-	// to an HTML page — the RSC runtime can't parse HTML. If the user isn't
-	// authed yet, let the prefetch through with the intl response; the real
-	// navigation that follows will hit the auth redirect.
-	const isPrefetch = request.headers.get("Next-Router-Prefetch") === "1";
-	if (isPrefetch) return intlResponse;
+	// RSC payload requests (both prefetches and the RSC half of normal client
+	// navigations) must never be redirected to an HTML page — the RSC runtime
+	// can't parse HTML and throws InvariantError. The browser already has a
+	// valid session cookie for RSC requests following the initial HTML load,
+	// so returning the intl response (plain rewrite) is safe for authed flows
+	// and harmless for unauthed ones — the next full navigation will still hit
+	// the auth redirect.
+	const isRsc =
+		request.headers.get("RSC") === "1" ||
+		request.headers.get("Next-Router-Prefetch") === "1";
+	if (isRsc) return intlResponse;
 
 	const authed = await convexAuth.isAuthenticated();
 	if (isLoginPage(request) && authed) {
