@@ -999,40 +999,45 @@ Most of Phase 15's original checklist was absorbed into the UX alignment Tier 1�
 
 ## Phase 16: Tests
 
-### What to do
+Split into 16A (Vitest + CI — shipped) and 16B (Playwright e2e + component render tests — deferred). Playwright needs a Convex test-deployment strategy plus an OAuth bypass helper before it can be wired in; that's a dedicated session, not a slice.
 
-1. **Vitest unit tests:**
-   - Convex functions: auth checks, data validation, correct return shapes
-   - Utility functions: date formatting, locale helpers
-   - Components: render tests with mock Convex data, verify Icelandic text
+### Phase 16A — Vitest + CI (Status 2026-04-19: Complete)
 
-2. **Playwright e2e tests** (all at **375×812 viewport**):
-   - Auth flow: login → dashboard. Unauthorized → rejection.
-   - Dashboard: appointments + log render, quick actions work
-   - Appointments CRUD + driver volunteering
-   - Log CRUD + author-only editing + "Breytt" badge
-   - Info tabs: navigate all 4, add items, verify persistence
-   - File upload → list → download
-   - Real-time: two tabs, add in one, appears in other
-   - Contacts: verify phone links are tappable
+Test files live adjacent to the code they cover — `convex/*.test.ts` for backend tests, `src/lib/*.test.ts` for utilities. `vitest.config.ts` runs everything under the `edge-runtime` environment so `convex-test` (which bundles a mock Convex runtime) works the same way it does in production.
 
-### Files to create/modify
+**What shipped:**
 
-- `tests/unit/convex/appointments.test.ts`
-- `tests/unit/convex/logEntries.test.ts`
-- `tests/unit/convex/medications.test.ts`
-- `tests/unit/components/MedicationTable.test.tsx`
-- `tests/e2e/auth.spec.ts`
-- `tests/e2e/dashboard.spec.ts`
-- `tests/e2e/appointments.spec.ts`
-- `tests/e2e/log.spec.ts`
-- `tests/e2e/info.spec.ts`
-- `playwright.config.ts`
+- `vitest.config.ts` — edge-runtime env, inlines `convex-test` for bundling, aliases `@` → `src`, picks up `convex/**/*.test.ts` and `src/**/*.test.{ts,tsx}`.
+- `package.json` scripts — `test` (CI mode), `test:watch` (dev), `test:coverage`.
+- `convex/testHelpers.test.ts` — `createAuthedTest(modules)` seeds a user row and returns a `withIdentity`-scoped `t`. The `.test.` basename is required so the Convex bundler skips it (per its multi-dot-basename rule) — the helper imports `convex-test`, a devDep not available in the Convex runtime. `vitest.config.ts` explicitly excludes this one path from its include glob so vitest doesn't fail it as a suite with no tests.
+- `convex/auth.test.ts` — table-driven: every public data-returning query and no-id-required mutation across every module throws `ConvexError("Ekki innskráður")` for unauthenticated callers. The two documented soft-return exceptions (`users.me` → null, `events.isAdmin` → false) get explicit asserts. Mutations that require a pre-existing `id` are deferred to domain tests (argument validators fire before the auth guard, so fake ids can't round-trip).
+- `convex/domain.test.ts` — correctness tests for the non-trivial logic:
+  - `entitlements.claim`: take-ownership-when-free, no-op-when-self, reject-when-other-owns-it (with guard-against-overwrite verified).
+  - `logEntries.update`: author-only edit, rejects non-author, rejects empty content.
+  - `recurringSeries.ensureNextOccurrences`: materializes only one upcoming slot per active series, skips paused series, idempotent across repeated runs.
+  - `backup.weeklyExport`: snapshot records a `backups` row pointing at the storage blob; 6 consecutive runs prune to 4 rows.
+- `src/lib/formatDate.test.ts` — `classifyRelative` boundaries across every kind (justNow, minutesAgo, hoursAgo, today, yesterday, daysAgo, absolute).
+- `src/lib/formatRecurrence.test.ts` — `isValidTimeOfDay`, `normaliseDaysOfWeek`, `computeNextStartTime` (same-day-later, skip-today-when-passed, multi-day, 7-day wraparound, strictly-future, empty-days throw, invalid-time throw).
+- `.github/workflows/ci.yml` — on push to main + all PRs: bun install → biome lint → `bunx tsc --noEmit` → `bun run test`. Concurrency group cancels superseded runs. No `convex deploy` from CI (Vercel handles prod deploys).
 
-### Exit criteria
+**Exit criteria:**
 
-- All tests pass
-- CI runs them on push
+- [x] `bun run test` green (55 tests passing).
+- [x] Typecheck clean (`bunx tsc --noEmit`).
+- [x] Lint clean (`bun run lint`).
+- [x] CI workflow added; will go green on first push once the branch pushes to GitHub.
+
+### Phase 16B — Playwright e2e + component render tests (deferred)
+
+**Why deferred:** Playwright against a Convex-auth app needs (a) a Convex test deployment spun up per run or seeded against a shared dev deployment, and (b) an OAuth bypass (Google OAuth can't be driven from headless Chromium at the family-account level without a seeding shortcut). Both are real engineering decisions, not drop-in.
+
+**Pick-up checklist before starting 16B:**
+
+1. Add a dev-only `auth.debugSignIn({ email })` mutation gated on `NODE_ENV !== "production"` that creates a session directly — or use Convex Auth's built-in OTP-style test provider if it matures.
+2. `playwright.config.ts` at project root; 375×812 viewport; `webServer` launches `bun dev` + `npx convex dev` (or points at a shared test deployment).
+3. Specs: auth flow → dashboard reachable; appointments CRUD + driver volunteering; log CRUD + author-only edit + "Breytt" badge; info tabs navigation; file upload → list → download; real-time across two tabs; phone `tel:` links.
+4. Component render tests under `src/components/**/*.test.tsx` using `@testing-library/react` — only where the render logic is non-trivial (MedicationTable's grouping, EntitlementList's filter-and-progress, WeekGrid's drag states). Skip pure-presentational components.
+5. Wire Playwright into the CI workflow as a separate job (keeps lint/typecheck/vitest fast as the gate).
 
 ---
 
