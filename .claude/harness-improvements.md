@@ -29,7 +29,20 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 
 ## Open Items
 
-_(empty — all items processed in 2026-04-19 audit run)_
+### 2026-04-19 · manual · Known Next.js 16.2.x dev-cache bug: 'Expected RSC response, got text/html' log noise
+
+**Context:** On every authenticated route load in `bun dev`, the terminal logs a 500 followed by a 200 for each path, with `Error [InvariantError]: Expected RSC response, got text/html; charset=utf-8. This is a bug in Next.js.` The user never sees a broken page — Turbopack auto-recovers and serves the 200.
+
+**Observation:** Confirmed as a **dev-only Next.js 16.2.x bug** (error code E789, thrown at `node_modules/next/dist/build/templates/app-page.js:1129`). Root cause is the dev HTTP cache serving a stale HTML entry where Next expects an RSC payload — PR #91503 landed in 16.2 hard-coded `Cache-Control: no-cache, must-revalidate` in dev, and PR #92892 (in canary, not yet in 16.2.4 stable) fixes adjacent cache-restore bugs. Production on Vercel is unaffected; the buggy code path requires the dev in-memory cache shape.
+
+Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2` + `91d277c`); that is the right shape per next-intl#2226 regardless of this dev bug. Do not revert it.
+
+**Suggested action:** Leave as-is. Re-check on Next 16.2.5 / 16.3 when those ship — the backport cadence of 16.2.x has been fixing cache-path bugs weekly. If the noise becomes actively problematic (masking real errors), spike `next@16.2.1-canary.46+` on a branch to see if PR #92892 also fixes E789.
+
+**References:**
+- [Next.js PR #92892](https://github.com/vercel/next.js/pull/92892)
+- [Next.js PR #91503](https://github.com/vercel/next.js/pull/91503)
+- [next-intl#2226 — composing middlewares](https://github.com/amannn/next-intl/issues/2226)
 
 ---
 
