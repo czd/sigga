@@ -64,7 +64,7 @@
 			"empty": "Nothing new since your last visit.",
 			"showOlder": "Show older",
 			"log": "{name} wrote a log entry",
-			"appointment": "New appointment: {title}",
+			"appointment": "{name} added an appointment: {title}",
 			"document": "{name} added a document: {fileName}",
 			"entitlementStatus": "{name} updated benefit “{title}” to {newStatus}"
 		},

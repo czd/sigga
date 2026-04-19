@@ -24,6 +24,7 @@ type AppointmentItem = {
 	ts: number;
 	title: string;
 	startTime: number;
+	createdByName: string;
 };
 type DocumentItem = {
 	kind: "document";
@@ -80,13 +81,16 @@ export const sinceLastVisit = query({
 			})),
 		);
 
-		const appointmentItems: AppointmentItem[] = appointments.map((a) => ({
-			kind: "appointment" as const,
-			id: a._id,
-			ts: a._creationTime,
-			title: a.title,
-			startTime: a.startTime,
-		}));
+		const appointmentItems: AppointmentItem[] = await Promise.all(
+			appointments.map(async (a) => ({
+				kind: "appointment" as const,
+				id: a._id,
+				ts: a._creationTime,
+				title: a.title,
+				startTime: a.startTime,
+				createdByName: await nameOf(a.createdBy),
+			})),
+		);
 
 		const documentItems: DocumentItem[] = await Promise.all(
 			documents.map(async (d) => ({

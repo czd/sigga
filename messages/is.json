@@ -64,7 +64,7 @@
 			"empty": "Ekkert nýtt frá síðustu heimsókn.",
 			"showOlder": "Sýna eldri",
 			"log": "{name} skrifaði færslu",
-			"appointment": "Nýr tími: {title}",
+			"appointment": "{name} bætti tíma: {title}",
 			"document": "{name} bætti við skjali: {fileName}",
 			"entitlementStatus": "{name} uppfærði réttindi „{title}“ í {newStatus}"
 		},

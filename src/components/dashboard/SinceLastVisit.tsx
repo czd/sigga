@@ -98,7 +98,10 @@ export function SinceLastVisit() {
 									{item.kind === "log"
 										? t("log", { name: item.authorName })
 										: item.kind === "appointment"
-											? t("appointment", { title: item.title })
+											? t("appointment", {
+													name: item.createdByName,
+													title: item.title,
+												})
 											: item.kind === "document"
 												? t("document", {
 														name: item.addedByName,
