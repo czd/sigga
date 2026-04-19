@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc } from "@/../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -227,15 +228,13 @@ export function MedicationForm({
 					</div>
 
 					{editMedication ? (
-						<label className="flex items-center gap-3 min-h-12 cursor-pointer">
-							<input
-								type="checkbox"
+						<Label className="flex items-center gap-3 min-h-12 cursor-pointer text-base font-normal">
+							<Checkbox
 								checked={isActive}
-								onChange={(e) => setIsActive(e.target.checked)}
-								className="size-5"
+								onCheckedChange={(v) => setIsActive(v === true)}
 							/>
-							<span className="text-base">{t("fields.active")}</span>
-						</label>
+							<span>{t("fields.active")}</span>
+						</Label>
 					) : null}
 
 					{error ? (
