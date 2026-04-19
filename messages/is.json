@@ -369,7 +369,7 @@
 			"cta": "+ Enginn eigandi · tek þetta",
 			"ctaShort": "Tek þetta",
 			"confirmTitle": "Taka að sér?",
-			"confirmBody": "Þú verður skráð(ur) sem umsjón með \"{title}\". Þú getur breytt þessu aftur seinna.",
+			"confirmBody": "Þú verður skráð sem umsjón með „{title}“. Þú getur breytt þessu aftur seinna.",
 			"confirmAction": "Já, ég tek þetta",
 			"error": "Ekki tókst að taka réttindin að sér."
 		},

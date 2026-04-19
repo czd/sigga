@@ -369,7 +369,7 @@
 			"cta": "+ No owner · I'll take this",
 			"ctaShort": "I'll take this",
 			"confirmTitle": "Take this on?",
-			"confirmBody": "You'll be listed as the owner of \"{title}\". You can change this later.",
+			"confirmBody": "You'll be listed as the owner of “{title}”. You can change this later.",
 			"confirmAction": "Yes, I'll take this",
 			"error": "Could not claim this entitlement."
 		},
