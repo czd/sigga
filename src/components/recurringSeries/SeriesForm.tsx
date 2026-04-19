@@ -191,7 +191,7 @@ export function SeriesForm({
 							onChange={(e) => setDuration(e.target.value)}
 							className="h-12 text-base"
 						/>
-						<p className="text-sm text-ink-faint">
+						<p className="text-sm text-ink-soft">
 							{t("form.fields.durationHint")}
 						</p>
 					</div>
@@ -222,7 +222,7 @@ export function SeriesForm({
 					</div>
 
 					{editSeries ? (
-						<p className="text-sm text-ink-faint">{t("form.editNextNote")}</p>
+						<p className="text-sm text-ink-soft">{t("form.editNextNote")}</p>
 					) : null}
 
 					{error ? (

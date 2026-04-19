@@ -103,7 +103,7 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 	return (
 		<div className="flex flex-col gap-5">
 			<header>
-				<div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-ink-faint">
+				<div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
 					<CalendarClock size={14} aria-hidden />
 					<span>{formatAbsoluteWithTime(appointment.startTime, locale)}</span>
 					{isVirtual ? (
@@ -120,7 +120,7 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 					{appointment.title}
 				</h2>
 				{appointment.status === "cancelled" ? (
-					<div className="text-sm text-ink-faint mt-1 italic">
+					<div className="text-sm text-ink-soft mt-1 italic">
 						{t("detail.cancelledStatus")}
 					</div>
 				) : null}
@@ -128,7 +128,7 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 
 			{appointment.location ? (
 				<div>
-					<div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-faint mb-1">
+					<div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft mb-1">
 						{t("fields.location")}
 					</div>
 					<div className="text-base text-ink">{appointment.location}</div>
@@ -136,7 +136,7 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 			) : null}
 
 			<div>
-				<div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-faint mb-2">
+				<div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft mb-2">
 					{t("fields.driver")}
 				</div>
 				<DriverPicker
@@ -148,7 +148,7 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 
 			{appointment.notes ? (
 				<div>
-					<div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-faint mb-1">
+					<div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft mb-1">
 						{t("fields.notes")}
 					</div>
 					<p className="text-base text-ink whitespace-pre-wrap">

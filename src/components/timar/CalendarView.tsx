@@ -208,7 +208,7 @@ export function CalendarView() {
 			<div className="flex justify-end pt-2">
 				<Link
 					href="/timar/reglulegir"
-					className="text-sm text-ink-faint hover:text-ink-soft"
+					className="text-sm text-ink-soft hover:text-ink"
 				>
 					{t("calendar.recurringLink")}
 				</Link>
@@ -244,7 +244,7 @@ function ViewToggle({
 						"min-h-9 px-3 rounded-md text-sm font-medium transition-colors",
 						view === key
 							? "bg-paper text-ink-soft shadow-sm"
-							: "text-ink-faint hover:text-ink-soft",
+							: "text-ink-soft hover:text-ink",
 					)}
 				>
 					{t(key)}

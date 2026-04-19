@@ -133,7 +133,7 @@ function DocRow({
 				</span>
 				<ChevronRight
 					aria-hidden
-					className="size-5 shrink-0 text-ink-faint"
+					className="size-5 shrink-0 text-ink-soft"
 					strokeWidth={1.8}
 				/>
 			</button>
@@ -408,7 +408,7 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 									aria-label={label || t("title")}
 								>
 									{label ? (
-										<h4 className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint">
+										<h4 className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
 											{label}
 										</h4>
 									) : null}

@@ -29,9 +29,9 @@ export function SeriesEntryRow() {
 		>
 			<div className="flex flex-col">
 				<span className="font-serif text-base text-ink">{t("entryLabel")}</span>
-				<span className="text-sm text-ink-faint">{subtitle}</span>
+				<span className="text-sm text-ink-soft">{subtitle}</span>
 			</div>
-			<ChevronRight size={20} className="text-ink-faint" aria-hidden />
+			<ChevronRight size={20} className="text-ink-soft" aria-hidden />
 		</Link>
 	);
 }

@@ -262,7 +262,7 @@ function WeekGridContent({ weekStartMs, activeId, onSelect }: Props) {
 									<div
 										className={cn(
 											"text-[0.7rem] font-semibold uppercase tracking-[0.1em]",
-											isToday ? "text-sage-shadow" : "text-ink-faint",
+											isToday ? "text-sage-shadow" : "text-ink-soft",
 										)}
 									>
 										{weekdayFmt.format(cellDate).replace(/\.$/, "")}
@@ -293,7 +293,7 @@ function WeekGridContent({ weekStartMs, activeId, onSelect }: Props) {
 				</div>
 
 				{appointments && appointments.length === 0 ? (
-					<p className="text-ink-faint text-center py-6">
+					<p className="text-ink-soft text-center py-6">
 						{t("noAppointments")}
 					</p>
 				) : null}
@@ -301,10 +301,10 @@ function WeekGridContent({ weekStartMs, activeId, onSelect }: Props) {
 				{users && users.length > 0 ? (
 					<div className="flex flex-col gap-2 pt-2 border-t border-divider">
 						<div className="flex items-baseline justify-between gap-2">
-							<span className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-faint">
+							<span className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
 								{t("drivers")}
 							</span>
-							<span className="text-xs text-ink-faint">{t("dragHint")}</span>
+							<span className="text-xs text-ink-soft">{t("dragHint")}</span>
 						</div>
 						<div className="flex flex-wrap gap-2">
 							{users.map((u) => (

@@ -38,7 +38,7 @@ function CancelledRow({ appointment }: { appointment: AppointmentWithDriver }) {
 	const locale = useLocale();
 	const { day, month } = useAppointmentDateParts(appointment.startTime, locale);
 	return (
-		<p className="py-3 text-sm text-ink-faint italic">
+		<p className="py-3 text-sm text-ink-soft italic">
 			{t("cancelledLine", {
 				day,
 				month,
@@ -69,7 +69,7 @@ function AppointmentRow({
 	return (
 		<div className="flex items-start gap-5 py-5">
 			<div className="w-14 flex-shrink-0 text-center pt-0.5">
-				<div className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink-faint">
+				<div className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink-soft">
 					{weekday}
 				</div>
 				<div className="font-serif text-[1.75rem] leading-none text-ink mt-1">
@@ -77,7 +77,7 @@ function AppointmentRow({
 				</div>
 			</div>
 			<div className="flex-1 min-w-0">
-				<div className="text-sm text-ink-faint">{t("time", { time })}</div>
+				<div className="text-sm text-ink-soft">{t("time", { time })}</div>
 				<h3 className="font-serif text-lg leading-snug text-ink text-balance mt-0.5">
 					{appointment.title}
 				</h3>
@@ -143,16 +143,16 @@ export function NextAppointments({
 				</h2>
 				<Link
 					href="/timar"
-					className="text-sm text-ink-faint hover:text-ink-soft transition-colors"
+					className="text-sm text-ink-soft hover:text-ink transition-colors"
 				>
 					{t("seeAll")}
 				</Link>
 			</div>
 
 			{appointments === undefined ? (
-				<p className="text-ink-faint py-2">{tCommon("loading")}</p>
+				<p className="text-ink-soft py-2">{tCommon("loading")}</p>
 			) : appointments.length === 0 ? (
-				<p className="text-ink-faint py-2">{t("empty")}</p>
+				<p className="text-ink-soft py-2">{t("empty")}</p>
 			) : (
 				<ul className="divide-y" style={{ borderColor: "var(--divider)" }}>
 					{appointments.map((apt) => (

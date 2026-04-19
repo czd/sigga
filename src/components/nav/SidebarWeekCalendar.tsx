@@ -88,7 +88,7 @@ function SidebarWeekCalendarContent() {
 								"flex flex-col items-center justify-center h-10 rounded-lg transition-colors text-[0.65rem]",
 								isToday
 									? "bg-paper text-sage-shadow font-semibold"
-									: "text-ink-faint hover:bg-paper/60",
+									: "text-ink-soft hover:bg-paper/60",
 							)}
 						>
 							<span className="text-[0.6rem] leading-none opacity-70">

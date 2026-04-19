@@ -29,7 +29,7 @@ export function ContactDetail({ id }: { id: Id<"contacts"> }) {
 	const [editOpen, setEditOpen] = useState(false);
 
 	if (contacts === undefined) {
-		return <p className="text-ink-faint">{tCommon("loading")}</p>;
+		return <p className="text-ink-soft">{tCommon("loading")}</p>;
 	}
 	if (contact === null) {
 		return null;
@@ -38,7 +38,7 @@ export function ContactDetail({ id }: { id: Id<"contacts"> }) {
 	return (
 		<div className="flex flex-col gap-5">
 			<header className="flex flex-col gap-1">
-				<div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-faint">
+				<div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
 					{t(`categories.${contact.category}`)}
 				</div>
 				<h2 className="font-serif text-[1.75rem] leading-tight text-ink">
@@ -64,7 +64,7 @@ export function ContactDetail({ id }: { id: Id<"contacts"> }) {
 						href={`mailto:${contact.email}`}
 						className="flex items-center gap-3 min-h-12 rounded-xl bg-muted px-4 py-2 text-base text-foreground hover:bg-muted/80 transition-colors"
 					>
-						<Mail aria-hidden className="size-5 shrink-0 text-ink-faint" />
+						<Mail aria-hidden className="size-5 shrink-0 text-ink-soft" />
 						<span className="truncate">{contact.email}</span>
 					</a>
 				) : null}

@@ -101,7 +101,7 @@ export function MonthGrid({
 				{weekdayHeaders.map((label) => (
 					<div
 						key={`wd-${label}`}
-						className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-faint px-2 py-2"
+						className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft px-2 py-2"
 					>
 						{label}
 					</div>
@@ -135,7 +135,7 @@ export function MonthGrid({
 										? "text-sage-shadow font-semibold"
 										: inMonth
 											? "text-ink-soft"
-											: "text-ink-faint",
+											: "text-ink-soft",
 								)}
 							>
 								<span
@@ -180,7 +180,7 @@ export function MonthGrid({
 									);
 								})}
 								{overflow > 0 ? (
-									<li className="px-1.5 text-xs text-ink-faint">
+									<li className="px-1.5 text-xs text-ink-soft">
 										{t("more", { count: overflow })}
 									</li>
 								) : null}

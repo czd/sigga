@@ -71,9 +71,9 @@ export function SinceLastVisit() {
 			</h2>
 
 			{items === undefined ? (
-				<p className="text-ink-faint">{tCommon("loading")}</p>
+				<p className="text-ink-soft">{tCommon("loading")}</p>
 			) : items.length === 0 ? (
-				<p className="text-ink-faint">{t("empty")}</p>
+				<p className="text-ink-soft">{t("empty")}</p>
 			) : (
 				<ul className="flex flex-col divide-y divide-divider">
 					{items.map((item) => (
@@ -82,7 +82,7 @@ export function SinceLastVisit() {
 							className="flex items-start gap-3 py-3"
 							style={{ fontSize: "var(--text-body-dense)" }}
 						>
-							<div className="text-ink-faint mt-0.5">
+							<div className="text-ink-soft mt-0.5">
 								{item.kind === "log" ? (
 									<BookOpen size={16} aria-hidden />
 								) : item.kind === "appointment" ? (
@@ -117,12 +117,12 @@ export function SinceLastVisit() {
 													})}
 								</div>
 								{item.kind === "log" && item.preview ? (
-									<div className="text-ink-faint mt-0.5 line-clamp-1 italic">
+									<div className="text-ink-soft mt-0.5 line-clamp-1 italic">
 										{item.preview}
 									</div>
 								) : null}
 							</div>
-							<div className="flex-shrink-0 text-ink-faint text-xs">
+							<div className="flex-shrink-0 text-ink-soft text-xs">
 								{formatRelative(item.ts, locale, tCommon)}
 							</div>
 						</li>

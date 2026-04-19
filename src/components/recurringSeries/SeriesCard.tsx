@@ -83,13 +83,13 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 				<p
 					className={cn(
 						"text-sm",
-						series.isActive ? "text-ink-soft" : "text-ink-faint",
+						series.isActive ? "text-ink-soft" : "text-ink-soft",
 					)}
 				>
 					{cadence}
 				</p>
 				{series.location ? (
-					<p className="text-sm text-ink-faint">{series.location}</p>
+					<p className="text-sm text-ink-soft">{series.location}</p>
 				) : null}
 			</div>
 

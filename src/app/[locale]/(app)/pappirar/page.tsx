@@ -13,7 +13,7 @@ export default async function PappirarPage({
 
 	return (
 		<StackLayout className="pt-4 pb-28 gap-4" xlMaxWidth="xl:max-w-[1100px]">
-			<div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint">
+			<div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
 				{t("pappirar.title")}
 			</div>
 			<PappirarTabs />

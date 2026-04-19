@@ -64,7 +64,7 @@ export function Sidebar() {
 			aria-label={t("app.name")}
 		>
 			<div className="px-6 pt-7 pb-6">
-				<span className="font-serif italic text-base font-normal text-ink-faint tracking-wide">
+				<span className="font-serif italic text-base font-normal text-ink-soft tracking-wide">
 					{t("app.name").toLowerCase()}
 				</span>
 			</div>
@@ -124,7 +124,7 @@ export function Sidebar() {
 								className="size-8 text-xs"
 							/>
 							<span className="flex-1 truncate text-sm">{displayName}</span>
-							<ChevronUp aria-hidden className="size-4 text-ink-faint" />
+							<ChevronUp aria-hidden className="size-4 text-ink-soft" />
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="start" side="top" className="min-w-56">

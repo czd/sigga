@@ -51,7 +51,7 @@ export function AppointmentCard({
 		<article className="flex flex-col gap-4 rounded-2xl bg-paper px-5 py-5 ring-1 ring-foreground/10">
 			<div className="flex items-start gap-3">
 				<div className="flex-1 min-w-0">
-					<div className="text-sm text-ink-faint">
+					<div className="text-sm text-ink-soft">
 						{formatAbsoluteWithTime(appointment.startTime, locale)}
 					</div>
 					<h3 className="mt-0.5 font-serif text-lg leading-snug text-ink">
@@ -97,7 +97,7 @@ export function AppointmentCard({
 					</div>
 				) : variant === "upcoming" ? (
 					<>
-						<span className="text-base text-ink-faint">
+						<span className="text-base text-ink-soft">
 							{t("fields.noDriverAssigned")}
 						</span>
 						<Button
@@ -109,7 +109,7 @@ export function AppointmentCard({
 						</Button>
 					</>
 				) : (
-					<span className="text-base text-ink-faint">
+					<span className="text-base text-ink-soft">
 						{t("fields.noDriverAssigned")}
 					</span>
 				)}

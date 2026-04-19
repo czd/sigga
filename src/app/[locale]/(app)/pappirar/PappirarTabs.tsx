@@ -118,7 +118,7 @@ export function PappirarTabs() {
 								<span
 									className={cn(
 										"text-sm tabular-nums",
-										active ? "text-ink-faint" : "text-ink-faint/80",
+										active ? "text-ink-soft" : "text-ink-soft/80",
 									)}
 								>
 									{count}
@@ -148,7 +148,7 @@ export function PappirarTabs() {
 							<DocumentDetail id={activeDocId} onAfterDelete={handleDocClear} />
 						) : (
 							<div className="flex items-center justify-center h-full min-h-[40vh]">
-								<p className="text-ink-faint text-base italic">
+								<p className="text-ink-soft text-base italic">
 									{t("skjolEmptyPane")}
 								</p>
 							</div>

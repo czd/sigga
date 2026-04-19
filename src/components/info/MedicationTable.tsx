@@ -53,7 +53,7 @@ function MedicationRow({
 			>
 				<span
 					aria-hidden
-					className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-paper-deep text-ink-faint"
+					className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-paper-deep text-ink-soft"
 				>
 					<Icon className="size-5" strokeWidth={1.6} aria-hidden />
 				</span>
@@ -62,7 +62,7 @@ function MedicationRow({
 						{medication.name}
 					</span>
 					<span className="text-base text-ink">
-						{medication.dose} <span className="text-ink-faint">·</span>{" "}
+						{medication.dose} <span className="text-ink-soft">·</span>{" "}
 						{medication.schedule}
 					</span>
 					{subtitle ? (

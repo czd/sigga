@@ -86,7 +86,7 @@ function WeekStripContent() {
 		<section aria-labelledby="week-strip-heading">
 			<h3
 				id="week-strip-heading"
-				className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-faint mb-3"
+				className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft mb-3"
 			>
 				{weekLabel}
 			</h3>
@@ -115,7 +115,7 @@ function WeekStripContent() {
 								<div
 									className={cn(
 										"text-[0.7rem] font-semibold uppercase tracking-[0.1em]",
-										isToday ? "text-sage-shadow" : "text-ink-faint",
+										isToday ? "text-sage-shadow" : "text-ink-soft",
 									)}
 								>
 									{weekdayFmt.format(cellDate).replace(/\.$/, "")}
@@ -141,7 +141,7 @@ function WeekStripContent() {
 									/>
 								))}
 								{dayAppts.length > 2 ? (
-									<div className="text-ink-faint">
+									<div className="text-ink-soft">
 										{t("more", { count: dayAppts.length - 2 })}
 									</div>
 								) : null}

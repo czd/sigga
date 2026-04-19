@@ -23,7 +23,7 @@ export function UmonnunView() {
 		<>
 			<div className="px-6 pt-4 pb-28 xl:pb-8 flex flex-col gap-6">
 				<header className="flex flex-col gap-2">
-					<div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-faint">
+					<div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
 						{t("umonnun.title")}
 					</div>
 					<h2 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
@@ -68,7 +68,7 @@ export function UmonnunView() {
 								{activeId ? (
 									<LogEntryReader id={activeId} />
 								) : (
-									<p className="text-ink-faint border-t border-divider pt-4">
+									<p className="text-ink-soft border-t border-divider pt-4">
 										{t("dagbok.detail.noSelection")}
 									</p>
 								)}

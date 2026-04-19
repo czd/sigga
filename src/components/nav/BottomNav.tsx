@@ -74,7 +74,7 @@ export function BottomNav() {
 										? "text-sage-shadow"
 										: isHome
 											? "text-sage-shadow/80"
-											: "text-ink-faint",
+											: "text-ink-soft",
 								)}
 							>
 								<BookIcon

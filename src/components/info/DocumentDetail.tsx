@@ -43,7 +43,7 @@ export function DocumentDetail({
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	if (documents === undefined) {
-		return <p className="text-ink-faint">{tCommon("loading")}</p>;
+		return <p className="text-ink-soft">{tCommon("loading")}</p>;
 	}
 	if (doc === null) {
 		return null;
@@ -74,7 +74,7 @@ export function DocumentDetail({
 				<h2 className="font-serif text-[1.6rem] leading-tight text-ink">
 					{doc.title}
 				</h2>
-				<div className="text-sm text-ink-faint">
+				<div className="text-sm text-ink-soft">
 					{doc.fileName} · {formatSize(doc.fileSize)}
 				</div>
 			</header>
@@ -125,7 +125,7 @@ export function DocumentDetail({
 						className="w-full max-h-[60vh] object-contain bg-page"
 					/>
 				) : (
-					<p className="p-6 text-ink-faint text-center">{t("unavailable")}</p>
+					<p className="p-6 text-ink-soft text-center">{t("unavailable")}</p>
 				)}
 			</div>
 

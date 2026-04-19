@@ -34,7 +34,7 @@ export default function AppError({
 	return (
 		<div className="flex flex-col items-center justify-center gap-6 px-6 py-20 text-center">
 			<h1 className="font-serif text-3xl font-normal">{t("title")}</h1>
-			<p className="max-w-md text-lg text-ink-faint">{t("body")}</p>
+			<p className="max-w-md text-lg text-ink-soft">{t("body")}</p>
 			<Button size="touch" onClick={reset}>
 				{t("retry")}
 			</Button>

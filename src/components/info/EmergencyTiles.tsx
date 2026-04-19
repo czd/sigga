@@ -64,7 +64,7 @@ export function EmergencyTiles() {
 	if (contacts === undefined) {
 		return (
 			<div className="flex flex-col gap-2">
-				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint">
+				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
 					{t("emergencyLabel")}
 				</div>
 				<div className="grid grid-cols-3 gap-3">
@@ -87,7 +87,7 @@ export function EmergencyTiles() {
 		<section aria-labelledby="emergency-label" className="flex flex-col gap-2">
 			<div
 				id="emergency-label"
-				className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint"
+				className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft"
 			>
 				{t("emergencyLabel")}
 			</div>

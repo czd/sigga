@@ -36,7 +36,7 @@
 	--secondary: var(--paper-deep);
 	--secondary-foreground: var(--ink);
 	--muted: var(--paper-deep);
-	--muted-foreground: var(--ink-faint);
+	--muted-foreground: var(--ink-soft);
 	--accent: var(--wheat);
 	--accent-foreground: var(--ink);
 	--destructive: #b85a5a;

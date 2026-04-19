@@ -49,10 +49,10 @@ function LogPreviewInner({ entry }: { entry: LogEntry }) {
 
 	return (
 		<>
-			<div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-faint">
+			<div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
 				{t("eyebrow")}
 				<span aria-hidden> · </span>
-				<span className="font-normal normal-case tracking-normal text-ink-faint italic">
+				<span className="font-normal normal-case tracking-normal text-ink-soft italic">
 					{when.toLowerCase()}
 				</span>
 			</div>
@@ -77,7 +77,7 @@ function LogPreviewInner({ entry }: { entry: LogEntry }) {
 				</button>
 			) : null}
 			{authorName ? (
-				<div className="flex items-center gap-2.5 text-sm text-ink-faint">
+				<div className="flex items-center gap-2.5 text-sm text-ink-soft">
 					<UserAvatar
 						name={entry.author?.name}
 						email={entry.author?.email}
@@ -104,7 +104,7 @@ export function RecentLog({ entry }: { entry: LogEntry | null | undefined }) {
 				{t("eyebrow")}
 			</span>
 			{entry === undefined ? null : entry === null ? (
-				<p className="text-ink-faint">{t("empty")}</p>
+				<p className="text-ink-soft">{t("empty")}</p>
 			) : (
 				<LogPreviewInner entry={entry} />
 			)}

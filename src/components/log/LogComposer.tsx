@@ -74,7 +74,7 @@ export function LogComposer() {
 				className="resize-none"
 			/>
 			<div className="flex items-center justify-between gap-3">
-				<span className="text-xs text-ink-faint">
+				<span className="text-xs text-ink-soft">
 					{draftSavedAt ? t("draftSaved") : ""}
 					{draftSavedAt ? " · " : ""}
 					<span>{t("submitHint")}</span>

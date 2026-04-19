@@ -33,7 +33,7 @@ export function FolkView() {
 	return (
 		<>
 			<header className="flex flex-col gap-2">
-				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint">
+				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
 					{t("folk.title")}
 				</div>
 				<h2 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
@@ -55,7 +55,7 @@ export function FolkView() {
 						<ContactDetail id={activeId} />
 					) : (
 						<div className="flex items-center justify-center h-full min-h-[40vh]">
-							<p className="text-ink-faint text-base italic">
+							<p className="text-ink-soft text-base italic">
 								{t("folk.selectHint")}
 							</p>
 						</div>

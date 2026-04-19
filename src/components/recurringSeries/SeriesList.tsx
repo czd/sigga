@@ -25,7 +25,7 @@ export function SeriesList() {
 	return (
 		<>
 			{loading ? (
-				<p className="text-ink-faint py-2">{tCommon("loading")}</p>
+				<p className="text-ink-soft py-2">{tCommon("loading")}</p>
 			) : series.length === 0 ? (
 				<EmptyState
 					icon={<CalendarRange size={40} aria-hidden />}

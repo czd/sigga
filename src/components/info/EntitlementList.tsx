@@ -300,7 +300,7 @@ function FilterChips({
 						<span
 							className={cn(
 								"tabular-nums",
-								active ? "text-paper/75" : "text-ink-faint",
+								active ? "text-paper/75" : "text-ink-soft",
 							)}
 						>
 							{count}
@@ -431,7 +431,7 @@ export function EntitlementList() {
 									>
 										<h4
 											id={`entitlements-${status}`}
-											className="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint"
+											className="flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft"
 										>
 											<span
 												aria-hidden

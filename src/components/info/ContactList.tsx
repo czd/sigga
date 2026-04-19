@@ -228,7 +228,7 @@ export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 				<div className="relative">
 					<Search
 						aria-hidden
-						className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-ink-faint"
+						className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-ink-soft"
 					/>
 					<Input
 						id="contacts-search"
@@ -291,7 +291,7 @@ export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 							>
 								<h4
 									id={`contacts-${category}`}
-									className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-faint"
+									className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft"
 								>
 									{t(`categories.${category}`)}
 								</h4>

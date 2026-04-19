@@ -40,7 +40,7 @@ export function LogEntryReader({ id }: Props) {
 	const [editOpen, setEditOpen] = useState(false);
 
 	if (entry === undefined) {
-		return <p className="text-ink-faint">{tCommon("loading")}</p>;
+		return <p className="text-ink-soft">{tCommon("loading")}</p>;
 	}
 	if (entry === null) {
 		return null;
@@ -60,7 +60,7 @@ export function LogEntryReader({ id }: Props) {
 					<div className="text-base font-medium text-ink leading-tight">
 						{entry.author?.name ?? entry.author?.email ?? "—"}
 					</div>
-					<div className="text-sm text-ink-faint">
+					<div className="text-sm text-ink-soft">
 						{formatEntryDate(entry._creationTime, locale)}
 						{entry.editedAt ? (
 							<>
@@ -87,7 +87,7 @@ export function LogEntryReader({ id }: Props) {
 			</p>
 
 			{entry.appointment ? (
-				<div className="inline-flex self-start items-center gap-1.5 rounded-full bg-paper-deep px-3 py-1 text-sm text-ink-faint">
+				<div className="inline-flex self-start items-center gap-1.5 rounded-full bg-paper-deep px-3 py-1 text-sm text-ink-soft">
 					<CalendarClock size={14} aria-hidden />
 					<span>
 						{entry.appointment.title} ·{" "}

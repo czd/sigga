@@ -33,7 +33,7 @@ export default function UsagePage() {
 	if (isAdmin === undefined) {
 		return (
 			<StackLayout className="pt-8 pb-10">
-				<p className="text-ink-faint">{t("common.loading")}</p>
+				<p className="text-ink-soft">{t("common.loading")}</p>
 			</StackLayout>
 		);
 	}
@@ -44,7 +44,7 @@ export default function UsagePage() {
 				<h1 className="font-serif text-[2rem] leading-tight font-normal">
 					{t("admin.usage.notAuthorizedTitle")}
 				</h1>
-				<p className="text-base text-ink-faint">
+				<p className="text-base text-ink-soft">
 					{t("admin.usage.notAuthorizedBody")}
 				</p>
 			</StackLayout>
@@ -57,7 +57,7 @@ export default function UsagePage() {
 				<h1 className="font-serif text-[2rem] leading-tight font-normal">
 					{t("admin.usage.title")}
 				</h1>
-				<p className="text-base text-ink-faint">{t("admin.usage.subtitle")}</p>
+				<p className="text-base text-ink-soft">{t("admin.usage.subtitle")}</p>
 			</header>
 
 			<section className="flex flex-col gap-3">
@@ -65,9 +65,9 @@ export default function UsagePage() {
 					{t("admin.usage.peopleHeading")}
 				</h2>
 				{usage === undefined ? (
-					<p className="text-ink-faint">{t("common.loading")}</p>
+					<p className="text-ink-soft">{t("common.loading")}</p>
 				) : usage.length === 0 ? (
-					<p className="text-ink-faint">{t("admin.usage.empty")}</p>
+					<p className="text-ink-soft">{t("admin.usage.empty")}</p>
 				) : (
 					<ul className="flex flex-col gap-2">
 						{usage.map((row) => (
@@ -86,7 +86,7 @@ export default function UsagePage() {
 													{row.user.name ?? row.user.email ?? "—"}
 												</span>
 												{row.user.email && row.user.name ? (
-													<span className="text-xs font-normal text-ink-faint">
+													<span className="text-xs font-normal text-ink-soft">
 														{row.user.email}
 													</span>
 												) : null}
@@ -94,13 +94,13 @@ export default function UsagePage() {
 										</CardTitle>
 									</CardHeader>
 									<CardContent className="flex flex-col gap-2 text-sm">
-										<div className="text-ink-faint">
+										<div className="text-ink-soft">
 											{t("admin.usage.lastActive")}:{" "}
 											<span className="text-ink">
 												{formatLastActive(row.lastActiveAt, locale, t)}
 											</span>
 										</div>
-										<div className="flex flex-wrap gap-x-5 gap-y-1 text-ink-faint">
+										<div className="flex flex-wrap gap-x-5 gap-y-1 text-ink-soft">
 											<span>
 												{t("admin.usage.appOpens")}:{" "}
 												<strong className="text-ink">{row.appOpens}</strong>
@@ -133,9 +133,9 @@ export default function UsagePage() {
 					{t("admin.usage.errorsHeading")}
 				</h2>
 				{errors === undefined ? (
-					<p className="text-ink-faint">{t("common.loading")}</p>
+					<p className="text-ink-soft">{t("common.loading")}</p>
 				) : errors.length === 0 ? (
-					<p className="text-ink-faint">{t("admin.usage.noErrors")}</p>
+					<p className="text-ink-soft">{t("admin.usage.noErrors")}</p>
 				) : (
 					<ul className="flex flex-col gap-2">
 						{errors.map((e) => (
@@ -146,14 +146,14 @@ export default function UsagePage() {
 											{e.user?.name ??
 												e.user?.email ??
 												t("admin.usage.unknownUser")}
-											<span className="ml-2 font-normal text-ink-faint">
+											<span className="ml-2 font-normal text-ink-soft">
 												· {formatAbsoluteWithTime(e._creationTime, locale)}
 											</span>
 										</CardTitle>
 									</CardHeader>
 									<CardContent className="flex flex-col gap-2">
 										{e.path ? (
-											<div className="text-xs text-ink-faint break-all">
+											<div className="text-xs text-ink-soft break-all">
 												{e.path}
 											</div>
 										) : null}
@@ -166,7 +166,7 @@ export default function UsagePage() {
 											</pre>
 										) : null}
 										{e.userAgent ? (
-											<div className="text-[11px] text-ink-faint break-all">
+											<div className="text-[11px] text-ink-soft break-all">
 												{e.userAgent}
 											</div>
 										) : null}
