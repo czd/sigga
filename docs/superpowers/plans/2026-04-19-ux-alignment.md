@@ -182,22 +182,22 @@ Any learning from Phase D that changes a canonical answer gets back-ported to `d
 
 Do these first. Token-level fixes cascade through the whole app, so later tasks assume they've landed.
 
-**C1. Fix MedicationForm 20 px checkbox.** Pattern 7, 18 · a11y **blocker** (fails WCAG 2.5.8 24 px minimum).
+**C1. ✅ Fix MedicationForm 20 px checkbox.** Pattern 7, 18 · a11y **blocker** (fails WCAG 2.5.8 24 px minimum). *Done: commit `fb78ac6`.*
 - *Files:* `src/components/info/MedicationForm.tsx` (native `<input type="checkbox">`).
 - *Exit:* Replace with shadcn `<Checkbox>` sized to ≥48×48 tap area (label + control). A11y audit item cleared.
 - *Size:* S · *Deps:* none.
 
-**C2. Repoint `--muted-foreground` token and sweep text-bearing usage.** Pattern 7, 18 · a11y systemic #1 (2.87:1 → 5.97:1).
+**C2. ✅ Repoint `--muted-foreground` token and sweep text-bearing usage.** Pattern 7, 18 · a11y systemic #1 (2.87:1 → 5.97:1). *Done: commit `046ef6c`.*
 - *Files:* `src/app/globals.css` (token definition), ~30 `text-ink-faint` call sites across dashboard/timar/umonnun/folk/pappirar.
 - *Exit:* `--muted-foreground` points to `ink-soft`; every `text-ink-faint` used as body or meta text swapped to `text-ink-soft`; decorative-only icon tints may stay. Spot-measure contrast on three sample views at 375 px.
 - *Size:* M · *Deps:* none.
 
-**C3. Fix `--input` border + `focus-visible:ring-ring/50`.** Pattern 18 · a11y systemic #2 (form boundaries + focus rings invisible).
+**C3. ✅ Fix `--input` border + `focus-visible:ring-ring/50`.** Pattern 18 · a11y systemic #2 (form boundaries + focus rings invisible). *Done: commit `728cc4b`.*
 - *Files:* `src/app/globals.css` input/ring tokens; `src/components/ui/button.tsx` + `src/components/ui/input.tsx` default variants.
 - *Exit:* Form boundaries ≥3:1 against paper; focus rings at full alpha, never `/50`; keyboard navigation leaves an obvious trail on every interactive control.
 - *Size:* S · *Deps:* none.
 
-**C4. Deprecate sub-48 px shadcn button variants + fix dialog/sheet close X.** Pattern 7, 18 · a11y systemic #3 (every dialog/sheet has a sub-floor control today).
+**C4. ✅ Deprecate sub-48 px shadcn button variants + fix dialog/sheet close X.** Pattern 7, 18 · a11y systemic #3 (every dialog/sheet has a sub-floor control today). *Done: commit `241879a`.*
 - *Files:* `src/components/ui/button.tsx` (re-size or remove `xs`/`sm`/`default`/`icon-sm`); `src/components/ui/dialog.tsx:74`, `src/components/ui/sheet.tsx:75` (`icon-sm` → `touch-icon`); 10+ call-site changes.
 - *Exit:* No shadcn button variant under 48 px remains in the codebase. QA grep for `size="sm"` or `size="icon-sm"` returns zero.
 - *Size:* L · *Deps:* none — but batch with C2/C3 since they share primitives.
