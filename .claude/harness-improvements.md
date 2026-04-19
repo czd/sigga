@@ -61,6 +61,12 @@ Note: The code violation was fixed in commit 58856bc (uses `crons.cron` througho
 **Observation:** This is a large intentional design pivot that happened without an intermediate docs-sync. Both `docs/spec.md` and `docs/implementation-plan.md` described the old architecture until this sweep. The drift accumulated across multiple commits. CLAUDE.md's "Current Repo State" section was also stale ("Phase 0 not yet started") — but that file is out of scope for docs-sync.
 **Suggested action:** Consider adding a harness rule or CLAUDE.md convention: when a phase involves route renames or bottom-nav changes, the implementer should invoke docs-sync immediately rather than deferring it. The nav is a high-impact, high-visibility piece of the architecture and stale docs here are especially confusing.
 
+### 2026-04-19 · qa · `events.isAdmin` soft-returns `false` for unauthenticated callers — CLAUDE.md policy says throw, but this is a deliberate exception like `users.me`
+
+**Context:** Reviewing admin-gating commit for `/nytjun`. `events.isAdmin` calls `getAuthUserId` directly and returns `false` rather than throwing `ConvexError("Ekki innskráður")` for unauthenticated callers. This mirrors the documented `users.me` exception.
+**Observation:** CLAUDE.md states "Every mutation AND every data-returning query calls `requireAuth(ctx)` and throws `ConvexError('Ekki innskráður')` if null" with a single documented exception (`users.me`). `events.isAdmin` is a second exception but is not documented as such. Any future QA run will flag this as a Convex convention violation unless the exception is noted.
+**Suggested action:** Update CLAUDE.md Architecture Notes and/or `docs/spec.md` to document the second exception: `events.isAdmin` returns `boolean` (false for unauthenticated) rather than throwing, by design, so the UI can branch without a try/catch. The pattern is: "soft-returning queries that gate UI display" are exempt from the throw convention; both must be listed explicitly.
+
 ---
 
 ## Resolved

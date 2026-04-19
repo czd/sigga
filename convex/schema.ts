@@ -116,6 +116,6 @@ export default defineSchema({
 		userAgent: v.optional(v.string()),
 		metadata: v.optional(v.string()),
 	})
-		.index("by_user_and_time", ["userId", "_creationTime"])
-		.index("by_type_and_time", ["type", "_creationTime"]),
+		.index("by_user_and_time", ["userId"])
+		.index("by_type_and_time", ["type"]),
 });
