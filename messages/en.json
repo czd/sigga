@@ -157,7 +157,12 @@
 			"recurring": "Recurring",
 			"virtualHint": "This occurrence comes from a recurring series — it'll be saved the moment you assign a driver, edit, or cancel it.",
 			"cancelledStatus": "Cancelled",
-			"cancel": "Cancel this occurrence"
+			"cancel": "Cancel this occurrence",
+			"cancelConfirm": {
+				"title": "Cancel this occurrence?",
+				"body": "The occurrence will be marked cancelled and disappears from the upcoming list.",
+				"action": "Yes, cancel it"
+			}
 		},
 		"new": "New appointment",
 		"createTitle": "New appointment",

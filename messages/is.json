@@ -158,7 +158,12 @@
 			"recurring": "Reglulegur tími",
 			"virtualHint": "Þessi tími er úr reglulegum tíma — hann verður vistaður um leið og þú skutlar, breytir eða hættir við.",
 			"cancelledStatus": "Hætt við",
-			"cancel": "Hætta við þennan tíma"
+			"cancel": "Hætta við þennan tíma",
+			"cancelConfirm": {
+				"title": "Hætta við þennan tíma?",
+				"body": "Tíminn verður merktur sem afboðaður og hverfur af listanum yfir næstu tíma.",
+				"action": "Já, hætta við"
+			}
 		},
 		"createTitle": "Nýr tími",
 		"editTitle": "Breyta tíma",

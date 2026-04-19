@@ -37,6 +37,7 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 	const [pendingDriverId, setPendingDriverId] = useState<Id<"users"> | null>(
 		null,
 	);
+	const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
 
 	const isVirtual = appointment.virtual;
 
@@ -195,7 +196,7 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 					<Button
 						variant="ghost"
 						size="touch"
-						onClick={handleCancel}
+						onClick={() => setCancelConfirmOpen(true)}
 						disabled={pending}
 						className="text-destructive"
 					>
@@ -212,6 +213,15 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 					editAppointment={editTarget}
 				/>
 			) : null}
+			<ConfirmDialog
+				open={cancelConfirmOpen}
+				onOpenChange={setCancelConfirmOpen}
+				title={t("detail.cancelConfirm.title")}
+				body={t("detail.cancelConfirm.body")}
+				confirmLabel={t("detail.cancelConfirm.action")}
+				confirmVariant="destructive"
+				onConfirm={handleCancel}
+			/>
 			<ConfirmDialog
 				open={pendingDriverId !== null}
 				onOpenChange={(next) => {
