@@ -445,5 +445,28 @@
 		"greetingWithName": "Hello {name}",
 		"notSignedIn": "Not signed in",
 		"signInFailed": "Sign-in failed. Try again."
+	},
+	"errors": {
+		"title": "Something went wrong",
+		"body": "We've logged the error. Try again or reload the page.",
+		"retry": "Try again"
+	},
+	"admin": {
+		"usage": {
+			"title": "Usage",
+			"subtitle": "Who is using the app and who has hit errors (last 30 days).",
+			"peopleHeading": "People",
+			"errorsHeading": "Recent errors",
+			"lastActive": "Last active",
+			"appOpens": "App opens",
+			"pageViews": "Page views",
+			"errors": "Errors",
+			"empty": "No usage recorded yet.",
+			"noErrors": "No errors in the last 30 days.",
+			"never": "Never",
+			"unknownUser": "Unknown user",
+			"notAuthorizedTitle": "Not authorized",
+			"notAuthorizedBody": "This page is for administrators only."
+		}
 	}
 }
