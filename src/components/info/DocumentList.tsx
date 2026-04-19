@@ -1,15 +1,13 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { ChevronRight, Download, FileText, Trash2, Upload } from "lucide-react";
+import { useQuery } from "convex/react";
+import { ChevronRight, FileText, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
 	Sheet,
 	SheetContent,
@@ -18,6 +16,7 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { DocumentDetail } from "./DocumentDetail";
 import { DocumentUpload } from "./DocumentUpload";
 
 type DocumentDoc = Doc<"documents">;
@@ -53,20 +52,6 @@ function formatShortDate(ts: number, locale: string): string {
 		day: "numeric",
 		month: "short",
 	}).format(new Date(ts));
-}
-
-function formatFullDate(ts: number, locale: string): string {
-	return new Intl.DateTimeFormat(locale, {
-		day: "numeric",
-		month: "long",
-		year: "numeric",
-	}).format(new Date(ts));
-}
-
-function formatSize(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function firstName(name: string | null | undefined, email?: string | null) {
@@ -166,123 +151,6 @@ function buildSections(
 		rows: rows.sort((x, y) => y._creationTime - x._creationTime),
 	}));
 }
-
-function DocumentDetail({
-	doc,
-	open,
-	onOpenChange,
-	onRequestDelete,
-}: {
-	doc: DocumentWithMeta | null;
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	onRequestDelete: (d: DocumentWithMeta) => void;
-}) {
-	const t = useTranslations("documents");
-	const tCommon = useTranslations("common");
-	const locale = useLocale();
-
-	if (!doc) return null;
-
-	const kind = thumbKindOf(doc.fileType);
-	const thumb = THUMB_STYLE[kind];
-	const uploader = doc.addedByUser;
-	const createdStr = formatFullDate(doc._creationTime, locale);
-
-	return (
-		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent
-				side="bottom"
-				className="max-h-[85vh] overflow-y-auto rounded-t-2xl"
-				showCloseButton
-			>
-				<div className="flex flex-col gap-5 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-					<SheetHeader className="p-0">
-						<SheetTitle className="font-serif text-2xl leading-snug font-semibold text-ink">
-							{doc.title}
-						</SheetTitle>
-						<SheetDescription className="sr-only">
-							{t("detailTitle")}
-						</SheetDescription>
-					</SheetHeader>
-
-					<div className="flex items-center gap-4">
-						<span
-							aria-hidden
-							className={cn(
-								"flex size-16 shrink-0 items-center justify-center rounded-xl text-sm font-semibold tracking-wide",
-								thumb.bg,
-							)}
-						>
-							{thumb.label}
-						</span>
-						<div className="flex min-w-0 flex-col gap-0.5">
-							<span className="truncate text-base text-ink">
-								{doc.fileName}
-							</span>
-							<span className="text-sm text-ink-soft">
-								{formatSize(doc.fileSize)}
-							</span>
-						</div>
-					</div>
-
-					{doc.category ? (
-						<div>
-							<span className="inline-flex items-center rounded-full bg-paper-deep px-3 py-1 text-sm font-medium text-ink">
-								{doc.category}
-							</span>
-						</div>
-					) : null}
-
-					{doc.notes ? (
-						<p className="whitespace-pre-wrap text-base text-foreground/90">
-							{doc.notes}
-						</p>
-					) : null}
-
-					<div className="flex items-center gap-2 text-sm text-ink-soft">
-						{uploader ? (
-							<UserAvatar
-								name={uploader.name}
-								email={uploader.email}
-								imageUrl={uploader.image}
-								className="size-6"
-							/>
-						) : null}
-						<span>
-							{createdStr}
-							{uploader ? ` · ${uploader.name ?? uploader.email ?? ""}` : ""}
-						</span>
-					</div>
-
-					<div className="flex flex-col gap-2 pt-1">
-						{doc.url ? (
-							<Button asChild size="touch">
-								<a href={doc.url} target="_blank" rel="noreferrer">
-									<Download aria-hidden />
-									<span>{t("download")}</span>
-								</a>
-							</Button>
-						) : (
-							<Button variant="outline" size="touch" disabled>
-								{t("unavailable")}
-							</Button>
-						)}
-						<Button
-							variant="destructive"
-							size="touch"
-							onClick={() => onRequestDelete(doc)}
-						>
-							<Trash2 aria-hidden />
-							<span>{tCommon("delete")}</span>
-						</Button>
-					</div>
-				</div>
-			</SheetContent>
-		</Sheet>
-	);
-}
-
 type DocumentListProps = {
 	/**
 	 * When provided, clicking a row calls this handler with the document id
@@ -298,28 +166,16 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 	const tCommon = useTranslations("common");
 	const locale = useLocale();
 	const [uploadOpen, setUploadOpen] = useState(false);
-	const [detailTarget, setDetailTarget] = useState<DocumentWithMeta | null>(
-		null,
-	);
-	const [deleteTarget, setDeleteTarget] = useState<DocumentWithMeta | null>(
-		null,
-	);
+	const [detailId, setDetailId] = useState<Id<"documents"> | null>(null);
 	const [sort, setSort] = useState<SortKey>("recent");
 
 	const documents = useQuery(api.documents.list, {});
-	const remove = useMutation(api.documents.remove);
 	const loading = documents === undefined;
 
 	const sections = useMemo(
 		() => buildSections(documents ?? [], sort, t("uncategorized"), locale),
 		[documents, sort, t, locale],
 	);
-
-	async function handleDelete() {
-		if (!deleteTarget) return;
-		await remove({ id: deleteTarget._id });
-		setDetailTarget(null);
-	}
 
 	const totalDocs = documents?.length ?? 0;
 	const sortOptions: Array<{ key: SortKey; label: string }> = [
@@ -403,7 +259,7 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 												doc={d}
 												onOpen={(doc) => {
 													if (onRowClick) onRowClick(doc._id);
-													else setDetailTarget(doc);
+													else setDetailId(doc._id);
 												}}
 												isLast={i === rows.length - 1}
 												active={activeId === d._id}
@@ -419,28 +275,30 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 
 			<DocumentUpload open={uploadOpen} onOpenChange={setUploadOpen} />
 
-			<DocumentDetail
-				doc={detailTarget}
-				open={detailTarget !== null}
+			<Sheet
+				open={detailId !== null}
 				onOpenChange={(open) => {
-					if (!open) setDetailTarget(null);
+					if (!open) setDetailId(null);
 				}}
-				onRequestDelete={(d) => setDeleteTarget(d)}
-			/>
-
-			<ConfirmDialog
-				open={deleteTarget !== null}
-				onOpenChange={(open) => {
-					if (!open) setDeleteTarget(null);
-				}}
-				title={t("deleteConfirm.title", {
-					title: deleteTarget?.title ?? deleteTarget?.fileName ?? "",
-				})}
-				body={t("deleteConfirm.body")}
-				confirmLabel={tCommon("delete")}
-				confirmVariant="destructive"
-				onConfirm={handleDelete}
-			/>
+			>
+				<SheetContent
+					side="bottom"
+					className="max-h-[85vh] overflow-y-auto rounded-t-2xl"
+				>
+					<SheetHeader className="sr-only">
+						<SheetTitle>{t("detailTitle")}</SheetTitle>
+						<SheetDescription>{t("detailTitle")}</SheetDescription>
+					</SheetHeader>
+					<div className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+						{detailId ? (
+							<DocumentDetail
+								id={detailId}
+								onAfterDelete={() => setDetailId(null)}
+							/>
+						) : null}
+					</div>
+				</SheetContent>
+			</Sheet>
 		</>
 	);
 }
