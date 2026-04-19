@@ -326,6 +326,8 @@ export const byRange = query({
 	handler: async (ctx, args): Promise<RangeRow[]> => {
 		await requireAuth(ctx);
 
+		const now = Date.now();
+
 		// Real materialized rows in the window — over-fetch on startTime,
 		// filter to window. Include cancelled so calendars show them too
 		// (virtuals won't overlap with cancelled because the series id +
@@ -367,11 +369,17 @@ export const byRange = query({
 			.withIndex("by_active", (q) => q.eq("isActive", true))
 			.collect();
 
+		// Clamp virtual generation to `now` — past slots that were never
+		// materialized never actually happened, so showing them as ghost
+		// entries on a backward-scrolled calendar is misleading.
+		const virtualStartMs = Math.max(args.startMs, now);
+
 		const virtualOut: RangeRow[] = [];
 		for (const series of activeSeries) {
+			if (virtualStartMs >= args.endMs) break;
 			const occs = virtualOccurrencesForSeries(
 				series,
-				args.startMs,
+				virtualStartMs,
 				args.endMs,
 			);
 			for (const occ of occs) {

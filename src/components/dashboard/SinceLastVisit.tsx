@@ -32,6 +32,7 @@ function formatRelative(
 export function SinceLastVisit() {
 	const t = useTranslations("dashboard.sinceLastVisit");
 	const tCommon = useTranslations("common");
+	const tStatuses = useTranslations("entitlements.statuses");
 	const locale = useLocale();
 	const me = useQuery(api.users.me);
 
@@ -104,8 +105,15 @@ export function SinceLastVisit() {
 														fileName: item.fileName,
 													})
 												: t("entitlementStatus", {
+														name: item.updatedByName,
 														title: item.title,
-														newStatus: item.newStatus,
+														newStatus: tStatuses(
+															item.newStatus as
+																| "in_progress"
+																| "not_applied"
+																| "approved"
+																| "denied",
+														),
 													})}
 								</div>
 								{item.kind === "log" && item.preview ? (

@@ -38,6 +38,7 @@ type EntitlementItem = {
 	ts: number;
 	title: string;
 	newStatus: string;
+	updatedByName: string;
 };
 type ActivityItem = LogItem | AppointmentItem | DocumentItem | EntitlementItem;
 
@@ -97,13 +98,16 @@ export const sinceLastVisit = query({
 			})),
 		);
 
-		const entitlementItems: EntitlementItem[] = entitlements.map((e) => ({
-			kind: "entitlement_status" as const,
-			id: e._id,
-			ts: e.updatedAt,
-			title: e.title,
-			newStatus: e.status,
-		}));
+		const entitlementItems: EntitlementItem[] = await Promise.all(
+			entitlements.map(async (e) => ({
+				kind: "entitlement_status" as const,
+				id: e._id,
+				ts: e.updatedAt,
+				title: e.title,
+				newStatus: e.status,
+				updatedByName: await nameOf(e.updatedBy),
+			})),
+		);
 
 		const all: ActivityItem[] = [
 			...logItems,

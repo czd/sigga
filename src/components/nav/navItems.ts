@@ -9,17 +9,22 @@ export type NavItem = {
 export const PRIMARY_ITEMS: NavItem[] = [
 	{ href: "/", labelKey: "dashboard", icon: "today" },
 	{ href: "/umonnun", labelKey: "care", icon: "care" },
+	{ href: "/timar", labelKey: "appointments", icon: "time" },
 	{ href: "/folk", labelKey: "people", icon: "people" },
 	{ href: "/pappirar", labelKey: "paperwork", icon: "docs" },
 ];
 
 /**
- * Secondary items rendered only in the desktop Sidebar (not in BottomNav).
- * Keeps mobile parity intact (BottomNav stays 4 items — the audience depends
- * on that muscle memory) while giving desktop users faster access.
+ * BottomNav renders Í dag in the middle slot so it reads as the home anchor
+ * on mobile — thumb-central, visually the biggest. Desktop Sidebar keeps the
+ * logical top-down order (dashboard first) via PRIMARY_ITEMS.
  */
-export const SECONDARY_ITEMS: NavItem[] = [
+export const MOBILE_ITEMS: NavItem[] = [
+	{ href: "/umonnun", labelKey: "care", icon: "care" },
 	{ href: "/timar", labelKey: "appointments", icon: "time" },
+	{ href: "/", labelKey: "dashboard", icon: "today" },
+	{ href: "/folk", labelKey: "people", icon: "people" },
+	{ href: "/pappirar", labelKey: "paperwork", icon: "docs" },
 ];
 
 export function isActiveRoute(

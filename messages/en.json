@@ -30,7 +30,7 @@
 		"dashboard": "Today",
 		"care": "Care",
 		"people": "People",
-		"paperwork": "Paperwork",
+		"paperwork": "Records",
 		"appointments": "Appointments",
 		"attention": {
 			"badge": "{count, plural, one {1 item needs attention} other {# items need attention}}"
@@ -54,7 +54,7 @@
 			"log": "{name} wrote a log entry",
 			"appointment": "New appointment: {title}",
 			"document": "{name} added a document: {fileName}",
-			"entitlementStatus": "Benefit '{title}' updated to {newStatus}"
+			"entitlementStatus": "{name} updated benefit “{title}” to {newStatus}"
 		},
 		"attentionColumn": {
 			"title": "Needs attention",
@@ -133,8 +133,6 @@
 			"recurringLink": "Recurring appointments →"
 		},
 		"weekGrid": {
-			"prev": "Previous week",
-			"next": "Next week",
 			"drivers": "Drivers",
 			"dragHint": "Drag a name onto an appointment to assign a driver.",
 			"noAppointments": "No appointments this week."
@@ -261,7 +259,7 @@
 		"selectHint": "Select a contact to view."
 	},
 	"pappirar": {
-		"title": "Paperwork",
+		"title": "Records",
 		"headlines": {
 			"rettindi": "Entitlements in motion.",
 			"rettindiAllDone": "All squared away.",

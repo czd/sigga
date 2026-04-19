@@ -19,12 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import {
-	isActiveRoute,
-	type NavItem,
-	PRIMARY_ITEMS,
-	SECONDARY_ITEMS,
-} from "./navItems";
+import { isActiveRoute, type NavItem, PRIMARY_ITEMS } from "./navItems";
 import { SidebarAttentionBadge } from "./SidebarAttentionBadge";
 import { SidebarWeekCalendar } from "./SidebarWeekCalendar";
 
@@ -105,32 +100,6 @@ export function Sidebar() {
 									/>
 									<span className="flex-1">{navT(labelKey)}</span>
 									<SidebarAttentionBadge count={count} />
-								</Link>
-							</li>
-						);
-					})}
-				</ul>
-				<ul className="flex flex-col gap-1 mt-3 pt-3 border-t border-divider">
-					{SECONDARY_ITEMS.map(({ href, labelKey, icon }) => {
-						const active = isActiveRoute(pathname, href);
-						return (
-							<li key={href}>
-								<Link
-									href={href}
-									aria-current={active ? "page" : undefined}
-									className={cn(
-										"flex items-center gap-3 px-3 min-h-12 rounded-2xl text-base transition-colors",
-										active
-											? "bg-paper text-sage-shadow font-semibold"
-											: "text-ink-soft hover:bg-paper/80",
-									)}
-								>
-									<BookIcon
-										kind={icon}
-										size={22}
-										strokeWidth={active ? 2 : 1.6}
-									/>
-									<span className="flex-1">{navT(labelKey)}</span>
 								</Link>
 							</li>
 						);

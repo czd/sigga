@@ -13,14 +13,13 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronLeft, ChevronRight, Repeat } from "lucide-react";
+import { Repeat } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { ClientOnly } from "@/components/shared/ClientOnly";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { RangeRow } from "./MonthGrid";
 
@@ -107,7 +106,8 @@ function DroppableAppointment({
 			type="button"
 			onClick={() => onSelect(appointment)}
 			className={cn(
-				"text-left rounded-lg p-2 bg-paper transition-colors",
+				"text-left rounded-lg p-2 transition-colors",
+				appointment.driver ? "bg-sage/25" : "bg-amber-bg-1",
 				isOver
 					? "ring-2 ring-sage"
 					: active
@@ -115,13 +115,23 @@ function DroppableAppointment({
 						: "ring-1 ring-foreground/10 hover:ring-foreground/20",
 			)}
 		>
-			<div className="flex items-center gap-1 text-xs text-ink-soft font-medium">
+			<div
+				className={cn(
+					"flex items-center gap-1 text-xs font-medium",
+					appointment.driver ? "text-sage-shadow" : "text-amber-ink-deep",
+				)}
+			>
 				{appointment.virtual ? (
 					<Repeat aria-hidden className="size-3 opacity-70" />
 				) : null}
 				<span>{timeFmt.format(new Date(appointment.startTime))}</span>
 			</div>
-			<div className="text-sm text-ink truncate mt-0.5">
+			<div
+				className={cn(
+					"text-sm truncate mt-0.5",
+					appointment.driver ? "text-sage-shadow" : "text-amber-ink-deep",
+				)}
+			>
 				{appointment.title}
 			</div>
 			<div className="mt-1">
@@ -145,8 +155,6 @@ function DroppableAppointment({
 
 type Props = {
 	weekStartMs: number;
-	onPrevWeek: () => void;
-	onNextWeek: () => void;
 	activeId?: string | null;
 	onSelect: (appointment: RangeRow) => void;
 };
@@ -161,13 +169,7 @@ export function WeekGrid(props: Props) {
 	);
 }
 
-function WeekGridContent({
-	weekStartMs,
-	onPrevWeek,
-	onNextWeek,
-	activeId,
-	onSelect,
-}: Props) {
+function WeekGridContent({ weekStartMs, activeId, onSelect }: Props) {
 	const locale = useLocale();
 	const t = useTranslations("timar.weekGrid");
 	const weekEndMs = weekStartMs + 7 * DAY_MS;
@@ -188,17 +190,11 @@ function WeekGridContent({
 	const now = new Date();
 
 	const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
-	const dayFmt = new Intl.DateTimeFormat(locale, { day: "numeric" });
-	const monthFmt = new Intl.DateTimeFormat(locale, { month: "short" });
 	const timeFmt = new Intl.DateTimeFormat(locale, {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
 	});
-
-	const weekStart = new Date(weekStartMs);
-	const weekEnd = new Date(weekStartMs + 6 * DAY_MS);
-	const dateRange = `${dayFmt.format(weekStart)}.–${dayFmt.format(weekEnd)}. ${monthFmt.format(weekEnd).replace(/\.$/, "")}`;
 
 	function handleDragStart(ev: DragStartEvent) {
 		const userId = ev.active.data.current?.userId as Id<"users"> | undefined;
@@ -247,26 +243,6 @@ function WeekGridContent({
 			onDragEnd={handleDragEnd}
 		>
 			<div className="flex flex-col gap-4">
-				<div className="flex items-center justify-between gap-3">
-					<Button
-						variant="ghost"
-						size="touch-icon"
-						onClick={onPrevWeek}
-						aria-label={t("prev")}
-					>
-						<ChevronLeft aria-hidden />
-					</Button>
-					<div className="font-serif text-lg text-ink">{dateRange}</div>
-					<Button
-						variant="ghost"
-						size="touch-icon"
-						onClick={onNextWeek}
-						aria-label={t("next")}
-					>
-						<ChevronRight aria-hidden />
-					</Button>
-				</div>
-
 				<div className="grid grid-cols-7 gap-2">
 					{Array.from({ length: 7 }).map((_, i) => {
 						const cellDate = new Date(weekStartMs + i * DAY_MS);

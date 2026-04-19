@@ -7,7 +7,7 @@ import { api } from "@/../convex/_generated/api";
 import { BookIcon } from "@/components/shared/BookIcon";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { isActiveRoute, type NavItem, PRIMARY_ITEMS } from "./navItems";
+import { isActiveRoute, MOBILE_ITEMS, type NavItem } from "./navItems";
 import { SidebarAttentionBadge } from "./SidebarAttentionBadge";
 
 const LABEL_TO_COUNT_KEY: Record<
@@ -53,7 +53,7 @@ export function BottomNav() {
 			}}
 		>
 			<ul className="flex items-end justify-around pointer-events-auto font-sans">
-				{PRIMARY_ITEMS.map(({ href, labelKey, icon }) => {
+				{MOBILE_ITEMS.map(({ href, labelKey, icon }) => {
 					const active = isActiveRoute(pathname, href);
 					const countKey = LABEL_TO_COUNT_KEY[labelKey];
 					const count =
@@ -62,6 +62,7 @@ export function BottomNav() {
 							: countKey && counts
 								? counts[countKey]
 								: 0;
+					const isHome = icon === "today";
 					return (
 						<li key={href} className="flex-1">
 							<Link
@@ -69,19 +70,23 @@ export function BottomNav() {
 								aria-current={active ? "page" : undefined}
 								className={cn(
 									"relative flex flex-col items-center justify-center gap-1.5 min-h-16 px-2 py-2 transition-colors",
-									active ? "text-sage-shadow" : "text-ink-faint",
+									active
+										? "text-sage-shadow"
+										: isHome
+											? "text-sage-shadow/80"
+											: "text-ink-faint",
 								)}
 							>
 								<BookIcon
 									kind={icon}
-									size={26}
-									strokeWidth={active ? 2 : 1.6}
-									filled={active && icon === "today"}
+									size={isHome ? 32 : 26}
+									strokeWidth={active || isHome ? 2 : 1.6}
+									filled={active && isHome}
 								/>
 								<span
 									className={cn(
 										"text-xs tracking-[0.02em]",
-										active ? "font-semibold" : "font-normal",
+										active || isHome ? "font-semibold" : "font-normal",
 									)}
 								>
 									{t(labelKey)}

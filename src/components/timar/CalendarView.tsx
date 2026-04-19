@@ -169,8 +169,6 @@ export function CalendarView() {
 					) : view === "week" ? (
 						<WeekGrid
 							weekStartMs={weekStartMs}
-							onPrevWeek={() => setWeekOffset((n) => n - 1)}
-							onNextWeek={() => setWeekOffset((n) => n + 1)}
 							activeId={activeId}
 							onSelect={handleSelect}
 						/>

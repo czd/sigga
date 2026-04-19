@@ -30,7 +30,7 @@
 		"dashboard": "Í dag",
 		"care": "Umönnun",
 		"people": "Fólk",
-		"paperwork": "Pappírar",
+		"paperwork": "Gögn",
 		"appointments": "Tímar",
 		"attention": {
 			"badge": "{count, plural, one {1 atriði þarfnast athygli} other {# atriði þarfnast athygli}}"
@@ -54,7 +54,7 @@
 			"log": "{name} skrifaði færslu",
 			"appointment": "Nýr tími: {title}",
 			"document": "{name} bætti við skjali: {fileName}",
-			"entitlementStatus": "Réttindi '{title}' uppfærð í {newStatus}"
+			"entitlementStatus": "{name} uppfærði réttindi „{title}“ í {newStatus}"
 		},
 		"attentionColumn": {
 			"title": "Þarf athygli",
@@ -134,8 +134,6 @@
 			"recurringLink": "Reglulegir tímar →"
 		},
 		"weekGrid": {
-			"prev": "Fyrri vika",
-			"next": "Næsta vika",
 			"drivers": "Skutlarar",
 			"dragHint": "Dragðu nafn á tíma til að skipa skutlara.",
 			"noAppointments": "Engir tímar þessa viku."
@@ -261,7 +259,7 @@
 		"selectHint": "Veldu manneskju til að skoða."
 	},
 	"pappirar": {
-		"title": "Pappírar",
+		"title": "Gögn",
 		"headlines": {
 			"rettindi": "Réttindi í vinnslu.",
 			"rettindiAllDone": "Allt í höfn.",

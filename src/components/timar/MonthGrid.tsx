@@ -160,11 +160,9 @@ export function MonthGrid({
 													"flex items-center gap-1 w-full text-left rounded px-1.5 py-1 truncate transition-colors",
 													active
 														? "bg-sage-deep text-paper"
-														: a.virtual
-															? "bg-paper-deep text-ink-soft hover:bg-paper-deep/80"
-															: a.driver
-																? "bg-paper-deep text-ink hover:bg-paper-deep/80"
-																: "bg-amber-bg-1 text-amber-ink-deep hover:bg-amber-bg-2",
+														: a.driver
+															? "bg-sage/25 text-sage-shadow hover:bg-sage/35"
+															: "bg-amber-bg-1 text-amber-ink-deep hover:bg-amber-bg-2",
 												)}
 											>
 												{a.virtual ? (
