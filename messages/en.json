@@ -464,7 +464,9 @@
 			"empty": "No usage recorded yet.",
 			"noErrors": "No errors in the last 30 days.",
 			"never": "Never",
-			"unknownUser": "Unknown user"
+			"unknownUser": "Unknown user",
+			"notAuthorizedTitle": "Not authorized",
+			"notAuthorizedBody": "This page is for administrators only."
 		}
 	}
 }

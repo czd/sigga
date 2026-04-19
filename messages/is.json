@@ -464,7 +464,9 @@
 			"empty": "Engin notkun skráð ennþá.",
 			"noErrors": "Engar villur síðustu 30 dagana.",
 			"never": "Aldrei",
-			"unknownUser": "Óþekktur notandi"
+			"unknownUser": "Óþekktur notandi",
+			"notAuthorizedTitle": "Ekki heimill aðgangur",
+			"notAuthorizedBody": "Þessi síða er aðeins fyrir kerfisstjóra."
 		}
 	}
 }

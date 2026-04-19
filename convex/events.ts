@@ -37,6 +37,25 @@ async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
 	return userId;
 }
 
+function isAdminEmail(email: string | undefined | null): boolean {
+	if (!email) return false;
+	const raw = process.env.ADMIN_EMAILS ?? "";
+	const allowed = raw
+		.split(",")
+		.map((e) => e.trim().toLowerCase())
+		.filter(Boolean);
+	return allowed.includes(email.toLowerCase());
+}
+
+async function requireAdmin(ctx: QueryCtx): Promise<Id<"users">> {
+	const userId = await requireAuth(ctx);
+	const user = await ctx.db.get(userId);
+	if (!isAdminEmail(user?.email)) {
+		throw new ConvexError("Ekki heimill aðgangur");
+	}
+	return userId;
+}
+
 function truncate(value: string | undefined, max: number): string | undefined {
 	if (value === undefined) return undefined;
 	return value.length > max ? value.slice(0, max) : value;
@@ -80,10 +99,20 @@ export const log = mutation({
 	},
 });
 
+export const isAdmin = query({
+	args: {},
+	handler: async (ctx): Promise<boolean> => {
+		const userId = await getAuthUserId(ctx);
+		if (userId === null) return false;
+		const user = await ctx.db.get(userId);
+		return isAdminEmail(user?.email);
+	},
+});
+
 export const usage = query({
 	args: { sinceDays: v.optional(v.number()) },
 	handler: async (ctx, args): Promise<UsageRow[]> => {
-		await requireAuth(ctx);
+		await requireAdmin(ctx);
 		const days = args.sinceDays ?? 30;
 		const sinceMs = Date.now() - days * 24 * 60 * 60 * 1000;
 
@@ -140,7 +169,7 @@ export const usage = query({
 export const recentErrors = query({
 	args: { limit: v.optional(v.number()) },
 	handler: async (ctx, args): Promise<EventWithUser[]> => {
-		await requireAuth(ctx);
+		await requireAdmin(ctx);
 		const errorEvents = await ctx.db
 			.query("events")
 			.withIndex("by_type_and_time", (q) => q.eq("type", "error"))

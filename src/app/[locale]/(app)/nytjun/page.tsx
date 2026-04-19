@@ -20,8 +20,36 @@ function formatLastActive(
 export default function UsagePage() {
 	const t = useTranslations();
 	const locale = useLocale();
-	const usage = useQuery(api.events.usage, { sinceDays: 30 });
-	const errors = useQuery(api.events.recentErrors, { limit: 25 });
+	const isAdmin = useQuery(api.events.isAdmin);
+	const usage = useQuery(
+		api.events.usage,
+		isAdmin ? { sinceDays: 30 } : "skip",
+	);
+	const errors = useQuery(
+		api.events.recentErrors,
+		isAdmin ? { limit: 25 } : "skip",
+	);
+
+	if (isAdmin === undefined) {
+		return (
+			<StackLayout className="pt-8 pb-10">
+				<p className="text-ink-faint">{t("common.loading")}</p>
+			</StackLayout>
+		);
+	}
+
+	if (!isAdmin) {
+		return (
+			<StackLayout className="pt-8 pb-10 gap-3">
+				<h1 className="font-serif text-[2rem] leading-tight font-normal">
+					{t("admin.usage.notAuthorizedTitle")}
+				</h1>
+				<p className="text-base text-ink-faint">
+					{t("admin.usage.notAuthorizedBody")}
+				</p>
+			</StackLayout>
+		);
+	}
 
 	return (
 		<StackLayout className="pt-8 pb-10 gap-8">
