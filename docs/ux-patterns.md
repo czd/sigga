@@ -665,6 +665,8 @@ const statusStyle = {
 
 **Counter-examples (when NOT to use):** Icelandic-first, English-second: when authoring a new string always write the Icelandic key first, then mirror. Do not English-first + translate-later — tone drifts every time.
 
+**Gender convention for Icelandic copy:** **Default to feminine forms** (e.g. `skráð`, not `skráð(ur)`, not `skráður`). All current primary users are women, and parenthetical gender forms read as clinical to the 60+ audience. Apply to new keys and sweep existing parenthetical keys (`rettindi.claim.confirmBody` etc.) in Phase C. If a future user flow introduces a mixed-gender surface (onboarding for external contributors, admin console), that specific surface can revisit the convention — until then, feminine is the default. See `MEMORY.md`: "Feminine-first Icelandic copy".
+
 **Code recipe:**
 
 ```tsx
@@ -768,7 +770,7 @@ export function DialogContent({ showCloseButton = true, children, ...props }) {
 
 **Icelandic copy:** New keys under `driving.confirm.*` mirroring the existing `rettindi.claim.*` shape:
 - `driving.confirm.title` → **"Skutla þennan tíma?"**
-- `driving.confirm.body` → **"Þú verður skráð(ur) sem skutlari í „{title}" {when}. Þú getur breytt þessu aftur seinna."** (uses Icelandic curly quotes, gender-neutral `skráð(ur)`, includes the specific event + time).
+- `driving.confirm.body` → **"Þú verður skráð sem skutlari í „{title}" {when}. Þú getur breytt þessu aftur seinna."** (uses Icelandic curly quotes and the feminine `skráð` per the feminine-first convention in Pattern 17; includes the specific event + time).
 - `driving.confirm.action` → **"Já, ég skutla"**.
 
 For the dropdown-assign case (assigning someone else), a parallel set of keys: `driving.confirm.assignOtherTitle` → **"Setja {name} sem skutlara?"**, `driving.confirm.assignOtherAction` → **"Já, setja {name}"**.
@@ -785,10 +787,10 @@ Existing `rettindi.claim.*` stays unchanged and is the template.
 
 ## Pattern 20 — Gaps the rulebook can't decide without Nic's input
 
-The rulebook has a canonical answer for all 19 interaction patterns. Two items would benefit from Nic's explicit sign-off, but neither blocks Phase C:
+The rulebook has a canonical answer for all 19 interaction patterns. After Nic's 2026-04-19 sign-off, one item remains deferred but does not block Phase C:
 
-1. **The `driving.confirm.body` copy in Pattern 19** — the proposed sentence "Þú verður skráð(ur) sem skutlari..." uses gender-neutral parenthetical form consistent with the existing `rettindi.claim.confirmBody` pattern. If Nic prefers a different Icelandic convention (full `skráð/ur` variants, default to feminine given the audience skew, etc.), swap the string; the structure of the pattern doesn't change.
-2. **Whether `DrivingCta` should be the one v1 surface to add optimistic UI** (Pattern 14 default-no) — today's blocking round-trip on LTE is probably tolerable, but it's the highest-frequency commit in the app and a candidate if audience feedback surfaces slowness. Decision deferred to post-Phase-D audience testing.
+1. ~~The `driving.confirm.body` copy in Pattern 19.~~ **Resolved 2026-04-19:** default to feminine forms (`skráð`, not `skráð(ur)`), since all current users are women. Codified as a cross-cutting rule in Pattern 17; existing `skráð(ur)` keys get swept in Phase C.
+2. **Whether `DrivingCta` should be the one v1 surface to add optimistic UI** (Pattern 14 default-no) — today's blocking round-trip on LTE is probably tolerable, but it's the highest-frequency commit in the app and a candidate if audience feedback surfaces slowness. Decision deferred to post-Phase-D audience testing. Nic has accepted the default-no for now.
 
 Everything else — edit, destroy, create, sheet vs dialog, headline scale, tap floor, list-detail, date format, actor, loading, error, tel, colour, i18n, a11y, commitment — has a single canonical answer above.
 

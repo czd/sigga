@@ -75,7 +75,8 @@ npx convex env set <KEY> "<value>"
 
 ## Conventions
 
-- **All user-facing text in Icelandic**, sourced from `messages/is.json`. Nothing hardcoded. "Vista" not "Submit", "Bæta við" not "Create". Icelandic characters (ð, þ, æ, ö) must render correctly — pick fonts accordingly.
+- **All user-facing text in Icelandic**, sourced from `messages/is.json`. Nothing hardcoded. "Vista" not "Submit", "Bæta við" not "Create". Icelandic characters (ð, þ, æ, ö) must render correctly — pick fonts accordingly. **Default to feminine forms** — all current users are women; use `skráð`, not `skráð(ur)` or `skráður`. See `docs/ux-patterns.md` Pattern 17 for the full Icelandic copy convention.
+- **Canonical UX patterns live in `docs/ux-patterns.md`** (20 rules, one per interaction — edit affordance, destroy/commitment confirmation, sheet vs dialog, tap-target floor, headline scale, date format, etc.). When adding or touching any interactive surface, consult the relevant pattern and follow its code recipe. Rules override ad-hoc invention; if a rule feels wrong for a specific surface, raise it before diverging.
 - **Phone numbers are tappable** (`tel:` links). This is the single most-used feature — zero extra taps between "I need a number" and the call starting.
 - **Seed data is real**, not placeholder. The medications, contacts, and entitlements in `docs/spec.md` came from the family Messenger chat and Helga's confirmation. Don't fabricate or genericize any of it.
 - **Do NOT build** (deferred to v2): medication check-off, push notifications, Google Calendar sync, AI log summaries, multi-patient support, full offline CRUD.
