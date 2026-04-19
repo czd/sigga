@@ -260,47 +260,47 @@ The substance of the initiative. **C6 introduces the `<ConfirmDialog>` primitive
 
 Visual and semantic tightening once the primitives and affordances are canonical.
 
-**C15. Heading hierarchy: one `<h1>` per page + skip-link.** Pattern 6, 18 · a11y major.
+**C15. ✅ Heading hierarchy: one `<h1>` per page + skip-link.** Pattern 6, 18 · a11y major.
 - *Files:* `src/app/[locale]/(app)/layout.tsx` (skip-link); every route page head.
 - *Exit:* Lighthouse/axe reports exactly one `<h1>` per page; Tab from page load reaches the skip-link first; skip-link jumps to `<main>`.
 - *Size:* S · *Deps:* none.
 
-**C16. Consolidate headline scale.** Pattern 6.
+**C16. ✅ Consolidate headline scale.** Pattern 6.
 - *Files:* every route page head + EmptyState headlines.
 - *Exit:* Two sizes — `text-[2.5rem]` for page `<h1>`, `text-[1.4rem]` for section `<h2>`. `text-balance` on both. Dashboard greeting scales down to match the other page heads.
 - *Size:* S · *Deps:* C15.
 
-**C17. Empty-state restyle to Bókasafn surface.** Pattern 5.
+**C17. ✅ Empty-state restyle to Bókasafn surface.** Pattern 5.
 - *Files:* `src/components/shared/EmptyState.tsx`.
 - *Exit:* `bg-paper ring-1 ring-foreground/10` replaces `bg-muted/40 border-dashed`. All consumers render the new surface without further per-caller changes.
 - *Size:* S · *Deps:* none.
 
-**C18. Replace silent error swallowing with inline banners + live-region.** Pattern 11, 13 · a11y major.
+**C18. ✅ Replace silent error swallowing with inline banners + live-region.** Pattern 11, 13 · a11y major.
 - *Files:* `src/app/[locale]/(app)/layout.tsx` (polite live-region landmark); mutation-call sites in DrivingCta/NextAppointments/AppointmentCard, dnd-kit drag handlers (`WeekGrid.tsx:208-237`, `EntitlementKanban.tsx`), document delete paths. Delete the unused `recurring.pauseToast`/`resumeToast` keys.
 - *Exit:* No `try/finally` that swallows mutation errors; every failure surfaces inline or via live-region; save/delete success announced through the live-region.
 - *Size:* M · *Deps:* C7 (overlaps on DrivingCta).
 
-**C19. Relative vs absolute date formatting consolidation.** Pattern 9.
+**C19. ✅ Relative vs absolute date formatting consolidation.** Pattern 9.
 - *Files:* activity feed (`SinceLastVisit`), appointment cards, dagbók entries, document list, entitlement cards.
 - *Exit:* Relative for events within 7 days, absolute otherwise; every rendering calls `formatDate.ts` helpers. `<time>` wrappers + sr-only absolute per a11y audit.
 - *Size:* S · *Deps:* C15/C16 if they revise heading structure nearby.
 
-**C20. Colour-semantics audit + inline-hex purge.** Pattern 16.
+**C20. ✅ Colour-semantics audit + inline-hex purge.** Pattern 16.
 - *Files:* `src/components/dashboard/AttentionCard.tsx`, `src/components/dashboard/DrivingCta.tsx` (inline hex), any other surface where sage/amber/sage-deep usage doesn't match the rulebook's semantic meaning.
 - *Exit:* No inline hex remains; every sage/amber usage is semantically correct (sage = handled, amber = needs attention, sage-deep = selected). Spot-check BRÝNT pill contrast on real entitlement data.
 - *Size:* M · *Deps:* C2 (token-level contrast may already cascade).
 
-**C21. Loading-state standardisation.** Pattern 12.
+**C21. ✅ Loading-state standardisation.** Pattern 12.
 - *Files:* any surface using spinners or skeletons.
 - *Exit:* "Hleð…" text only; no spinners below 1 s round-trips; no skeletons.
 - *Size:* S · *Deps:* none.
 
-**C22. Actor-attribution sweep.** Pattern 10.
+**C22. ✅ Actor-attribution sweep.** Pattern 10.
 - *Files:* any log-event rendering not already subject-first (`SinceLastVisit.appointment` still omits actor per rulebook).
 - *Exit:* Every actor-relevant event row reads "{name} verb …" subject-first; new `appointment` key adds actor per rulebook.
 - *Size:* S · *Deps:* none.
 
-**C23. Hoist author/date semantics to proper headings + time elements.** Pattern 6, 18 · a11y minor.
+**C23. ✅ Hoist author/date semantics to proper headings + time elements.** Pattern 6, 18 · a11y minor.
 - *Files:* Dagbók entry author `<div>`s that should be `<h3>`; timestamp `<div>`s that should be `<time>`; reduced-motion respected on Sheet/Dialog animations.
 - *Exit:* Axe reports no heading-hierarchy or semantic-role issues on Dagbók; reduced-motion honoured in primitives.
 - *Size:* S · *Deps:* C15 (establishes h1 baseline).
