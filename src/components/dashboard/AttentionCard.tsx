@@ -1,7 +1,11 @@
 "use client";
 
+import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Link } from "@/i18n/navigation";
 
 export type AttentionItem = {
@@ -17,6 +21,9 @@ export function AttentionCard({
 	items: AttentionItem[] | undefined;
 }) {
 	const t = useTranslations("dashboard.attention");
+	const tClaim = useTranslations("rettindi.claim");
+	const claim = useMutation(api.entitlements.claim);
+	const [confirmOpen, setConfirmOpen] = useState(false);
 	if (!items || items.length === 0) return null;
 	const top = items[0];
 	const summary = top.description ?? top.appliedTo ?? "";
@@ -24,6 +31,10 @@ export function AttentionCard({
 	const extraCount = items.length - 1;
 
 	const eyebrow = t("eyebrow", { count: items.length });
+
+	async function handleClaim() {
+		await claim({ id: top._id });
+	}
 	return (
 		<section
 			aria-label={eyebrow}
@@ -44,13 +55,14 @@ export function AttentionCard({
 				{body}
 			</p>
 			<div className="mt-4 flex items-center gap-2">
-				<Link
-					href="/pappirar"
-					className="rounded-full px-4 py-2.5 text-sm font-semibold text-paper"
+				<button
+					type="button"
+					onClick={() => setConfirmOpen(true)}
+					className="rounded-full px-4 py-2.5 text-sm font-semibold text-paper outline-none focus-visible:ring-3 focus-visible:ring-ring"
 					style={{ background: "var(--amber-ink-deep)" }}
 				>
 					{t("take")}
-				</Link>
+				</button>
 				<Link
 					href="/pappirar"
 					className="px-2 py-2.5 text-sm font-medium"
@@ -75,6 +87,14 @@ export function AttentionCard({
 					</span>
 				</Link>
 			) : null}
+			<ConfirmDialog
+				open={confirmOpen}
+				onOpenChange={setConfirmOpen}
+				title={tClaim("confirmTitle")}
+				body={tClaim("confirmBody", { title: top.title })}
+				confirmLabel={tClaim("confirmAction")}
+				onConfirm={handleClaim}
+			/>
 		</section>
 	);
 }
