@@ -251,7 +251,7 @@ The substance of the initiative. **C6 introduces the `<ConfirmDialog>` primitive
 - *Exit:* Every "add X" uses the full-width touch button at a predictable position OR, for kanban, uses per-column adds at ≥48 px. No `size="sm"` create button remains.
 - *Size:* M · *Deps:* C4.
 
-**C14. Finish list-detail responsive pattern uniformly.** Pattern 8.
+**C14. ✅ Dedupe DocumentList/DocumentDetail.** Pattern 8. *Done: commit `2076e89` — mobile Sheet now wraps the standalone DocumentDetail (with preview); DocumentList.tsx 447 → 304 lines. PaneLayout-wide adoption across other routes deferred to a follow-up.*
 - *Files:* any route not yet on `PaneLayout` + `?id=` URL param at `md:`. Resolve the DocumentList/DocumentDetail duplication (two separate detail implementations) by consolidating to one.
 - *Exit:* Mobile = full-page routes with back; desktop `md:` = list-detail via `PaneLayout`; kanban stays as the Réttindi-only third pattern. Single DocumentDetail component used for both mobile sheet and desktop pane.
 - *Size:* M · *Deps:* C12.
