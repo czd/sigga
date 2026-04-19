@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatAbsoluteWithTime } from "@/lib/formatDate";
 
 type DrivingCandidate = {
@@ -16,17 +17,13 @@ type DrivingCandidate = {
 
 export function DrivingCta({ appointment }: { appointment: DrivingCandidate }) {
 	const t = useTranslations("dashboard.drivingCta");
+	const tDriving = useTranslations("driving.confirm");
 	const locale = useLocale();
 	const volunteer = useMutation(api.appointments.volunteerToDrive);
-	const [pending, setPending] = useState(false);
+	const [confirmOpen, setConfirmOpen] = useState(false);
 
-	async function handleVolunteer() {
-		setPending(true);
-		try {
-			await volunteer({ id: appointment._id });
-		} finally {
-			setPending(false);
-		}
+	async function handleConfirm() {
+		await volunteer({ id: appointment._id });
 	}
 
 	return (
@@ -66,13 +63,23 @@ export function DrivingCta({ appointment }: { appointment: DrivingCandidate }) {
 				</div>
 				<button
 					type="button"
-					onClick={handleVolunteer}
-					disabled={pending}
-					className="mt-3 w-full rounded-full bg-paper px-5 py-3.5 text-base font-semibold text-sage-shadow shadow-[0_2px_0_rgba(79,98,67,0.35)] transition-opacity disabled:opacity-60"
+					onClick={() => setConfirmOpen(true)}
+					className="mt-3 w-full rounded-full bg-paper px-5 py-3.5 text-base font-semibold text-sage-shadow shadow-[0_2px_0_rgba(79,98,67,0.35)] transition-opacity"
 				>
 					{t("volunteer")}
 				</button>
 			</div>
+			<ConfirmDialog
+				open={confirmOpen}
+				onOpenChange={setConfirmOpen}
+				title={tDriving("title")}
+				body={tDriving("body", {
+					title: appointment.title,
+					when: formatAbsoluteWithTime(appointment.startTime, locale),
+				})}
+				confirmLabel={tDriving("action")}
+				onConfirm={handleConfirm}
+			/>
 		</section>
 	);
 }

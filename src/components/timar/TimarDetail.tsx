@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { CalendarClock, Pencil, Repeat, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 import { DriverPicker } from "@/components/appointments/DriverPicker";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatAbsoluteWithTime } from "@/lib/formatDate";
 import type { RangeRow } from "./MonthGrid";
 
@@ -25,11 +26,17 @@ type Props = {
 export function TimarDetail({ appointment, onMaterialized }: Props) {
 	const t = useTranslations("timar");
 	const tCommon = useTranslations("common");
+	const tDriving = useTranslations("driving.confirm");
 	const locale = useLocale();
 	const update = useMutation(api.appointments.update);
 	const materialize = useMutation(api.appointments.materializeOccurrence);
+	const me = useQuery(api.users.me);
+	const users = useQuery(api.users.list);
 	const [editOpen, setEditOpen] = useState(false);
 	const [pending, setPending] = useState(false);
+	const [pendingDriverId, setPendingDriverId] = useState<Id<"users"> | null>(
+		null,
+	);
 
 	const isVirtual = appointment.virtual;
 
@@ -51,7 +58,7 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 		return newId;
 	}
 
-	async function handleDriverChange(driverId: Id<"users"> | null) {
+	async function commitDriverChange(driverId: Id<"users"> | null) {
 		setPending(true);
 		try {
 			const id = await realize();
@@ -61,6 +68,23 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 			setPending(false);
 		}
 	}
+
+	function handleDriverChange(driverId: Id<"users"> | null) {
+		// Unassign is not a commit — apply directly. Assign (self or other) gates
+		// through ConfirmDialog per Pattern 19.
+		if (driverId === null) {
+			void commitDriverChange(null);
+			return;
+		}
+		setPendingDriverId(driverId);
+	}
+
+	const pendingDriverName = pendingDriverId
+		? (users?.find((u) => u._id === pendingDriverId)?.name ??
+			users?.find((u) => u._id === pendingDriverId)?.email ??
+			"")
+		: "";
+	const isSelfAssign = pendingDriverId !== null && pendingDriverId === me?._id;
 
 	async function handleCancel() {
 		setPending(true);
@@ -188,6 +212,39 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 					editAppointment={editTarget}
 				/>
 			) : null}
+			<ConfirmDialog
+				open={pendingDriverId !== null}
+				onOpenChange={(next) => {
+					if (!next) setPendingDriverId(null);
+				}}
+				title={
+					isSelfAssign
+						? tDriving("title")
+						: tDriving("assignOtherTitle", { name: pendingDriverName })
+				}
+				body={
+					isSelfAssign
+						? tDriving("body", {
+								title: appointment.title,
+								when: formatAbsoluteWithTime(appointment.startTime, locale),
+							})
+						: tDriving("assignOtherBody", {
+								name: pendingDriverName,
+								title: appointment.title,
+								when: formatAbsoluteWithTime(appointment.startTime, locale),
+							})
+				}
+				confirmLabel={
+					isSelfAssign
+						? tDriving("action")
+						: tDriving("assignOtherAction", { name: pendingDriverName })
+				}
+				onConfirm={async () => {
+					const id = pendingDriverId;
+					setPendingDriverId(null);
+					await commitDriverChange(id);
+				}}
+			/>
 		</div>
 	);
 }

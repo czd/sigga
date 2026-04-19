@@ -26,6 +26,16 @@
 		"name": "Sigga",
 		"tagline": "Fjölskyldusamráð um umönnun Siggu"
 	},
+	"driving": {
+		"confirm": {
+			"title": "Skutla þennan tíma?",
+			"body": "Þú verður skráð sem skutlari í „{title}“ {when}. Þú getur breytt þessu aftur seinna.",
+			"action": "Já, ég skutla",
+			"assignOtherTitle": "Setja {name} sem skutlara?",
+			"assignOtherBody": "{name} verður skráð sem skutlari í „{title}“ {when}. Þú getur breytt þessu aftur seinna.",
+			"assignOtherAction": "Já, setja {name}"
+		}
+	},
 	"nav": {
 		"dashboard": "Í dag",
 		"care": "Umönnun",

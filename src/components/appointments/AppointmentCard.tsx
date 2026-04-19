@@ -8,6 +8,7 @@ import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatAbsoluteWithTime } from "@/lib/formatDate";
 
 type AppointmentDoc = Doc<"appointments">;
@@ -34,17 +35,13 @@ export function AppointmentCard({
 }: AppointmentCardProps) {
 	const t = useTranslations("timar");
 	const tCommon = useTranslations("common");
+	const tDriving = useTranslations("driving.confirm");
 	const locale = useLocale();
 	const volunteer = useMutation(api.appointments.volunteerToDrive);
-	const [volunteering, setVolunteering] = useState(false);
+	const [confirmOpen, setConfirmOpen] = useState(false);
 
-	async function handleVolunteer() {
-		setVolunteering(true);
-		try {
-			await volunteer({ id: appointment._id });
-		} finally {
-			setVolunteering(false);
-		}
+	async function handleConfirm() {
+		await volunteer({ id: appointment._id });
 	}
 
 	return (
@@ -100,11 +97,7 @@ export function AppointmentCard({
 						<span className="text-base text-ink-soft">
 							{t("fields.noDriverAssigned")}
 						</span>
-						<Button
-							size="touch"
-							onClick={handleVolunteer}
-							disabled={volunteering}
-						>
+						<Button size="touch" onClick={() => setConfirmOpen(true)}>
 							{t("volunteer")}
 						</Button>
 					</>
@@ -125,6 +118,17 @@ export function AppointmentCard({
 					</Button>
 				) : null}
 			</div>
+			<ConfirmDialog
+				open={confirmOpen}
+				onOpenChange={setConfirmOpen}
+				title={tDriving("title")}
+				body={tDriving("body", {
+					title: appointment.title,
+					when: formatAbsoluteWithTime(appointment.startTime, locale),
+				})}
+				confirmLabel={tDriving("action")}
+				onConfirm={handleConfirm}
+			/>
 		</article>
 	);
 }

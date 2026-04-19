@@ -7,7 +7,9 @@ import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Link } from "@/i18n/navigation";
+import { formatAbsoluteWithTime } from "@/lib/formatDate";
 
 type AppointmentWithDriver = FunctionReturnType<
 	typeof api.appointments.upcoming
@@ -50,14 +52,13 @@ function CancelledRow({ appointment }: { appointment: AppointmentWithDriver }) {
 
 function AppointmentRow({
 	appointment,
-	onVolunteer,
-	pending,
+	onConfirmVolunteer,
 }: {
 	appointment: AppointmentWithDriver;
-	onVolunteer: (id: Id<"appointments">) => void;
-	pending: boolean;
+	onConfirmVolunteer: (id: Id<"appointments">) => Promise<void>;
 }) {
 	const t = useTranslations("dashboard.nextAppointments");
+	const tDriving = useTranslations("driving.confirm");
 	const locale = useLocale();
 	const { weekday, day, time } = useAppointmentDateParts(
 		appointment.startTime,
@@ -65,6 +66,7 @@ function AppointmentRow({
 	);
 	const driverName =
 		appointment.driver?.name ?? appointment.driver?.email ?? null;
+	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	return (
 		<div className="flex items-start gap-5 py-5">
@@ -95,9 +97,8 @@ function AppointmentRow({
 					) : (
 						<button
 							type="button"
-							onClick={() => onVolunteer(appointment._id)}
-							disabled={pending}
-							className="inline-flex items-center gap-2 text-sm font-medium text-amber-ink transition-opacity disabled:opacity-60"
+							onClick={() => setConfirmOpen(true)}
+							className="inline-flex items-center gap-2 text-sm font-medium text-amber-ink transition-opacity"
 						>
 							<span
 								className="inline-block size-2 rounded-full"
@@ -109,6 +110,17 @@ function AppointmentRow({
 					)}
 				</div>
 			</div>
+			<ConfirmDialog
+				open={confirmOpen}
+				onOpenChange={setConfirmOpen}
+				title={tDriving("title")}
+				body={tDriving("body", {
+					title: appointment.title,
+					when: formatAbsoluteWithTime(appointment.startTime, locale),
+				})}
+				confirmLabel={tDriving("action")}
+				onConfirm={() => onConfirmVolunteer(appointment._id)}
+			/>
 		</div>
 	);
 }
@@ -121,15 +133,9 @@ export function NextAppointments({
 	const t = useTranslations("dashboard.nextAppointments");
 	const tCommon = useTranslations("common");
 	const volunteer = useMutation(api.appointments.volunteerToDrive);
-	const [pendingId, setPendingId] = useState<Id<"appointments"> | null>(null);
 
-	async function handleVolunteer(id: Id<"appointments">) {
-		setPendingId(id);
-		try {
-			await volunteer({ id });
-		} finally {
-			setPendingId((current) => (current === id ? null : current));
-		}
+	async function handleConfirmVolunteer(id: Id<"appointments">) {
+		await volunteer({ id });
 	}
 
 	return (
@@ -166,8 +172,7 @@ export function NextAppointments({
 							) : (
 								<AppointmentRow
 									appointment={apt}
-									onVolunteer={handleVolunteer}
-									pending={pendingId === apt._id}
+									onConfirmVolunteer={handleConfirmVolunteer}
 								/>
 							)}
 						</li>

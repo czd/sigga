@@ -22,6 +22,16 @@
 		"saving": "Saving...",
 		"none": "None"
 	},
+	"driving": {
+		"confirm": {
+			"title": "Drive to this appointment?",
+			"body": "You'll be listed as the driver for “{title}” {when}. You can change this later.",
+			"action": "Yes, I'll drive",
+			"assignOtherTitle": "Set {name} as driver?",
+			"assignOtherBody": "{name} will be listed as the driver for “{title}” {when}. You can change this later.",
+			"assignOtherAction": "Yes, set {name}"
+		}
+	},
 	"app": {
 		"name": "Sigga",
 		"tagline": "Family coordination for Sigga's care"
