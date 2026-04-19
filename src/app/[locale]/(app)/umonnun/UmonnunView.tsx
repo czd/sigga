@@ -32,7 +32,7 @@ export function UmonnunView() {
 				</header>
 
 				<Tabs defaultValue="dagbok" className="gap-6">
-					<TabsList className="grid w-full h-auto grid-cols-2 rounded-xl border border-border bg-muted p-1">
+					<TabsList className="grid w-full grid-cols-2 rounded-xl border border-border bg-muted p-1 group-data-horizontal/tabs:h-auto">
 						<TabsTrigger
 							value="dagbok"
 							className="min-h-12 rounded-lg text-base font-medium data-active:bg-card data-active:text-foreground data-active:shadow-sm"
