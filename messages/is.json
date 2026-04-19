@@ -445,5 +445,26 @@
 		"greetingWithName": "Halló {name}",
 		"notSignedIn": "Ekki innskráður",
 		"signInFailed": "Innskráning tókst ekki. Reyndu aftur."
+	},
+	"errors": {
+		"title": "Eitthvað fór úrskeiðis",
+		"body": "Við höfum skráð villuna. Reyndu aftur eða hlaðið síðuna upp á nýtt.",
+		"retry": "Reyna aftur"
+	},
+	"admin": {
+		"usage": {
+			"title": "Notkun",
+			"subtitle": "Hverjir eru að nota appið og hverjir hafa lent í villum (síðustu 30 dagar).",
+			"peopleHeading": "Fólk",
+			"errorsHeading": "Nýlegar villur",
+			"lastActive": "Síðast virkt",
+			"appOpens": "Opnanir",
+			"pageViews": "Síðuskoðanir",
+			"errors": "Villur",
+			"empty": "Engin notkun skráð ennþá.",
+			"noErrors": "Engar villur síðustu 30 dagana.",
+			"never": "Aldrei",
+			"unknownUser": "Óþekktur notandi"
+		}
 	}
 }

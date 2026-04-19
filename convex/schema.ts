@@ -100,4 +100,22 @@ export default defineSchema({
 		notes: v.optional(v.string()),
 		addedBy: v.id("users"),
 	}),
+
+	events: defineTable({
+		userId: v.optional(v.id("users")),
+		type: v.union(
+			v.literal("app_open"),
+			v.literal("page_view"),
+			v.literal("error"),
+			v.literal("unhandled_rejection"),
+			v.literal("client_log"),
+		),
+		path: v.optional(v.string()),
+		message: v.optional(v.string()),
+		stack: v.optional(v.string()),
+		userAgent: v.optional(v.string()),
+		metadata: v.optional(v.string()),
+	})
+		.index("by_user_and_time", ["userId", "_creationTime"])
+		.index("by_type_and_time", ["type", "_creationTime"]),
 });

@@ -15,6 +15,7 @@ import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
 import type * as documents from "../documents.js";
 import type * as entitlements from "../entitlements.js";
+import type * as events from "../events.js";
 import type * as http from "../http.js";
 import type * as logEntries from "../logEntries.js";
 import type * as medications from "../medications.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   documents: typeof documents;
   entitlements: typeof entitlements;
+  events: typeof events;
   http: typeof http;
   logEntries: typeof logEntries;
   medications: typeof medications;
