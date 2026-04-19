@@ -49,7 +49,7 @@ export function AppointmentCard({
 			<button
 				type="button"
 				onClick={onEdit}
-				aria-label={tCommon("edit")}
+				aria-label={tCommon("editItem", { title: appointment.title })}
 				className="-mx-2 -mt-2 rounded-lg px-2 pt-2 pb-1 text-left outline-none transition-colors hover:bg-paper-deep/40 focus-visible:ring-3 focus-visible:ring-ring"
 			>
 				<div className="text-sm text-ink-soft">

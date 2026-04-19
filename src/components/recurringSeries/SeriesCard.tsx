@@ -73,7 +73,7 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 				type="button"
 				onClick={onEdit}
 				disabled={pending}
-				aria-label={tCommon("edit")}
+				aria-label={tCommon("editItem", { title: series.title })}
 				className="-mx-2 -mt-2 flex flex-col gap-1.5 rounded-lg px-2 pt-2 pb-1 text-left outline-none transition-colors hover:bg-paper-deep/40 focus-visible:ring-3 focus-visible:ring-ring"
 			>
 				<h3 className="font-serif text-lg leading-snug text-ink">

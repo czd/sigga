@@ -124,7 +124,9 @@ export function LogFeed() {
 							{isAuthor ? (
 								<button
 									type="button"
-									aria-label={tCommon("edit")}
+									aria-label={tCommon("editItem", {
+										title: entry.content.slice(0, 60),
+									})}
 									className="block w-full text-left rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
 									onClick={() =>
 										setEditTarget({

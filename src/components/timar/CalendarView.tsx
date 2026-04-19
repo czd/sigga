@@ -224,16 +224,17 @@ function ViewToggle({
 	const t = useTranslations("timar.view");
 	return (
 		<div
-			role="tablist"
-			aria-label="view"
+			role="radiogroup"
+			aria-label={t("toggleLabel")}
 			className="inline-flex rounded-lg bg-paper-deep p-1"
 		>
 			{(["month", "week", "list"] as const).map((key) => (
+				// biome-ignore lint/a11y/useSemanticElements: segmented-toggle pattern — button with role=radio keeps the shared visual surface
 				<button
 					key={key}
 					type="button"
-					role="tab"
-					aria-selected={view === key}
+					role="radio"
+					aria-checked={view === key}
 					onClick={() => onChange(key)}
 					className={cn(
 						"min-h-12 px-3 rounded-md text-sm font-medium transition-colors",

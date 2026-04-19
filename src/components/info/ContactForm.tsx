@@ -200,6 +200,7 @@ export function ContactForm({
 								value={name}
 								onChange={(e) => setName(e.target.value)}
 								className="h-12 text-base"
+								autoComplete="name"
 								required
 								autoFocus
 							/>
@@ -226,6 +227,7 @@ export function ContactForm({
 								id="contact-phone"
 								type="tel"
 								inputMode="tel"
+								autoComplete="tel"
 								value={phone}
 								onChange={(e) => setPhone(e.target.value)}
 								className="h-12 text-base"
@@ -241,6 +243,7 @@ export function ContactForm({
 								id="contact-email"
 								type="email"
 								inputMode="email"
+								autoComplete="email"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								className="h-12 text-base"

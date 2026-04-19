@@ -21,7 +21,7 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 
 ## Current Repo State
 
-**Built out through Phase 12 + Phase 8.5 (recurring appointments) + Phase 14 (backup cron).** The scaffold, auth, i18n, schema/seed, app shell, dashboard, Dagbók, Tímar (incl. recurring series), all four Upplýsingar sub-pages (Lyf, Símaskrá, Réttindi, Skjöl), and the weekly backup export are shipped. Remaining phases: 13 (PWA config), 15 (polish), 16 (tests), 17 (deploy & onboard). Consult `docs/implementation-plan.md` for the authoritative phase-by-phase status.
+**Built out through Phase 12 + Phase 8.5 + Phase 13A + Phase 14 + Phase 15.** The scaffold, auth, i18n, schema/seed, app shell, dashboard, Dagbók, Tímar (incl. recurring series), all four Upplýsingar sub-pages (Lyf, Símaskrá, Réttindi, Skjöl), PWA installability (manifest + brand mark + iOS meta), weekly backup export, and the a11y / Pattern-13 polish pass are shipped. Remaining phases: **13B** (service worker — deferred until a Next-16-vetted library lands), **16** (tests), **17** (deploy & onboard). Consult `docs/implementation-plan.md` for the authoritative phase-by-phase status.
 
 What's in the tree now (high level):
 

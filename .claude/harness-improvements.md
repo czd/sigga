@@ -54,6 +54,11 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 
 ## Resolved
 
+### 2026-04-19 · qa · EntitlementList reset button uses min-h-11 (44px) — violates the explicit CLAUDE.md 48px floor and the CLAUDE.md "not `min-h-11`" carve-out
+
+**Context:** Phase 15 closing-slice commit, Finding 36 (reset-filter button chrome). The fix initially applied `min-h-11` (44px) to the reset button, contradicting the CLAUDE.md rule that explicitly names `min-h-11` as forbidden and sets the floor at `min-h-12` (48px).
+**Resolution:** 2026-04-19 · code · Fixed in the same slice before commit. `src/components/info/EntitlementList.tsx:213` now uses `min-h-12`; the Phase 15 plan note updated from "44 px" to "48 px (`min-h-12`)". QA's suggested grep check (`rg 'min-h-11' src/`) still applies going forward — any future hit outside a comment is a tap-target violation.
+
 ### 2026-04-19 · qa · Phase 13 implementation-plan prescribes icon-192.png + icon-512.png but shipped code uses Next.js file conventions instead
 
 **Context:** Reviewing Phase 13A PWA commit. `docs/implementation-plan.md` Phase 13 step 2 said "Icons: `icon-192.png` and `icon-512.png`" and listed `public/icon-192.png` / `public/icon-512.png` under "Files to create/modify", but the shipped code uses Next 16 file conventions (`src/app/icon.svg` + `src/app/apple-icon.tsx`) instead.

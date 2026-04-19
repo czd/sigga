@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
+import { useLiveRegion } from "@/components/shared/LiveRegion";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { cn } from "@/lib/utils";
 import { EntitlementForm } from "./EntitlementForm";
@@ -63,6 +64,7 @@ function KanbanCard({
 	isOverlay?: boolean;
 }) {
 	const t = useTranslations("entitlements");
+	const tKanban = useTranslations("entitlements.kanban");
 	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
 		id: entitlement._id,
 	});
@@ -76,6 +78,7 @@ function KanbanCard({
 			{...attributes}
 			{...listeners}
 			onClick={() => onEdit(entitlement)}
+			aria-label={tKanban("dragCard", { title: entitlement.title })}
 			className={cn(
 				"text-left relative overflow-hidden rounded-2xl bg-paper ring-1 ring-foreground/10 p-4 flex flex-col gap-2 cursor-grab active:cursor-grabbing hover:ring-foreground/20 transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-sage-deep",
 				isDragging && !isOverlay && "opacity-30",
@@ -170,6 +173,9 @@ function KanbanColumn({
 }
 
 export function EntitlementKanban() {
+	const t = useTranslations("entitlements.kanban");
+	const tStatuses = useTranslations("entitlements.statuses");
+	const { announce } = useLiveRegion();
 	const entitlements = useQuery(api.entitlements.list);
 	const update = useMutation(api.entitlements.update);
 	const sensors = useSensors(
@@ -228,6 +234,7 @@ export function EntitlementKanban() {
 			await update({ id, status: target });
 		} catch (err) {
 			console.error(err);
+			announce(t("saveFailed"));
 		}
 	}
 
@@ -238,6 +245,24 @@ export function EntitlementKanban() {
 				collisionDetection={closestCenter}
 				onDragStart={handleDragStart}
 				onDragEnd={handleDragEnd}
+				accessibility={{
+					announcements: {
+						onDragStart: () => t("announcements.onDragStart"),
+						onDragOver: ({ over }) =>
+							over && COLUMN_ORDER.includes(over.id as EntitlementStatus)
+								? t("announcements.onDragOver", {
+										status: tStatuses(over.id as EntitlementStatus),
+									})
+								: t("announcements.onDragStart"),
+						onDragEnd: ({ over }) =>
+							over && COLUMN_ORDER.includes(over.id as EntitlementStatus)
+								? t("announcements.onDragEnd", {
+										status: tStatuses(over.id as EntitlementStatus),
+									})
+								: t("announcements.onDragCancel"),
+						onDragCancel: () => t("announcements.onDragCancel"),
+					},
+				}}
 			>
 				<div className="grid gap-3 xl:grid-cols-4">
 					{COLUMN_ORDER.map((status) => (

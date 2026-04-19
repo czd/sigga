@@ -104,6 +104,8 @@ export function PappirarTabs() {
 							key={value}
 							type="button"
 							role="tab"
+							id={`pappirar-tab-${value}`}
+							aria-controls={`pappirar-panel-${value}`}
 							aria-selected={active}
 							onClick={() => handleChange(value)}
 							className={cn(
@@ -129,7 +131,12 @@ export function PappirarTabs() {
 				})}
 			</div>
 
-			<div className={cn(tab === "rettindi" ? "" : "hidden")}>
+			<div
+				role="tabpanel"
+				id="pappirar-panel-rettindi"
+				aria-labelledby="pappirar-tab-rettindi"
+				hidden={tab !== "rettindi"}
+			>
 				<div className="xl:hidden">
 					<EntitlementList />
 				</div>
@@ -137,7 +144,12 @@ export function PappirarTabs() {
 					<EntitlementKanban />
 				</div>
 			</div>
-			<div className={cn(tab === "skjol" ? "" : "hidden")}>
+			<div
+				role="tabpanel"
+				id="pappirar-panel-skjol"
+				aria-labelledby="pappirar-tab-skjol"
+				hidden={tab !== "skjol"}
+			>
 				<div className="xl:hidden">
 					<DocumentList />
 				</div>

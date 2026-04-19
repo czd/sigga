@@ -46,6 +46,8 @@ export function AppointmentList() {
 						key={key}
 						type="button"
 						role="tab"
+						id={`appointment-tab-${key}`}
+						aria-controls={`appointment-panel-${key}`}
 						aria-selected={tab === key}
 						onClick={() => setTab(key)}
 						className={cn(
@@ -60,29 +62,37 @@ export function AppointmentList() {
 				))}
 			</div>
 
-			{loading ? (
-				<LoadingLine />
-			) : entries.length === 0 ? (
-				<EmptyState
-					icon={<CalendarClock size={40} aria-hidden />}
-					title={t(`empty.${tab}`)}
-				/>
-			) : (
-				<ul className="flex flex-col gap-3">
-					{entries.map((apt) => (
-						<li key={apt._id}>
-							<AppointmentCard
-								appointment={apt}
-								variant={tab}
-								onEdit={() => setEditTarget(apt)}
-								onLogEntry={
-									tab === "past" ? (id) => setLogForAppointment(id) : undefined
-								}
-							/>
-						</li>
-					))}
-				</ul>
-			)}
+			<div
+				role="tabpanel"
+				id={`appointment-panel-${tab}`}
+				aria-labelledby={`appointment-tab-${tab}`}
+			>
+				{loading ? (
+					<LoadingLine />
+				) : entries.length === 0 ? (
+					<EmptyState
+						icon={<CalendarClock size={40} aria-hidden />}
+						title={t(`empty.${tab}`)}
+					/>
+				) : (
+					<ul className="flex flex-col gap-3">
+						{entries.map((apt) => (
+							<li key={apt._id}>
+								<AppointmentCard
+									appointment={apt}
+									variant={tab}
+									onEdit={() => setEditTarget(apt)}
+									onLogEntry={
+										tab === "past"
+											? (id) => setLogForAppointment(id)
+											: undefined
+									}
+								/>
+							</li>
+						))}
+					</ul>
+				)}
+			</div>
 
 			<AppointmentForm
 				open={editTarget !== null}

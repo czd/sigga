@@ -3,6 +3,7 @@
 		"save": "Vista",
 		"cancel": "Hætta við",
 		"edit": "Breyta",
+		"editItem": "Breyta — {title}",
 		"delete": "Eyða",
 		"add": "Bæta við",
 		"back": "Til baka",
@@ -135,6 +136,7 @@
 		"title": "Tímar",
 		"new": "Nýr tími",
 		"view": {
+			"toggleLabel": "Sýn",
 			"month": "Mánuður",
 			"week": "Vika",
 			"list": "Listi"
@@ -148,7 +150,15 @@
 		"weekGrid": {
 			"drivers": "Skutlarar",
 			"dragHint": "Dragðu nafn á tíma til að skipa skutlara.",
-			"noAppointments": "Engir tímar þessa viku."
+			"noAppointments": "Engir tímar þessa viku.",
+			"dragAvatar": "Skutla — {name}. Dragðu á tíma.",
+			"announcements": {
+				"onDragStart": "Byrjað að færa skutlara.",
+				"onDragOver": "Skutlari yfir tíma.",
+				"onDragEnd": "Skutlari skráður.",
+				"onDragCancel": "Hætt við."
+			},
+			"saveFailed": "Ekki tókst að skrá skutlara."
 		},
 		"monthGrid": {
 			"more": "+{count} til viðbótar"
@@ -381,6 +391,16 @@
 			"approved": "Samþykkt",
 			"denied": "Hafnað"
 		},
+		"kanban": {
+			"dragCard": "Réttindi — {title}. Dragðu í annan dálk.",
+			"announcements": {
+				"onDragStart": "Byrjað að færa réttindi.",
+				"onDragOver": "Yfir {status}.",
+				"onDragEnd": "Fært í {status}.",
+				"onDragCancel": "Hætt við."
+			},
+			"saveFailed": "Ekki tókst að færa réttindin."
+		},
 		"fields": {
 			"title": "Titill",
 			"status": "Staða",
@@ -418,6 +438,7 @@
 			"recent": "Nýleg",
 			"byCategory": "Eftir flokki"
 		},
+		"sortLabel": "Röðun skjala",
 		"uncategorized": "Án flokks",
 		"addedBy": "{date} · {name}",
 		"fields": {

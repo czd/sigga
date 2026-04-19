@@ -76,7 +76,9 @@ export function LogEntryReader({ id }: Props) {
 						variant="ghost"
 						size="touch-icon"
 						onClick={() => setEditOpen(true)}
-						aria-label={tCommon("edit")}
+						aria-label={tCommon("editItem", {
+							title: entry.content.slice(0, 60),
+						})}
 					>
 						<Pencil aria-hidden />
 					</Button>

@@ -203,18 +203,19 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 				) : (
 					<>
 						<div
-							role="tablist"
-							aria-label={t("title")}
+							role="radiogroup"
+							aria-label={t("sortLabel")}
 							className="grid grid-cols-2 rounded-xl border border-border bg-muted p-1"
 						>
 							{sortOptions.map(({ key, label }) => {
 								const active = sort === key;
 								return (
+									// biome-ignore lint/a11y/useSemanticElements: segmented-toggle pattern — button with role=radio keeps the shared visual surface
 									<button
 										key={key}
 										type="button"
-										role="tab"
-										aria-selected={active}
+										role="radio"
+										aria-checked={active}
 										onClick={() => setSort(key)}
 										className={cn(
 											"min-h-12 rounded-lg text-base font-medium transition-colors",

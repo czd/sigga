@@ -963,22 +963,37 @@ The plan originally bundled the service worker with installability. Option A (de
 
 ## Phase 15: Polish & Feedback
 
-### What to do
+### Status (2026-04-19): Complete
 
-1. **Toast confirmations** on every mutation: save, delete, edit, volunteer.
-2. **Loading states** on all async actions.
-3. **Error messages** in Icelandic — friendly, not technical.
-4. **Delete confirmations** everywhere: "Ertu viss? Þetta er ekki hægt að afturkalla."
-5. **Empty states** with warm, friendly Icelandic text (not just "No data").
-6. **Audit all tap targets** — minimum 48px, prefer 56px+.
-7. **Test on actual phones** — both iOS and Android, in Icelandic locale.
-8. **Accessibility pass** — screen reader labels in Icelandic, sufficient color contrast.
+Most of Phase 15's original checklist was absorbed into the UX alignment Tier 1–3 pass (C1–C23) — toasts retired in favour of a polite live-region, delete/commit confirmations unified behind `<ConfirmDialog>`, tap-target sweep, heading hierarchy + skip-link, empty-state restyle, error-handling per Pattern 13, loading states unified behind `LoadingLine`. The closing slice cleans up the a11y-audit items C-tasks didn't cover.
+
+### Closing slice (2026-04-19)
+
+**A11y audit follow-through (findings not mapped to C-tasks):**
+
+1. **Finding 11 — per-route page titles.** Every authenticated route now exports `generateMetadata` so `<title>` is `{route} · Sigga` instead of the bare app name. Dashboard + Nýtjun were split into server `page.tsx` + client `View.tsx` since they needed Convex subscriptions. Files: `src/app/[locale]/(app)/{page,umonnun,folk,pappirar,timar,timar/reglulegir,nytjun}/page.tsx` + new `(app)/DashboardView.tsx` + renamed `nytjun/UsageView.tsx`.
+2. **Findings 13–14 — dnd-kit announcements + draggable aria-labels.** WeekGrid + EntitlementKanban now pass `accessibility.announcements` with Icelandic onDragStart/onDragOver/onDragEnd/onDragCancel messages. Draggable avatars and kanban cards expose their draggability via aria-label. Files: `src/components/timar/WeekGrid.tsx`, `src/components/info/EntitlementKanban.tsx`, new keys under `timar.weekGrid.announcements` and `entitlements.kanban.announcements`.
+3. **Finding 30 — aria-label context.** `LogFeed`, `LogEntryReader`, `AppointmentCard`, `SeriesCard` edit buttons now read `Breyta — {title}` via a new `common.editItem` ICU key.
+4. **Finding 33 — autoComplete on form inputs.** `ContactForm` name/tel/email fields now set `autoComplete` so iOS/Android autofill kicks in.
+5. **Finding 36 — reset-filter button chrome.** `EntitlementList` filter-reset button now has a 48 px (`min-h-12`) hit area and proper focus ring, keeping the text-link appearance.
+6. **Finding 41 — DocumentList sort toggle semantics.** Was `role="tablist"` → now `role="radiogroup"` (with button children + `role="radio"` + `biome-ignore` on the segmented-toggle pattern that keeps the shared visual surface).
+7. **Finding 42 — tablist aria-controls.** `AppointmentList` and `PappirarTabs` now wire `id`/`aria-controls`/`aria-labelledby` between tabs and panels; PappirarTabs panels use the `hidden` attribute instead of a `.hidden` class so screen-reader tree matches visual state. `CalendarView` view-toggle is a radiogroup (view-mode switcher, not navigation tabs).
+
+**Pattern 13 sweep:** The two remaining silent catches (drag handlers in `WeekGrid.handleDragEnd` and `EntitlementKanban.handleDragEnd`) now announce a localised failure message (`timar.weekGrid.saveFailed` / `entitlements.kanban.saveFailed`) via the existing live-region instead of just console.error. All other mutation catches were already Pattern-13-compliant.
+
+**Icelandic copy leak scan:** grep-verified — no hardcoded English strings outside ui/ primitives (which were already localised via Tier 1 C5). Fixed one leak in `CalendarView` (`aria-label="view"` → `aria-label={t("toggleLabel")}`).
 
 ### Exit criteria
 
-- Every action has feedback (toast, loading spinner, or state change)
-- No English text leaks into the Icelandic interface
-- Usable by a 60-year-old who doesn't read English
+- [x] Every action has feedback (live-region announce, inline banner, or state change)
+- [x] No English text leaks into the Icelandic interface (grep-verified)
+- [x] Every authenticated surface has Pattern-12 loading, Pattern-13 errors, Pattern-2/19 confirmations
+- [x] Per-route `<title>` announced by screen reader nav
+- [x] Drag interactions reachable and announceable for AT users
+
+**Deferred (not part of Phase 15):**
+- On-device user testing (manual QA, not a dev task).
+- Service worker offline shell — deferred to Phase 13B.
 
 ---
 

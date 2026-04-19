@@ -19,6 +19,7 @@ import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { ClientOnly } from "@/components/shared/ClientOnly";
+import { useLiveRegion } from "@/components/shared/LiveRegion";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { cn } from "@/lib/utils";
 import type { RangeRow } from "./MonthGrid";
@@ -51,10 +52,12 @@ type DriverSummary = {
 };
 
 function DraggableAvatar({ user }: { user: DriverSummary }) {
+	const t = useTranslations("timar.weekGrid");
 	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
 		id: `user-${user._id}`,
 		data: { userId: user._id },
 	});
+	const displayName = user.name ?? user.email ?? "";
 	return (
 		<button
 			ref={setNodeRef}
@@ -65,7 +68,7 @@ function DraggableAvatar({ user }: { user: DriverSummary }) {
 				"flex items-center gap-2 rounded-full bg-paper px-2 py-1 ring-1 ring-foreground/10 cursor-grab active:cursor-grabbing transition-opacity",
 				isDragging && "opacity-30",
 			)}
-			aria-label={user.name ?? user.email ?? ""}
+			aria-label={t("dragAvatar", { name: displayName })}
 		>
 			<UserAvatar
 				name={user.name}
@@ -172,6 +175,7 @@ export function WeekGrid(props: Props) {
 function WeekGridContent({ weekStartMs, activeId, onSelect }: Props) {
 	const locale = useLocale();
 	const t = useTranslations("timar.weekGrid");
+	const { announce } = useLiveRegion();
 	const weekEndMs = weekStartMs + 7 * DAY_MS;
 	const appointments = useQuery(api.appointments.byRange, {
 		startMs: weekStartMs,
@@ -229,6 +233,7 @@ function WeekGridContent({ weekStartMs, activeId, onSelect }: Props) {
 			await update({ id: targetId, driverId: userId });
 		} catch (err) {
 			console.error(err);
+			announce(t("saveFailed"));
 		}
 	}
 
@@ -241,6 +246,14 @@ function WeekGridContent({ weekStartMs, activeId, onSelect }: Props) {
 			sensors={sensors}
 			onDragStart={handleDragStart}
 			onDragEnd={handleDragEnd}
+			accessibility={{
+				announcements: {
+					onDragStart: () => t("announcements.onDragStart"),
+					onDragOver: () => t("announcements.onDragOver"),
+					onDragEnd: () => t("announcements.onDragEnd"),
+					onDragCancel: () => t("announcements.onDragCancel"),
+				},
+			}}
 		>
 			<div className="flex flex-col gap-4">
 				<div className="grid grid-cols-7 gap-2">

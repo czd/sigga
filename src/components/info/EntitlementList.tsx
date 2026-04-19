@@ -210,7 +210,7 @@ function ProgressTracker({
 				<button
 					type="button"
 					onClick={onReset}
-					className="text-sm text-sage-shadow underline-offset-4 hover:underline focus-visible:outline-none focus-visible:underline"
+					className="-mx-2 -my-1.5 inline-flex min-h-12 items-center rounded-md px-2 py-1.5 text-sm text-sage-shadow underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
 				>
 					{t("reset")}
 				</button>

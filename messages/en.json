@@ -3,6 +3,7 @@
 		"save": "Save",
 		"cancel": "Cancel",
 		"edit": "Edit",
+		"editItem": "Edit — {title}",
 		"delete": "Delete",
 		"add": "Add",
 		"back": "Back",
@@ -134,6 +135,7 @@
 	"timar": {
 		"title": "Appointments",
 		"view": {
+			"toggleLabel": "View",
 			"month": "Month",
 			"week": "Week",
 			"list": "List"
@@ -147,7 +149,15 @@
 		"weekGrid": {
 			"drivers": "Drivers",
 			"dragHint": "Drag a name onto an appointment to assign a driver.",
-			"noAppointments": "No appointments this week."
+			"noAppointments": "No appointments this week.",
+			"dragAvatar": "Driver — {name}. Drag onto an appointment.",
+			"announcements": {
+				"onDragStart": "Started moving driver.",
+				"onDragOver": "Driver over appointment.",
+				"onDragEnd": "Driver assigned.",
+				"onDragCancel": "Cancelled."
+			},
+			"saveFailed": "Could not assign driver."
 		},
 		"monthGrid": {
 			"more": "+{count} more"
@@ -381,6 +391,16 @@
 			"approved": "Approved",
 			"denied": "Denied"
 		},
+		"kanban": {
+			"dragCard": "Entitlement — {title}. Drag to another column.",
+			"announcements": {
+				"onDragStart": "Started moving entitlement.",
+				"onDragOver": "Over {status}.",
+				"onDragEnd": "Moved to {status}.",
+				"onDragCancel": "Cancelled."
+			},
+			"saveFailed": "Could not move the entitlement."
+		},
 		"fields": {
 			"title": "Title",
 			"status": "Status",
@@ -418,6 +438,7 @@
 			"recent": "Recent",
 			"byCategory": "By category"
 		},
+		"sortLabel": "Document sort order",
 		"uncategorized": "Uncategorized",
 		"addedBy": "{date} · {name}",
 		"fields": {
