@@ -169,10 +169,16 @@
 		"editTitle": "Breyta tíma",
 		"volunteer": "Ég get!",
 		"logEntry": "Skrá í dagbók",
-		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"deleteConfirm": {
+			"title": "Eyða „{title}“?",
+			"body": "Þetta er ekki hægt að afturkalla."
+		},
 		"skip": "Hlaupa yfir þennan tíma",
 		"skipShort": "Hlaupa yfir",
-		"skipConfirm": "Hlaupa yfir þennan tíma? Tíminn verður sýndur sem sleppt og næsti tími verður til sjálfkrafa.",
+		"skipConfirm": {
+			"title": "Hlaupa yfir „{title}“?",
+			"body": "Tíminn birtist sem sleppt og næsti tími verður til sjálfkrafa."
+		},
 		"tabs": {
 			"upcoming": "Næstu tímar",
 			"past": "Liðnir tímar"
@@ -212,10 +218,8 @@
 		"edit": "Breyta",
 		"delete": "Eyða",
 		"deleteConfirm": {
-			"title": "Eyða {title}?",
-			"body": "Eldri tímar verða áfram sýnilegir í Liðnir tímar.",
-			"confirm": "Eyða",
-			"cancel": "Hætta við"
+			"title": "Eyða „{title}“?",
+			"body": "Eldri tímar verða áfram sýnilegir í Liðnir tímar."
 		},
 		"form": {
 			"createTitle": "Nýr reglulegur tími",
@@ -298,7 +302,10 @@
 		"searchPlaceholder": "Leita að nafni eða síma…",
 		"call": "Hringja í {name}",
 		"edit": "Breyta {name}",
-		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"deleteConfirm": {
+			"title": "Eyða „{title}“?",
+			"body": "Þetta er ekki hægt að afturkalla."
+		},
 		"filters": {
 			"all": "Allir",
 			"medical": "Læknar",
@@ -340,7 +347,10 @@
 		"owner": "Umsjón",
 		"ownerSuffix": "sér um",
 		"noOwner": "Enginn eigandi",
-		"deleteConfirm": "Ertu viss? Þetta er ekki hægt að afturkalla.",
+		"deleteConfirm": {
+			"title": "Eyða „{title}“?",
+			"body": "Þetta er ekki hægt að afturkalla."
+		},
 		"progress": {
 			"remaining": "{done} af {total} komin í höfn",
 			"inProgress": "{done} af {total} enn í vinnslu",
@@ -397,7 +407,10 @@
 		"unavailable": "Ekki aðgengilegt",
 		"empty": "Engin skjöl skráð",
 		"emptyHint": "Hladdu upp lyfseðlum, bréfum eða vottorðum til að hafa allt á einum stað.",
-		"deleteConfirm": "Ertu viss? Skjalið eyðist varanlega — þetta er ekki hægt að afturkalla.",
+		"deleteConfirm": {
+			"title": "Eyða „{title}“?",
+			"body": "Skjalið eyðist varanlega. Þetta er ekki hægt að afturkalla."
+		},
 		"detailTitle": "Skjal",
 		"sort": {
 			"recent": "Nýleg",

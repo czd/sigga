@@ -6,14 +6,7 @@ import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc } from "@/../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
 import { formatDays } from "@/lib/formatRecurrence";
 import { cn } from "@/lib/utils";
@@ -27,6 +20,7 @@ type SeriesCardProps = {
 
 export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 	const t = useTranslations("recurring");
+	const tCommon = useTranslations("common");
 	const tLong = useTranslations("recurring.form.daysLong");
 	const locale = useLocale();
 	const setActive = useMutation(api.recurringSeries.setActive);
@@ -65,10 +59,10 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 		setError(null);
 		try {
 			await remove({ id: series._id });
-			setConfirmDelete(false);
 		} catch (err) {
 			console.error(err);
 			setError(t("form.errors.generic"));
+			throw err;
 		} finally {
 			setPending(false);
 		}
@@ -138,36 +132,15 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 				</p>
 			) : null}
 
-			<Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-				<DialogContent className="max-w-sm" showCloseButton={false}>
-					<DialogHeader>
-						<DialogTitle className="text-xl">
-							{t("deleteConfirm.title", { title: series.title })}
-						</DialogTitle>
-						<DialogDescription className="text-base">
-							{t("deleteConfirm.body")}
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter className="flex-col gap-2 sm:flex-col">
-						<Button
-							variant="destructive"
-							size="touch"
-							onClick={handleDelete}
-							disabled={pending}
-						>
-							{t("deleteConfirm.confirm")}
-						</Button>
-						<Button
-							variant="outline"
-							size="touch"
-							onClick={() => setConfirmDelete(false)}
-							disabled={pending}
-						>
-							{t("deleteConfirm.cancel")}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+			<ConfirmDialog
+				open={confirmDelete}
+				onOpenChange={setConfirmDelete}
+				title={t("deleteConfirm.title", { title: series.title })}
+				body={t("deleteConfirm.body")}
+				confirmLabel={tCommon("delete")}
+				confirmVariant="destructive"
+				onConfirm={handleDelete}
+			/>
 		</article>
 	);
 }

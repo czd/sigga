@@ -169,10 +169,16 @@
 		"editTitle": "Edit appointment",
 		"volunteer": "I can!",
 		"logEntry": "Log entry",
-		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"deleteConfirm": {
+			"title": "Delete “{title}”?",
+			"body": "This cannot be undone."
+		},
 		"skip": "Skip this occurrence",
 		"skipShort": "Skip",
-		"skipConfirm": "Skip this occurrence? It will be marked as skipped and the next appointment will be created automatically.",
+		"skipConfirm": {
+			"title": "Skip “{title}”?",
+			"body": "The occurrence will be marked skipped and the next one will be created automatically."
+		},
 		"tabs": {
 			"upcoming": "Upcoming",
 			"past": "Past"
@@ -212,10 +218,8 @@
 		"edit": "Edit",
 		"delete": "Delete",
 		"deleteConfirm": {
-			"title": "Delete {title}?",
-			"body": "Past appointments remain visible in the Past tab.",
-			"confirm": "Delete",
-			"cancel": "Cancel"
+			"title": "Delete “{title}”?",
+			"body": "Past appointments remain visible in the Past tab."
 		},
 		"form": {
 			"createTitle": "New recurring appointment",
@@ -298,7 +302,10 @@
 		"searchPlaceholder": "Search name or number…",
 		"call": "Call {name}",
 		"edit": "Edit {name}",
-		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"deleteConfirm": {
+			"title": "Delete “{title}”?",
+			"body": "This cannot be undone."
+		},
 		"filters": {
 			"all": "All",
 			"medical": "Doctors",
@@ -340,7 +347,10 @@
 		"owner": "Owner",
 		"ownerSuffix": "owns this",
 		"noOwner": "No owner",
-		"deleteConfirm": "Are you sure? This cannot be undone.",
+		"deleteConfirm": {
+			"title": "Delete “{title}”?",
+			"body": "This cannot be undone."
+		},
 		"progress": {
 			"remaining": "{done} of {total} done",
 			"inProgress": "{done} of {total} still in progress",
@@ -397,7 +407,10 @@
 		"unavailable": "Unavailable",
 		"empty": "No documents yet",
 		"emptyHint": "Upload prescriptions, letters, or certificates to keep everything in one place.",
-		"deleteConfirm": "Are you sure? The document will be permanently deleted — this cannot be undone.",
+		"deleteConfirm": {
+			"title": "Delete “{title}”?",
+			"body": "The document will be permanently deleted. This cannot be undone."
+		},
 		"detailTitle": "Document",
 		"sort": {
 			"recent": "Recent",

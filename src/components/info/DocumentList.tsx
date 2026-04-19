@@ -9,14 +9,7 @@ import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
 	Sheet,
 	SheetContent,
@@ -311,7 +304,6 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 	const [deleteTarget, setDeleteTarget] = useState<DocumentWithMeta | null>(
 		null,
 	);
-	const [deleting, setDeleting] = useState(false);
 	const [sort, setSort] = useState<SortKey>("recent");
 
 	const documents = useQuery(api.documents.list, {});
@@ -325,16 +317,8 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 
 	async function handleDelete() {
 		if (!deleteTarget) return;
-		setDeleting(true);
-		try {
-			await remove({ id: deleteTarget._id });
-			setDeleteTarget(null);
-			setDetailTarget(null);
-		} catch (err) {
-			console.error(err);
-		} finally {
-			setDeleting(false);
-		}
+		await remove({ id: deleteTarget._id });
+		setDetailTarget(null);
 	}
 
 	const totalDocs = documents?.length ?? 0;
@@ -444,39 +428,19 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 				onRequestDelete={(d) => setDeleteTarget(d)}
 			/>
 
-			<Dialog
+			<ConfirmDialog
 				open={deleteTarget !== null}
 				onOpenChange={(open) => {
 					if (!open) setDeleteTarget(null);
 				}}
-			>
-				<DialogContent className="max-w-sm" showCloseButton={false}>
-					<DialogHeader>
-						<DialogTitle className="text-xl">{tCommon("delete")}?</DialogTitle>
-						<DialogDescription className="text-base">
-							{t("deleteConfirm")}
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter className="flex-col gap-2 sm:flex-col">
-						<Button
-							variant="destructive"
-							size="touch"
-							onClick={handleDelete}
-							disabled={deleting}
-						>
-							{tCommon("delete")}
-						</Button>
-						<Button
-							variant="outline"
-							size="touch"
-							onClick={() => setDeleteTarget(null)}
-							disabled={deleting}
-						>
-							{tCommon("cancel")}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+				title={t("deleteConfirm.title", {
+					title: deleteTarget?.title ?? deleteTarget?.fileName ?? "",
+				})}
+				body={t("deleteConfirm.body")}
+				confirmLabel={tCommon("delete")}
+				confirmVariant="destructive"
+				onConfirm={handleDelete}
+			/>
 		</>
 	);
 }

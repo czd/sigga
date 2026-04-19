@@ -7,14 +7,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc } from "@/../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -136,11 +129,11 @@ export function ContactForm({
 		setSaving(true);
 		try {
 			await remove({ id: editContact._id });
-			setConfirmDelete(false);
 			onOpenChange(false);
 		} catch (err) {
 			console.error(err);
 			setError(t("errors.generic"));
+			throw err;
 		} finally {
 			setSaving(false);
 		}
@@ -312,34 +305,15 @@ export function ContactForm({
 				</SheetContent>
 			</Sheet>
 
-			<Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-				<DialogContent className="max-w-sm" showCloseButton={false}>
-					<DialogHeader>
-						<DialogTitle className="text-xl">{tCommon("delete")}?</DialogTitle>
-						<DialogDescription className="text-base">
-							{t("deleteConfirm")}
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter className="flex-col gap-2 sm:flex-col">
-						<Button
-							variant="destructive"
-							size="touch"
-							onClick={handleDelete}
-							disabled={saving}
-						>
-							{tCommon("delete")}
-						</Button>
-						<Button
-							variant="outline"
-							size="touch"
-							onClick={() => setConfirmDelete(false)}
-							disabled={saving}
-						>
-							{tCommon("cancel")}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+			<ConfirmDialog
+				open={confirmDelete}
+				onOpenChange={setConfirmDelete}
+				title={t("deleteConfirm.title", { title: editContact?.name ?? "" })}
+				body={t("deleteConfirm.body")}
+				confirmLabel={tCommon("delete")}
+				confirmVariant="destructive"
+				onConfirm={handleDelete}
+			/>
 		</>
 	);
 }

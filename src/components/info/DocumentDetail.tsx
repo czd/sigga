@@ -8,14 +8,7 @@ import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 function formatSize(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`;
@@ -39,7 +32,6 @@ export function DocumentDetail({
 	const documents = useQuery(api.documents.list, {});
 	const doc = documents?.find((d) => d._id === id) ?? null;
 	const remove = useMutation(api.documents.remove);
-	const [deleting, setDeleting] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	if (documents === undefined) {
@@ -58,14 +50,8 @@ export function DocumentDetail({
 	}).format(new Date(doc._creationTime));
 
 	async function handleDelete() {
-		setDeleting(true);
-		try {
-			await remove({ id });
-			setConfirmOpen(false);
-			onAfterDelete?.();
-		} finally {
-			setDeleting(false);
-		}
+		await remove({ id });
+		onAfterDelete?.();
 	}
 
 	return (
@@ -149,34 +135,15 @@ export function DocumentDetail({
 				</Button>
 			</div>
 
-			<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-				<DialogContent className="max-w-sm" showCloseButton={false}>
-					<DialogHeader>
-						<DialogTitle className="text-xl">{tCommon("delete")}?</DialogTitle>
-						<DialogDescription className="text-base">
-							{t("deleteConfirm")}
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter className="flex-col gap-2 sm:flex-col">
-						<Button
-							variant="destructive"
-							size="touch"
-							onClick={handleDelete}
-							disabled={deleting}
-						>
-							{tCommon("delete")}
-						</Button>
-						<Button
-							variant="outline"
-							size="touch"
-							onClick={() => setConfirmOpen(false)}
-							disabled={deleting}
-						>
-							{tCommon("cancel")}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+			<ConfirmDialog
+				open={confirmOpen}
+				onOpenChange={setConfirmOpen}
+				title={t("deleteConfirm.title", { title: doc.title || doc.fileName })}
+				body={t("deleteConfirm.body")}
+				confirmLabel={tCommon("delete")}
+				confirmVariant="destructive"
+				onConfirm={handleDelete}
+			/>
 		</div>
 	);
 }
