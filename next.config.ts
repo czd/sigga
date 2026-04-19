@@ -23,6 +23,7 @@ export default sentryDsn && sentryOrg && sentryProject
 	? withSentryConfig(withIntl, {
 			org: sentryOrg,
 			project: sentryProject,
+			authToken: process.env.SENTRY_AUTH_TOKEN,
 			silent: !process.env.CI,
 			widenClientFileUpload: true,
 			disableLogger: true,
