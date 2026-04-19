@@ -20,7 +20,8 @@
 		"justNow": "Rétt í þessu",
 		"close": "Loka",
 		"saving": "Vista...",
-		"none": "Ekkert"
+		"none": "Ekkert",
+		"skipToContent": "Hoppa í aðalefni"
 	},
 	"app": {
 		"name": "Sigga",

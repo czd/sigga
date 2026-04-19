@@ -20,7 +20,8 @@
 		"justNow": "Just now",
 		"close": "Close",
 		"saving": "Saving...",
-		"none": "None"
+		"none": "None",
+		"skipToContent": "Skip to content"
 	},
 	"driving": {
 		"confirm": {

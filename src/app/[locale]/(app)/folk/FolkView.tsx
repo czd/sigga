@@ -36,9 +36,9 @@ export function FolkView() {
 				<div className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-soft">
 					{t("folk.title")}
 				</div>
-				<h2 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
+				<h1 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
 					{t("folk.subtitle")}
-				</h2>
+				</h1>
 			</header>
 			<EmergencyTiles />
 

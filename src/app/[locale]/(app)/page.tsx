@@ -74,7 +74,7 @@ export default function DashboardPage() {
 				>
 					{today ?? "\u00A0"}
 				</div>
-				<h2 className="font-serif text-[2.5rem] leading-[1.08] tracking-tight text-balance text-foreground">
+				<h1 className="font-serif text-[2.5rem] leading-[1.08] tracking-tight text-balance text-foreground">
 					{firstName
 						? t.rich("dashboard.greeting", {
 								name: firstName,
@@ -83,7 +83,7 @@ export default function DashboardPage() {
 								),
 							})
 						: t("dashboard.greetingPlain")}
-				</h2>
+				</h1>
 			</header>
 
 			{/* Mobile + tablet: the shipped single-column dashboard */}

@@ -17,9 +17,9 @@ export function ReglulegirView() {
 				<ChevronLeft size={18} aria-hidden />
 				<span>{t("backToTimar")}</span>
 			</Link>
-			<h2 className="font-serif text-3xl font-normal tracking-tight text-ink">
+			<h1 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
 				{t("title")}
-			</h2>
+			</h1>
 			<SeriesList />
 		</div>
 	);

@@ -26,9 +26,9 @@ export function UmonnunView() {
 					<div className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
 						{t("umonnun.title")}
 					</div>
-					<h2 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
+					<h1 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
 						{t("umonnun.hvernig")}
-					</h2>
+					</h1>
 				</header>
 
 				<Tabs defaultValue="dagbok" className="gap-6">

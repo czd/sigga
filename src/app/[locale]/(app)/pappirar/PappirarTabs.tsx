@@ -87,9 +87,9 @@ export function PappirarTabs() {
 
 	return (
 		<div className="flex flex-col gap-5">
-			<h2 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
+			<h1 className="font-serif text-[2.25rem] leading-[1.08] tracking-tight text-ink text-balance">
 				{renderHeadline(headline)}
-			</h2>
+			</h1>
 
 			<div
 				role="tablist"
