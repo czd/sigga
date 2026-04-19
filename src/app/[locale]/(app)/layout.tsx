@@ -26,10 +26,7 @@ export default async function AppLayout({
 			<Tracking />
 			<Sidebar />
 			<Header />
-			<main
-				id="main-content"
-				className="flex-1 pb-32 md:pb-12 md:pl-[248px]"
-			>
+			<main id="main-content" className="flex-1 pb-32 md:pb-12 md:pl-[248px]">
 				<div className="md:pl-24">{children}</div>
 			</main>
 			<BottomNav />
