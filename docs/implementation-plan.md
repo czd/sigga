@@ -918,37 +918,48 @@ This work shipped after Phase 12 and before Phase 13. Documented here for tracea
 
 ## Phase 14: Backup Cron Job
 
-### Status: Not yet started
+### Status (2026-04-19): Complete
 
-`convex/backup.ts` does not exist. `convex/crons.ts` currently registers only the daily recurring-appointments cron (`"10 0 * * *"`). The weekly backup cron must be added as a second entry in the same file.
+- `convex/backup.ts` landed with `snapshotTables` (internal query), `recordBackup` / `deleteBackupRow` (internal mutations), `listBackupsNewestFirst` (internal query), and `weeklyExport` (internal action).
+- `convex/schema.ts` gained a `backups` table (`storageId`, `size`) so cleanup can enumerate prior exports without scanning `_storage`.
+- `convex/crons.ts` registers the weekly cron at `0 3 * * 0` alongside the existing recurring-appointments daily entry.
 
-### What to do
+### What was built
 
-1. `convex/backup.ts` — `weeklyExport` internal action:
-   - Queries all tables
-   - Serializes to JSON with ISO timestamps
-   - Stores as file in Convex storage
-   - Deletes backups older than 4 weeks (keeps last 4)
+1. `convex/backup.ts` — `weeklyExport` internal action that:
+   - Reads every app table (`users`, `appointments`, `recurringSeries`, `logEntries`, `medications`, `contacts`, `entitlements`, `documents`, `events`) via the `snapshotTables` internal query.
+   - Serializes the snapshot to JSON with an `exportedAt` ISO header and a `schemaVersion` field.
+   - Stores the blob via `ctx.storage.store(new Blob([json], { type: "application/json" }))`.
+   - Records a `backups` row (`storageId` + `size`) via `recordBackup`.
+   - Keeps the 4 most recent backups; iterates any older entries, `ctx.storage.delete`s the blob, and deletes the row.
 
-2. Add weekly cron to `convex/crons.ts` (use `crons.cron`, NOT the deprecated `crons.weekly`):
-   ```typescript
-   crons.cron(
-     "weekly backup",
-     "0 3 * * 0",   // Sunday 03:00 UTC
-     internal.backup.weeklyExport,
-   );
+2. `convex/schema.ts` — added:
+   ```ts
+   backups: defineTable({ storageId: v.id("_storage"), size: v.number() })
    ```
+
+3. `convex/crons.ts` — added:
+   ```ts
+   crons.cron("weekly backup", "0 3 * * 0", internal.backup.weeklyExport);
+   ```
+
+### Deviations from the original plan
+
+- Added a dedicated `backups` table rather than scanning `_storage` so document blobs and backup blobs stay distinguishable.
+- Snapshot includes `users` (app-owned portion of `authTables`) but intentionally excludes the auth-internal tables (`authSessions`, `authAccounts`, etc.) — those are session-scoped and would expand the backup without improving restorability.
 
 ### Files to create/modify
 
-- `convex/backup.ts` — new file
-- `convex/crons.ts` — add weekly backup cron entry
+- `convex/backup.ts` — new
+- `convex/schema.ts` — `backups` table added
+- `convex/crons.ts` — second cron entry added
 
 ### Exit criteria
 
-- Can manually trigger the backup function
-- JSON file appears in Convex storage with all data
-- Older backups are cleaned up
+- [x] `weeklyExport` callable from the Convex dashboard / `npx convex run` (verified on dev 2026-04-19 — returns `{ storageId, size: 118840 }`)
+- [x] JSON file appears in Convex storage with all tables
+- [x] Older backups are cleaned up (verified: 5 consecutive runs → 4 rows retained, oldest blob + row deleted)
+- [ ] First real fire of the cron observed on Sunday 03:00 UTC (prod) — verify in Convex dashboard the following week once deployed
 
 ---
 

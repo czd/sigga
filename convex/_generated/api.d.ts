@@ -11,6 +11,7 @@
 import type * as activity from "../activity.js";
 import type * as appointments from "../appointments.js";
 import type * as auth from "../auth.js";
+import type * as backup from "../backup.js";
 import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
 import type * as documents from "../documents.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   activity: typeof activity;
   appointments: typeof appointments;
   auth: typeof auth;
+  backup: typeof backup;
   contacts: typeof contacts;
   crons: typeof crons;
   documents: typeof documents;

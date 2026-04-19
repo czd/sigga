@@ -118,4 +118,9 @@ export default defineSchema({
 	})
 		.index("by_user_and_time", ["userId"])
 		.index("by_type_and_time", ["type"]),
+
+	backups: defineTable({
+		storageId: v.id("_storage"),
+		size: v.number(),
+	}),
 });

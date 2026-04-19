@@ -9,4 +9,6 @@ crons.cron(
 	internal.recurringSeries.ensureNextOccurrences,
 );
 
+crons.cron("weekly backup", "0 3 * * 0", internal.backup.weeklyExport);
+
 export default crons;
