@@ -242,6 +242,15 @@ export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 					/>
 				</div>
 
+				<Button
+					size="touch"
+					onClick={() => setCreateOpen(true)}
+					className="w-full"
+				>
+					<Plus aria-hidden />
+					<span>{t("add")}</span>
+				</Button>
+
 				<div className="flex flex-wrap items-center gap-2">
 					{FILTER_ORDER.map((key) => {
 						const active = filter === key;
@@ -262,14 +271,6 @@ export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 							</button>
 						);
 					})}
-					<button
-						type="button"
-						onClick={() => setCreateOpen(true)}
-						aria-label={t("add")}
-						className="flex size-10 items-center justify-center rounded-full border border-divider-strong bg-paper text-ink-soft transition-colors hover:text-ink focus-visible:ring-3 focus-visible:ring-ring outline-none"
-					>
-						<Plus aria-hidden className="size-5" />
-					</button>
 				</div>
 
 				{loading ? (

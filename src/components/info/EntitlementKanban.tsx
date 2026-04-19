@@ -146,17 +146,19 @@ function KanbanColumn({
 				>
 					{t(`statuses.${status}`)}
 				</h3>
-				<span className="flex items-center gap-1.5 text-xs text-ink-soft tabular-nums">
-					<span>{items.length}</span>
+				<div className="flex items-center gap-2">
+					<span className="text-xs text-ink-soft tabular-nums">
+						{items.length}
+					</span>
 					<button
 						type="button"
 						onClick={onCreate}
 						aria-label={t("add")}
-						className="flex size-6 items-center justify-center rounded-full text-ink-soft hover:bg-paper hover:text-ink-soft transition-colors"
+						className="flex size-12 items-center justify-center rounded-full text-ink-soft outline-none transition-colors hover:bg-paper hover:text-ink focus-visible:ring-3 focus-visible:ring-ring"
 					>
-						<Plus aria-hidden className="size-4" />
+						<Plus aria-hidden className="size-5" />
 					</button>
-				</span>
+				</div>
 			</header>
 			<div className="flex flex-col gap-2">
 				{items.map((e) => (
