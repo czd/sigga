@@ -292,6 +292,12 @@ _(empty — all items processed in 2026-04-19 audit run)_
 **Observation:** Hover affordance on the Tímar back-link is lost (visually indistinguishable from rest state). The fix is one-line: `hover:text-ink-soft` → `hover:text-ink` to match the other two corrected links. Not a blocking FAIL (contrast still passes) but reduces pointer/keyboard interactivity signal.
 **Suggested action:** Fix `ReglulegirView.tsx` line 15 hover class in the next polish pass. Also consider adding a qa grep: `rg 'text-ink-soft[^"]*hover:text-ink-soft' src/` — any element with identical rest and hover color is a candidate redundant-hover to flag.
 
+### 2026-04-19 · qa · Button variant table shrunk to 4 floor-safe sizes — qa.md should have an automated grep guard
+
+**Context:** C4 UX alignment — `button.tsx` collapsed from 10 variants to 4 that all meet 48 px. The removed variants (`xs`, `sm`, `lg`, `icon-xs`, `icon-sm`, `icon-lg`) were previously the most commonly misused controls (sub-floor heights).
+**Observation:** There is no automated qa check that would catch a future `size="sm"` or `size="icon-sm"` prop on a `<Button>` — TypeScript catches it at compile time because the type is narrowed, but only if the consumer explicitly types the prop. A direct JSX string `size="sm"` on a `<Button>` will produce a TypeScript error, but a future contributor might re-add one of the old variants to `button.tsx` and the QA agent would not notice unless it actively greps. Additionally, after any future shadcn upgrade that resets `button.tsx` to stock, the sub-floor variants would silently return.
+**Suggested action:** Add to `.claude/agents/qa.md` UX section: after any diff touching `src/components/ui/button.tsx`, run `rg 'size=.*(xs|sm|lg|icon-xs|icon-sm|icon-lg)' src/components/ui/button.tsx` — any match in the `size:` variant map is a FAIL (floor violation). Additionally, add to the general UX grep for the full `src/`: `rg '<Button[^>]*size="(sm|xs|lg|icon-sm|icon-xs|icon-lg)"' src/` — any Button consumer of a removed variant is a FAIL.
+
 ### 2026-04-19 · qa · --input token repoint changes disabled-input background in light mode
 
 **Context:** C3 a11y fix repoints `--input` from `var(--divider-strong)` (a near-transparent alpha) to `var(--ink-soft)` (#5a6158, a dark muted green) to meet WCAG 1.4.11. Several shadcn primitives use `--input` as a background tint: `disabled:bg-input/50` on input and textarea, `data-unchecked:bg-input` on switch.

@@ -127,12 +127,7 @@ export function CalendarView() {
 							>
 								<ChevronRight aria-hidden />
 							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={handleToday}
-								className="ml-1"
-							>
+							<Button variant="outline" onClick={handleToday} className="ml-1">
 								{t("calendar.today")}
 							</Button>
 						</>
@@ -140,7 +135,7 @@ export function CalendarView() {
 				</div>
 				<div className="flex items-center gap-2">
 					<ViewToggle view={view} onChange={handleViewChange} />
-					<Button size="sm" onClick={() => setCreateOpen(true)}>
+					<Button onClick={() => setCreateOpen(true)}>
 						<Plus aria-hidden />
 						<span>{t("new")}</span>
 					</Button>
@@ -241,7 +236,7 @@ function ViewToggle({
 					aria-selected={view === key}
 					onClick={() => onChange(key)}
 					className={cn(
-						"min-h-9 px-3 rounded-md text-sm font-medium transition-colors",
+						"min-h-12 px-3 rounded-md text-sm font-medium transition-colors",
 						view === key
 							? "bg-paper text-ink-soft shadow-sm"
 							: "text-ink-soft hover:text-ink",
