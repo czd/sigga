@@ -880,39 +880,37 @@ This work shipped after Phase 12 and before Phase 13. Documented here for tracea
 
 ## Phase 13: PWA Configuration
 
-### What to do
+Split into two slices. 13A ships installability + brand mark. 13B ships the offline shell (service worker). The service-worker library landscape on Next 16 is still settling, so 13B is deferred rather than rushed.
 
-1. `public/manifest.json`:
-   ```json
-   {
-     "name": "Sigga",
-     "short_name": "Sigga",
-     "display": "standalone",
-     "start_url": "/",
-     "theme_color": "<teal/sage accent color>",
-     "background_color": "<cream background color>",
-     "lang": "is",
-     "icons": [...]
-   }
-   ```
+### Phase 13A — Installability & brand mark (Status 2026-04-19: Complete)
 
-2. Icons: `icon-192.png` and `icon-512.png`. Simple, warm, recognizable.
+Uses Next 16's file conventions rather than static `icon-192.png` / `icon-512.png`. A single scalable SVG drives every size; ImageResponse rasterizes the iOS 180×180 PNG at build time.
 
-3. Apple touch icon + meta tags for iOS splash screens.
+**Files shipped:**
+- `public/manifest.json` — `display: standalone`, `lang: is`, `theme_color: "#6b7f5c"` (sage-deep), `background_color: "#faf7f0"` (paper), icons referencing `/icon.svg` and `/apple-icon`, description pulled from the Icelandic tagline.
+- `src/app/icon.svg` — 512×512 sage-tile + serif "S" + paper book-spine underline. Next auto-emits `<link rel="icon" type="image/svg+xml">`.
+- `src/app/apple-icon.tsx` — ImageResponse handler producing a 180×180 PNG. Fetches Source Serif 4 Regular OTF from Adobe's canonical GitHub release at build time with a graceful system-serif fallback so the build never breaks on network hiccups. Next auto-emits `<link rel="apple-touch-icon">`.
+- `src/components/shared/Logo.tsx` — inline React component matching `icon.svg` but using `var(--font-serif-family)` so in-app rendering uses Source Serif 4 exactly. Placed in Header, Sidebar, and above the Login hero.
+- `src/app/[locale]/layout.tsx` — metadata extends with `manifest`, `applicationName`, `appleWebApp` (capable + title + default status-bar style), `formatDetection.telephone: true`. A separate `viewport` export sets `themeColor: "#6b7f5c"` (per the Next 15+ split where `themeColor` moved out of `metadata`).
 
-4. Service worker: offline shell so app chrome loads without network. Data areas show "Hleð..." until Convex reconnects.
+**Exit criteria met:**
+- [x] "Add to Home Screen" works on iOS and Android (manifest + apple-icon + theme-color complete).
+- [x] App opens full-screen without browser chrome (`display: standalone`).
+- [x] Production build recognises both `/icon.svg` and `/apple-icon` as static routes.
 
-### Files to create/modify
+### Phase 13B — Offline shell via service worker (deferred)
 
-- `public/manifest.json`
-- `public/icon-192.png`, `public/icon-512.png`
-- `src/app/[locale]/layout.tsx` — add manifest link, meta tags
+The plan originally bundled the service worker with installability. Option A (defer the SW) was chosen because: (1) rolling a correct Next 16 App Router SW by hand is fiddly (RSC payloads, dynamic routes, Turbopack dev quirks); (2) mainstream libraries (`next-pwa`, `@serwist/next`) are not yet officially Next 16-vetted; (3) the family's primary failure mode is spotty connectivity, not full offline, and Convex already shows the `LoadingLine` state on reconnect.
 
-### Exit criteria
+**What still needs to ship:**
+1. A service worker caching the app shell (`/_next/static/*`, the five top-level routes' HTML, icon assets).
+2. `navigator.serviceWorker.register(...)` in a client boundary.
+3. Verification that the manifest `start_url` loads offline with the app chrome, while data surfaces display `LoadingLine` until Convex reconnects.
 
-- "Add to Home Screen" works on iOS and Android
-- App opens full-screen without browser chrome
-- Offline: app shell loads, data shows loading state
+**Pick-up checklist before starting 13B:**
+- Confirm Next 16.3+ / Turbopack have resolved open SW-compat issues.
+- Decide between `@serwist/next` (recommended) vs a hand-rolled SW. Prefer the library once it's Next 16-vetted.
+- Write one Playwright spec for the offline path (network offline → reload → app chrome renders).
 
 ---
 

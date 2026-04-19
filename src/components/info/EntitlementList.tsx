@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -387,9 +388,7 @@ export function EntitlementList() {
 		<>
 			<div className="flex flex-col gap-5">
 				{loading ? (
-					<div className="rounded-2xl bg-paper px-4 py-6 ring-1 ring-foreground/10 text-muted-foreground">
-						{tCommon("loading")}
-					</div>
+					<LoadingLine />
 				) : total === 0 ? (
 					<EmptyState
 						icon={<FileText size={40} aria-hidden />}

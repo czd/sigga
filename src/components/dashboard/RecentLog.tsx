@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import type { api } from "@/../convex/_generated/api";
 import { LogEntryForm } from "@/components/log/LogEntryForm";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { classifyRelative, formatAbsolute } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
@@ -103,7 +104,9 @@ export function RecentLog({ entry }: { entry: LogEntry | null | undefined }) {
 			<span id="recent-log-heading" className="sr-only">
 				{t("eyebrow")}
 			</span>
-			{entry === undefined ? null : entry === null ? (
+			{entry === undefined ? (
+				<LoadingLine />
+			) : entry === null ? (
 				<p className="text-ink-soft">{t("empty")}</p>
 			) : (
 				<LogPreviewInner entry={entry} />

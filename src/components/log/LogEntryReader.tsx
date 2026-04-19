@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +41,7 @@ export function LogEntryReader({ id }: Props) {
 	const [editOpen, setEditOpen] = useState(false);
 
 	if (entry === undefined) {
-		return <p className="text-ink-soft">{tCommon("loading")}</p>;
+		return <LoadingLine />;
 	}
 	if (entry === null) {
 		return null;

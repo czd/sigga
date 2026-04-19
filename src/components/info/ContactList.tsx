@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -190,7 +191,6 @@ type ContactListProps = {
 
 export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 	const t = useTranslations("contacts");
-	const tCommon = useTranslations("common");
 	const [createOpen, setCreateOpen] = useState(false);
 	const [editTarget, setEditTarget] = useState<ContactDoc | null>(null);
 	const [filter, setFilter] = useState<FilterKey>("all");
@@ -274,9 +274,7 @@ export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 				</div>
 
 				{loading ? (
-					<div className="rounded-2xl bg-paper px-4 py-6 ring-1 ring-foreground/10 text-muted-foreground">
-						{tCommon("loading")}
-					</div>
+					<LoadingLine />
 				) : totalMatches === 0 ? (
 					<EmptyState
 						icon={<Users size={40} aria-hidden />}

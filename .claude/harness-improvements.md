@@ -44,9 +44,20 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 - [Next.js PR #91503](https://github.com/vercel/next.js/pull/91503)
 - [next-intl#2226 — composing middlewares](https://github.com/amannn/next-intl/issues/2226)
 
+### 2026-04-19 · qa · QA tCommon-cleanup check should warn when a declaration removal is the only diff hunk in a file with other tCommon usages
+
+**Context:** Reviewing the LoadingLine refactor. Several files had `tCommon = useTranslations("common")` removed because the loading call site was replaced. Three of those files (`ContactList.tsx`, `ContactDetail.tsx`, `LogEntryReader.tsx`) retain `tCommon` declarations for *other* call sites in the same or inner components — the removal was correct in each case, but the QA check currently requires manually reading each file to confirm.
+**Observation:** There is no automated check that flags "a `tCommon` declaration was removed but the identifier still appears elsewhere in the file" vs "the declaration was removed because no more usages remain." TypeScript would catch a leftover usage with no declaration, but it would not catch a *missing cleanup* (orphan declaration after all usages were replaced).
+**Suggested action:** Add to the QA checklist: after `tCommon` declaration removals, grep the post-diff file for remaining `tCommon` and confirm each surviving reference is in a *different* component scope. Alternatively, document in CLAUDE.md that shared-namespace hooks (`tCommon`, `tShared`) may appear in inner components — don't remove the outer declaration without scanning for inner scopes.
+
 ---
 
 ## Resolved
+
+### 2026-04-19 · qa · Phase 13 implementation-plan prescribes icon-192.png + icon-512.png but shipped code uses Next.js file conventions instead
+
+**Context:** Reviewing Phase 13A PWA commit. `docs/implementation-plan.md` Phase 13 step 2 said "Icons: `icon-192.png` and `icon-512.png`" and listed `public/icon-192.png` / `public/icon-512.png` under "Files to create/modify", but the shipped code uses Next 16 file conventions (`src/app/icon.svg` + `src/app/apple-icon.tsx`) instead.
+**Resolution:** 2026-04-19 · docs · Phase 13 rewritten in the same slice that drops this entry. The section now splits into 13A (installability + brand mark — complete, with file list matching the shipped conventions) and 13B (service worker — deferred with a pick-up checklist). The 512px Android-splash gap was intentionally left out of the shipped manifest: Chrome's install-quality check accepts the scalable SVG entry (`sizes: "any"`) as sufficient, and adding a dedicated 512px raster would duplicate the brand mark without a current install-quality signal telling us it's needed.
 
 ### 2026-04-19 · user-correction · Site-wide UX inconsistency — edit affordances and card-vs-detail patterns diverge across views
 

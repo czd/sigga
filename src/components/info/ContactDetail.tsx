@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { Button } from "@/components/ui/button";
 import { ContactForm } from "./ContactForm";
 
@@ -29,7 +30,7 @@ export function ContactDetail({ id }: { id: Id<"contacts"> }) {
 	const [editOpen, setEditOpen] = useState(false);
 
 	if (contacts === undefined) {
-		return <p className="text-ink-soft">{tCommon("loading")}</p>;
+		return <LoadingLine />;
 	}
 	if (contact === null) {
 		return null;

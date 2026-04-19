@@ -8,6 +8,7 @@ import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MedicationForm } from "./MedicationForm";
@@ -76,7 +77,6 @@ function MedicationRow({
 
 export function MedicationTable() {
 	const t = useTranslations("medications");
-	const tCommon = useTranslations("common");
 	const [showInactive, setShowInactive] = useState(false);
 	const [createOpen, setCreateOpen] = useState(false);
 	const [editTarget, setEditTarget] = useState<MedicationWithUpdater | null>(
@@ -104,9 +104,7 @@ export function MedicationTable() {
 				</div>
 
 				{loading ? (
-					<div className="rounded-2xl bg-paper px-4 py-6 ring-1 ring-foreground/10 text-muted-foreground">
-						{tCommon("loading")}
-					</div>
+					<LoadingLine />
 				) : active.length === 0 ? (
 					<EmptyState
 						icon={<Pill size={40} aria-hidden />}

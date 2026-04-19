@@ -5,6 +5,7 @@ import { BookOpen, CalendarPlus, FileCheck, FileText } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { api } from "@/../convex/_generated/api";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { classifyRelative, formatAbsolute } from "@/lib/formatDate";
 
 function formatRelative(
@@ -71,7 +72,7 @@ export function SinceLastVisit() {
 			</h2>
 
 			{items === undefined ? (
-				<p className="text-ink-soft">{tCommon("loading")}</p>
+				<LoadingLine />
 			) : items.length === 0 ? (
 				<p className="text-ink-soft">{t("empty")}</p>
 			) : (

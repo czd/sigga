@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,
@@ -163,7 +164,6 @@ type DocumentListProps = {
 
 export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 	const t = useTranslations("documents");
-	const tCommon = useTranslations("common");
 	const locale = useLocale();
 	const [uploadOpen, setUploadOpen] = useState(false);
 	const [detailId, setDetailId] = useState<Id<"documents"> | null>(null);
@@ -187,9 +187,7 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 		<>
 			<div className="flex flex-col gap-5">
 				{loading ? (
-					<div className="rounded-2xl bg-paper px-4 py-6 ring-1 ring-foreground/10 text-muted-foreground">
-						{tCommon("loading")}
-					</div>
+					<LoadingLine />
 				) : totalDocs === 0 ? (
 					<EmptyState
 						icon={<FileText size={40} aria-hidden />}

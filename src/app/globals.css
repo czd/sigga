@@ -161,6 +161,18 @@ body {
 	}
 }
 
+/* Gentle breath for the LoadingLine — softer than Tailwind's animate-pulse.
+   Opacity floor is 0.55 so the word stays legible at the fade. */
+@keyframes loading-breath {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.55;
+	}
+}
+
 /* Respect prefers-reduced-motion across animations, transitions, and
    scroll-smooth. Dialog / Sheet slide-in/out via tw-animate-css collapses to
    an instant swap for users who opt out of motion. */

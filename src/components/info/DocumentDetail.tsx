@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -35,7 +36,7 @@ export function DocumentDetail({
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	if (documents === undefined) {
-		return <p className="text-ink-soft">{tCommon("loading")}</p>;
+		return <LoadingLine />;
 	}
 	if (doc === null) {
 		return null;

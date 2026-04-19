@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Link } from "@/i18n/navigation";
@@ -130,7 +131,6 @@ export function NextAppointments({
 	appointments: AppointmentWithDriver[] | undefined;
 }) {
 	const t = useTranslations("dashboard.nextAppointments");
-	const tCommon = useTranslations("common");
 	const volunteer = useMutation(api.appointments.volunteerToDrive);
 
 	async function handleConfirmVolunteer(id: Id<"appointments">) {
@@ -155,7 +155,7 @@ export function NextAppointments({
 			</div>
 
 			{appointments === undefined ? (
-				<p className="text-ink-soft py-2">{tCommon("loading")}</p>
+				<LoadingLine />
 			) : appointments.length === 0 ? (
 				<p className="text-ink-soft py-2">{t("empty")}</p>
 			) : (

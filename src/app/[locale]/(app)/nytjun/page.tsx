@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 import { api } from "@/../convex/_generated/api";
 import { StackLayout } from "@/components/layout/StackLayout";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatAbsoluteWithTime } from "@/lib/formatDate";
@@ -33,7 +34,7 @@ export default function UsagePage() {
 	if (isAdmin === undefined) {
 		return (
 			<StackLayout className="pt-8 pb-10">
-				<p className="text-ink-soft">{t("common.loading")}</p>
+				<LoadingLine />
 			</StackLayout>
 		);
 	}
@@ -65,7 +66,7 @@ export default function UsagePage() {
 					{t("admin.usage.peopleHeading")}
 				</h2>
 				{usage === undefined ? (
-					<p className="text-ink-soft">{t("common.loading")}</p>
+					<LoadingLine />
 				) : usage.length === 0 ? (
 					<p className="text-ink-soft">{t("admin.usage.empty")}</p>
 				) : (
@@ -133,7 +134,7 @@ export default function UsagePage() {
 					{t("admin.usage.errorsHeading")}
 				</h2>
 				{errors === undefined ? (
-					<p className="text-ink-soft">{t("common.loading")}</p>
+					<LoadingLine />
 				) : errors.length === 0 ? (
 					<p className="text-ink-soft">{t("admin.usage.noErrors")}</p>
 				) : (

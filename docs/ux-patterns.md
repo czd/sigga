@@ -479,31 +479,60 @@ announce(t("saved", { title })); // e.g. "Færsla vistuð."
 
 **What it is:** What a surface renders while data is in flight.
 
-**Canonical answer:** **Plain text "Hleð..." only.** List-shaped loading uses the paper-block surface (`rounded-2xl bg-paper px-4 py-6 ring-1 ring-foreground/10 text-ink-soft`) with the text centred. Detail-shaped loading uses the plain italic line (`text-ink-soft italic`). No skeletons, no spinners, no shimmer — except the already-shipped aria-hidden placeholders on the week/month grids, which are retained because grid-shaped loading would flash jarringly as an empty list.
+**Canonical answer:** **A single shared `<LoadingLine />` component everywhere.** It renders the word "Hleð..." in Source Serif 4 italic, centred, at `text-ink-soft`, with a gentle motion-safe opacity breath (1.8 s ease-in-out, fades to 0.55 and back). No frame, no tile, no ring — the surrounding Card / tab panel / sheet carries the structure. No skeletons, no spinners, no shimmer — except the already-shipped aria-hidden empty `<div>` placeholders on the week/month grids, which are retained because grid-shaped loading would flash jarringly as an empty list.
 
-**When it applies:** Every `useQuery` first-render. Every mutation that blocks the UI (rare — see Pattern 14). Any Convex subscription waking up from a stale state.
+**When it applies:** Every `useQuery` first-render. Every mutation that blocks the UI (rare — see Pattern 14). Any Convex subscription waking up from a stale state. Paginated list's "LoadingMore" slot too, not just first-page.
 
-**Counter-examples (when NOT to use):** Below-1-second round-trips show nothing — flashing "Hleð..." for 200 ms is worse than silence. Dashboard RecentLog's current "render nothing while loading" is retired (Pattern 12 inventory finding); all surfaces render the `Hleð...` text so the page doesn't look empty. The shadcn Card variant (`<Card><CardContent>Hleð…</CardContent></Card>`) is retired — it looks foreign against the Bókasafn aesthetic.
+**Counter-examples (when NOT to use):** Below-1-second round-trips show nothing — flashing "Hleð..." for 200 ms is worse than silence. Button-pending states (e.g. Login during OAuth redirect) keep inline text on the button — the button itself is the context, a sibling LoadingLine would compete. The "render nothing while loading" variant is retired everywhere (including Dashboard RecentLog) — all data-fetch surfaces render `LoadingLine` so the page doesn't appear empty.
+
+**Retired:**
+- Paper-block list tile (`rounded-2xl bg-paper ring-1 ring-foreground/10`). The boxed-in frame around short text read as a placeholder shape, which subtly fought the "no skeletons" rule.
+- Plain sans-serif italic detail line (`text-ink-soft italic`). Matched body copy weight instead of the library-tone typography the rest of the app uses for state text.
+- shadcn Card variant (`<Card><CardContent>Hleð…</CardContent></Card>`). Imported shadcn default styling against the Bókasafn aesthetic.
 
 **Code recipe:**
 
 ```tsx
-// List loading
-<div className="rounded-2xl bg-paper px-4 py-6 text-center ring-1 ring-foreground/10 text-ink-soft">
-  {tCommon("loading")}
-</div>
+import { LoadingLine } from "@/components/shared/LoadingLine";
 
-// Detail loading
-<p className="text-ink-soft italic">{tCommon("loading")}</p>
+// List, detail, widget — all the same:
+{loading ? <LoadingLine /> : …}
+
+// With custom padding override (rare — e.g. tighter in a compact widget):
+<LoadingLine className="py-3" />
+
+// With custom label (rare — e.g. an upload-in-flight state):
+<LoadingLine label={t("uploading")} />
 ```
+
+The component itself:
+
+```tsx
+export function LoadingLine({ className, label }: LoadingLineProps) {
+  const tCommon = useTranslations("common");
+  return (
+    <p
+      role="status"
+      className={cn(
+        "font-serif italic text-ink-soft text-center py-6 motion-safe:animate-[loading-breath_1.8s_ease-in-out_infinite]",
+        className,
+      )}
+    >
+      {label ?? tCommon("loading")}
+    </p>
+  );
+}
+```
+
+`loading-breath` is defined in `src/app/globals.css` as a 0% 100% → 50% opacity fade. `motion-safe:` gates the animation so `prefers-reduced-motion` users get static text.
 
 **Icelandic copy:** `common.loading` → **"Hleð..."** (three dots, not ellipsis character).
 
 **English mirror:** `common.loading` → **"Loading..."**.
 
-**A11y requirements:** Loading containers carry `role="status"` and the "Hleð..." text so screen readers announce the wait. They do **not** carry `aria-live="assertive"` — do not interrupt.
+**A11y requirements:** `LoadingLine` sets `role="status"` so screen readers announce the wait. It does **not** carry `aria-live="assertive"` — do not interrupt. Reduced-motion users see a static italic line.
 
-**Rationale (brief):** Inventory Pattern 12 found four loading patterns in flight. Skeletons introduce motion the 60+ audience finds confusing; plain text is calm and honest.
+**Rationale (brief):** The audit pass (2026-04-19) landed on plain text over skeletons because skeletons' shape-morphing motion confuses the 60+ audience. A follow-up user review (2026-04-19) judged the paper-block list variant and sans-serif detail line as inelegant — boxy and utilitarian against the Bókasafn aesthetic. This revision keeps the anti-skeleton/anti-shimmer bans but promotes the treatment to match the app's typographic voice: Source Serif 4 italic with a breath-slow opacity pulse. One component, one treatment, everywhere.
 
 ---
 

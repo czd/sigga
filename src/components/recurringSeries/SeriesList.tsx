@@ -7,6 +7,7 @@ import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { Button } from "@/components/ui/button";
 import { SeriesCard } from "./SeriesCard";
 import { SeriesForm } from "./SeriesForm";
@@ -15,7 +16,6 @@ type SeriesDoc = Doc<"recurringSeries">;
 
 export function SeriesList() {
 	const t = useTranslations("recurring");
-	const tCommon = useTranslations("common");
 	const series = useQuery(api.recurringSeries.list);
 	const [createOpen, setCreateOpen] = useState(false);
 	const [editTarget, setEditTarget] = useState<SeriesDoc | null>(null);
@@ -25,7 +25,7 @@ export function SeriesList() {
 	return (
 		<>
 			{loading ? (
-				<p className="text-ink-soft py-2">{tCommon("loading")}</p>
+				<LoadingLine />
 			) : series.length === 0 ? (
 				<EmptyState
 					icon={<CalendarRange size={40} aria-hidden />}

@@ -8,7 +8,7 @@ import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { LogEntryForm } from "@/components/log/LogEntryForm";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Card, CardContent } from "@/components/ui/card";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { cn } from "@/lib/utils";
 import { AppointmentCard } from "./AppointmentCard";
 import { AppointmentForm } from "./AppointmentForm";
@@ -18,7 +18,6 @@ type AppointmentDoc = Doc<"appointments">;
 
 export function AppointmentList() {
 	const t = useTranslations("timar");
-	const tCommon = useTranslations("common");
 	const [tab, setTab] = useState<Tab>("upcoming");
 	const upcoming = useQuery(
 		api.appointments.upcoming,
@@ -62,11 +61,7 @@ export function AppointmentList() {
 			</div>
 
 			{loading ? (
-				<Card>
-					<CardContent className="text-muted-foreground py-2">
-						{tCommon("loading")}
-					</CardContent>
-				</Card>
+				<LoadingLine />
 			) : entries.length === 0 ? (
 				<EmptyState
 					icon={<CalendarClock size={40} aria-hidden />}

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,13 +57,7 @@ export function LogFeed() {
 	const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
 
 	if (status === "LoadingFirstPage") {
-		return (
-			<Card>
-				<CardContent className="text-muted-foreground py-2">
-					{tCommon("loading")}
-				</CardContent>
-			</Card>
-		);
+		return <LoadingLine />;
 	}
 
 	if (entries.length === 0) {
@@ -157,11 +152,7 @@ export function LogFeed() {
 					</Button>
 				</div>
 			) : null}
-			{status === "LoadingMore" ? (
-				<div className="mt-4 text-center text-muted-foreground">
-					{tCommon("loading")}
-				</div>
-			) : null}
+			{status === "LoadingMore" ? <LoadingLine className="mt-4" /> : null}
 			<LogEntryForm
 				open={editTarget !== null}
 				onOpenChange={(open) => {
