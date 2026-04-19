@@ -101,8 +101,7 @@ function AppointmentRow({
 							className="inline-flex items-center gap-2 text-sm font-medium text-amber-ink transition-opacity"
 						>
 							<span
-								className="inline-block size-2 rounded-full"
-								style={{ background: "#C9A35C" }}
+								className="inline-block size-2 rounded-full bg-amber-ink"
 								aria-hidden
 							/>
 							{t("noDriver")}
