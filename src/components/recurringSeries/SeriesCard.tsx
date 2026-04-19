@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
 import { formatDays } from "@/lib/formatRecurrence";
-import { cn } from "@/lib/utils";
 
 type SeriesDoc = Doc<"recurringSeries">;
 
@@ -70,22 +69,21 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 
 	return (
 		<article className="flex flex-col gap-4 rounded-2xl bg-paper px-5 py-5 ring-1 ring-foreground/10">
-			<div className="flex flex-col gap-1.5">
+			<button
+				type="button"
+				onClick={onEdit}
+				disabled={pending}
+				aria-label={tCommon("edit")}
+				className="-mx-2 -mt-2 flex flex-col gap-1.5 rounded-lg px-2 pt-2 pb-1 text-left outline-none transition-colors hover:bg-paper-deep/40 focus-visible:ring-3 focus-visible:ring-ring"
+			>
 				<h3 className="font-serif text-lg leading-snug text-ink">
 					{series.title}
 				</h3>
-				<p
-					className={cn(
-						"text-sm",
-						series.isActive ? "text-ink-soft" : "text-ink-soft",
-					)}
-				>
-					{cadence}
-				</p>
+				<p className="text-sm text-ink-soft">{cadence}</p>
 				{series.location ? (
 					<p className="text-sm text-ink-soft">{series.location}</p>
 				) : null}
-			</div>
+			</button>
 
 			<div className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-t border-divider pt-4">
 				<label
@@ -104,15 +102,6 @@ export function SeriesCard({ series, onEdit }: SeriesCardProps) {
 				</label>
 
 				<div className="flex items-center gap-2">
-					<Button
-						type="button"
-						variant="ghost"
-						size="touch"
-						onClick={onEdit}
-						disabled={pending}
-					>
-						{t("edit")}
-					</Button>
 					<Button
 						type="button"
 						variant="ghost"

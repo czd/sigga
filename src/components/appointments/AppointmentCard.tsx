@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "convex/react";
-import { BookOpen, MapPin, Pencil } from "lucide-react";
+import { BookOpen, MapPin } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
@@ -46,36 +46,30 @@ export function AppointmentCard({
 
 	return (
 		<article className="flex flex-col gap-4 rounded-2xl bg-paper px-5 py-5 ring-1 ring-foreground/10">
-			<div className="flex items-start gap-3">
-				<div className="flex-1 min-w-0">
-					<div className="text-sm text-ink-soft">
-						{formatAbsoluteWithTime(appointment.startTime, locale)}
-					</div>
-					<h3 className="mt-0.5 font-serif text-lg leading-snug text-ink">
-						{appointment.title}
-					</h3>
-					{appointment.location ? (
-						<div className="mt-1.5 flex items-center gap-1.5 text-sm text-ink-soft">
-							<MapPin size={16} aria-hidden />
-							<span>{appointment.location}</span>
-						</div>
-					) : null}
-					{appointment.notes ? (
-						<p className="mt-2 text-base whitespace-pre-wrap line-clamp-3 text-ink/90">
-							{appointment.notes}
-						</p>
-					) : null}
+			<button
+				type="button"
+				onClick={onEdit}
+				aria-label={tCommon("edit")}
+				className="-mx-2 -mt-2 rounded-lg px-2 pt-2 pb-1 text-left outline-none transition-colors hover:bg-paper-deep/40 focus-visible:ring-3 focus-visible:ring-ring"
+			>
+				<div className="text-sm text-ink-soft">
+					{formatAbsoluteWithTime(appointment.startTime, locale)}
 				</div>
-				<Button
-					variant="ghost"
-					size="touch-icon"
-					onClick={onEdit}
-					aria-label={tCommon("edit")}
-					className="-my-1 -mr-1"
-				>
-					<Pencil aria-hidden />
-				</Button>
-			</div>
+				<h3 className="mt-0.5 font-serif text-lg leading-snug text-ink">
+					{appointment.title}
+				</h3>
+				{appointment.location ? (
+					<div className="mt-1.5 flex items-center gap-1.5 text-sm text-ink-soft">
+						<MapPin size={16} aria-hidden />
+						<span>{appointment.location}</span>
+					</div>
+				) : null}
+				{appointment.notes ? (
+					<p className="mt-2 text-base whitespace-pre-wrap line-clamp-3 text-ink/90">
+						{appointment.notes}
+					</p>
+				) : null}
+			</button>
 
 			<div className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-t border-divider pt-4">
 				{appointment.driver ? (
