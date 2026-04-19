@@ -90,11 +90,15 @@ export function LogFeed() {
 									className="size-10"
 								/>
 								<div className="flex-1 min-w-0">
-									<div className="text-base font-medium leading-tight truncate">
+									<h3 className="text-base font-medium leading-tight truncate">
 										{entry.author?.name ?? entry.author?.email ?? "—"}
-									</div>
+									</h3>
 									<div className="text-sm text-muted-foreground">
-										{formatEntryDate(entry._creationTime, locale)}
+										<time
+											dateTime={new Date(entry._creationTime).toISOString()}
+										>
+											{formatEntryDate(entry._creationTime, locale)}
+										</time>
 										{entry.editedAt ? (
 											<>
 												<span aria-hidden> · </span>

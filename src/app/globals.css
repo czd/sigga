@@ -160,3 +160,17 @@ body {
 			serif;
 	}
 }
+
+/* Respect prefers-reduced-motion across animations, transitions, and
+   scroll-smooth. Dialog / Sheet slide-in/out via tw-animate-css collapses to
+   an instant swap for users who opt out of motion. */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}
