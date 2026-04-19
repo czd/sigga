@@ -21,7 +21,8 @@
 		"close": "Close",
 		"saving": "Saving...",
 		"none": "None",
-		"skipToContent": "Skip to content"
+		"skipToContent": "Skip to content",
+		"genericError": "Something went wrong. Please try again."
 	},
 	"driving": {
 		"confirm": {

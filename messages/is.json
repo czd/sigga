@@ -21,7 +21,8 @@
 		"close": "Loka",
 		"saving": "Vista...",
 		"none": "Ekkert",
-		"skipToContent": "Hoppa í aðalefni"
+		"skipToContent": "Hoppa í aðalefni",
+		"genericError": "Eitthvað fór úrskeiðis. Reyndu aftur."
 	},
 	"app": {
 		"name": "Sigga",

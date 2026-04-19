@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { useLiveRegion } from "@/components/shared/LiveRegion";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -48,6 +49,7 @@ export function ConfirmDialog({
 	onConfirm,
 }: Props) {
 	const tCommon = useTranslations("common");
+	const { announce } = useLiveRegion();
 	const [pending, setPending] = useState(false);
 
 	async function handleConfirm() {
@@ -56,6 +58,9 @@ export function ConfirmDialog({
 		try {
 			await onConfirm();
 			onOpenChange(false);
+		} catch (err) {
+			console.error(err);
+			announce(tCommon("genericError"));
 		} finally {
 			setPending(false);
 		}
