@@ -32,14 +32,17 @@ export function UmonnunView() {
 				</header>
 
 				<Tabs defaultValue="dagbok" className="gap-6">
-					<TabsList className="h-12 w-full xl:w-auto xl:self-start">
+					<TabsList className="grid w-full h-auto grid-cols-2 rounded-xl border border-border bg-muted p-1">
 						<TabsTrigger
 							value="dagbok"
-							className="h-full text-base font-medium"
+							className="min-h-12 rounded-lg text-base font-medium data-active:bg-card data-active:text-foreground data-active:shadow-sm"
 						>
 							{t("umonnun.sections.dagbok")}
 						</TabsTrigger>
-						<TabsTrigger value="lyf" className="h-full text-base font-medium">
+						<TabsTrigger
+							value="lyf"
+							className="min-h-12 rounded-lg text-base font-medium data-active:bg-card data-active:text-foreground data-active:shadow-sm"
+						>
 							{t("umonnun.sections.lyf")}
 						</TabsTrigger>
 					</TabsList>
