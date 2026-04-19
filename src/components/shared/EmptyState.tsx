@@ -14,7 +14,7 @@ export function EmptyState({
 	action,
 }: EmptyStateProps) {
 	return (
-		<div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/40 px-4 py-10 text-center">
+		<div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-paper ring-1 ring-foreground/10 px-4 py-10 text-center">
 			{icon ? (
 				<div className="text-muted-foreground" aria-hidden>
 					{icon}
