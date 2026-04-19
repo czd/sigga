@@ -1,6 +1,7 @@
 "use client";
 
 import { XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Dialog as SheetPrimitive } from "radix-ui";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ function SheetContent({
 	side?: "top" | "right" | "bottom" | "left";
 	showCloseButton?: boolean;
 }) {
+	const tCommon = useTranslations("common");
 	return (
 		<SheetPortal>
 			<SheetOverlay />
@@ -73,9 +75,9 @@ function SheetContent({
 							variant="ghost"
 							className="absolute top-3 right-3"
 							size="icon"
+							aria-label={tCommon("close")}
 						>
 							<XIcon />
-							<span className="sr-only">Close</span>
 						</Button>
 					</SheetPrimitive.Close>
 				)}
