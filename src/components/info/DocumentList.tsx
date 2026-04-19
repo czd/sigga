@@ -394,7 +394,7 @@ export function DocumentList({ onRowClick, activeId }: DocumentListProps = {}) {
 						<button
 							type="button"
 							onClick={() => setUploadOpen(true)}
-							className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-divider-strong bg-paper/50 px-4 text-base font-medium text-ink-soft transition-colors hover:bg-paper hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+							className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-divider-strong bg-paper/50 px-4 text-base font-medium text-ink-soft transition-colors hover:bg-paper hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
 						>
 							<Upload aria-hidden className="size-5" strokeWidth={1.8} />
 							<span>{t("uploadCta")}</span>

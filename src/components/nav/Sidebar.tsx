@@ -114,7 +114,7 @@ export function Sidebar() {
 					<DropdownMenuTrigger asChild>
 						<button
 							type="button"
-							className="w-full flex items-center gap-3 px-3 min-h-12 rounded-2xl text-left text-ink-soft hover:bg-paper/80 transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+							className="w-full flex items-center gap-3 px-3 min-h-12 rounded-2xl text-left text-ink-soft hover:bg-paper/80 transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring"
 							aria-label={displayName}
 						>
 							<UserAvatar

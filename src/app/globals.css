@@ -44,7 +44,11 @@
 	--warning: var(--amber-ink);
 	--warning-foreground: var(--paper);
 	--border: var(--divider-strong);
-	--input: var(--divider-strong);
+	/* Form-control borders must be ≥3:1 against paper (WCAG 1.4.11).
+	   divider-strong at 14% alpha is ~1.5:1, so use ink-soft directly for
+	   any `border-input` consumer (inputs, textareas, selects, checkbox,
+	   switch). Card/chrome borders keep the softer `--border` token. */
+	--input: var(--ink-soft);
 	--ring: var(--sage-deep);
 	--radius: 1rem;
 	--sidebar: var(--page);
@@ -140,7 +144,7 @@ body {
 
 @layer base {
 	* {
-		@apply border-border outline-ring/50;
+		@apply border-border outline-ring;
 	}
 	h1,
 	h2,

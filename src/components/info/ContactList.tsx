@@ -252,7 +252,7 @@ export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 								onClick={() => setFilter(key)}
 								aria-pressed={active}
 								className={cn(
-									"rounded-full px-4 h-10 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+									"rounded-full px-4 h-10 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
 									active
 										? "bg-sage-shadow text-paper"
 										: "border border-divider-strong bg-paper text-ink",
@@ -266,7 +266,7 @@ export function ContactList({ onRowClick, activeId }: ContactListProps = {}) {
 						type="button"
 						onClick={() => setCreateOpen(true)}
 						aria-label={t("add")}
-						className="flex size-10 items-center justify-center rounded-full border border-divider-strong bg-paper text-ink-soft transition-colors hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/40 outline-none"
+						className="flex size-10 items-center justify-center rounded-full border border-divider-strong bg-paper text-ink-soft transition-colors hover:text-ink focus-visible:ring-3 focus-visible:ring-ring outline-none"
 					>
 						<Plus aria-hidden className="size-5" />
 					</button>

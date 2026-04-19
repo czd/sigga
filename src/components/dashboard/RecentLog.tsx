@@ -71,7 +71,7 @@ function LogPreviewInner({ entry }: { entry: LogEntry }) {
 					type="button"
 					onClick={() => setExpanded((v) => !v)}
 					aria-expanded={expanded}
-					className="self-start text-sm font-medium text-sage-deep outline-none transition-colors hover:text-sage-shadow focus-visible:ring-2 focus-visible:ring-ring/50 rounded-md"
+					className="self-start text-sm font-medium text-sage-deep outline-none transition-colors hover:text-sage-shadow focus-visible:ring-2 focus-visible:ring-ring rounded-md"
 				>
 					{expanded ? t("showLess") : t("showMore")}
 				</button>

@@ -31,7 +31,7 @@ export function Header() {
 					<DropdownMenuTrigger asChild>
 						<button
 							type="button"
-							className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+							className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring"
 							aria-label={me?.name ?? me?.email ?? ""}
 						>
 							<UserAvatar

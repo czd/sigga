@@ -98,7 +98,7 @@ function EntitlementCard({
 	return (
 		<article
 			className={cn(
-				"relative overflow-hidden rounded-2xl bg-paper ring-1 ring-foreground/10 transition-shadow hover:ring-foreground/15 focus-within:ring-3 focus-within:ring-ring/40",
+				"relative overflow-hidden rounded-2xl bg-paper ring-1 ring-foreground/10 transition-shadow hover:ring-foreground/15 focus-within:ring-3 focus-within:ring-ring",
 				urgent &&
 					"before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-amber-ink/70",
 			)}
@@ -158,7 +158,7 @@ function EntitlementCard({
 								e.stopPropagation();
 								onClaim(entitlement);
 							}}
-							className="pointer-events-auto relative inline-flex min-h-12 items-center rounded-full border border-dashed border-divider-strong bg-paper px-4 text-sm font-medium text-ink-soft transition-colors hover:bg-paper-deep hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+							className="pointer-events-auto relative inline-flex min-h-12 items-center rounded-full border border-dashed border-divider-strong bg-paper px-4 text-sm font-medium text-ink-soft transition-colors hover:bg-paper-deep hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
 						>
 							{t("claim.cta")}
 						</button>
@@ -290,7 +290,7 @@ function FilterChips({
 						onClick={() => onFilterChange(key)}
 						aria-pressed={active}
 						className={cn(
-							"inline-flex min-h-12 items-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+							"inline-flex min-h-12 items-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
 							active
 								? "bg-sage-shadow text-paper"
 								: "border border-divider-strong bg-paper text-ink hover:bg-paper-deep",
