@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sigga">
+	<rect width="512" height="512" rx="112" fill="#6b7f5c" />
+	<text
+		x="256"
+		y="256"
+		text-anchor="middle"
+		dominant-baseline="central"
+		font-family="'Source Serif 4', 'Source Serif Pro', Georgia, 'Times New Roman', serif"
+		font-size="340"
+		font-weight="400"
+		fill="#faf7f0"
+	>S</text>
+	<rect x="211" y="420" width="90" height="5" rx="2.5" fill="#faf7f0" fill-opacity="0.55" />
+</svg>

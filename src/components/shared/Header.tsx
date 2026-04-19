@@ -14,6 +14,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Logo } from "./Logo";
 import { UserAvatar } from "./UserAvatar";
 
 export function Header() {
@@ -24,8 +25,9 @@ export function Header() {
 	return (
 		<header className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
 			<div className="flex items-center justify-between px-6 pt-5 pb-2">
-				<h1 className="font-serif italic text-base font-normal text-ink-soft tracking-wide">
-					{t("app.name").toLowerCase()}
+				<h1 className="flex items-center gap-2 font-serif italic text-base font-normal text-ink-soft tracking-wide">
+					<Logo size={28} className="rounded-[6px]" />
+					<span>{t("app.name")}</span>
 				</h1>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>

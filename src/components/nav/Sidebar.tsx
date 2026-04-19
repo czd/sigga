@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { api } from "@/../convex/_generated/api";
 import { BookIcon } from "@/components/shared/BookIcon";
+import { Logo } from "@/components/shared/Logo";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,9 +64,10 @@ export function Sidebar() {
 			className="hidden md:flex fixed inset-y-0 left-0 z-30 w-[248px] flex-col bg-page border-r border-divider"
 			aria-label={t("app.name")}
 		>
-			<div className="px-6 pt-7 pb-6">
+			<div className="flex items-center gap-2 px-6 pt-7 pb-6">
+				<Logo size={28} className="rounded-[6px]" />
 				<span className="font-serif italic text-base font-normal text-ink-soft tracking-wide">
-					{t("app.name").toLowerCase()}
+					{t("app.name")}
 				</span>
 			</div>
 

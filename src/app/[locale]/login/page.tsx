@@ -4,6 +4,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { ConvexError } from "convex/values";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { Logo } from "@/components/shared/Logo";
 
 export default function LoginPage() {
 	const { signIn } = useAuthActions();
@@ -30,9 +31,12 @@ export default function LoginPage() {
 
 	return (
 		<main className="flex-1 flex flex-col items-center justify-center px-6 py-12 gap-8">
-			<div className="flex flex-col items-center gap-2 text-center">
-				<h1 className="text-3xl font-semibold">{t("app.name")}</h1>
-				<p className="text-lg text-muted-foreground">{t("app.tagline")}</p>
+			<div className="flex flex-col items-center gap-4 text-center">
+				<Logo size={88} className="rounded-[20px] shadow-sm" />
+				<div className="flex flex-col gap-2">
+					<h1 className="text-3xl font-semibold">{t("app.name")}</h1>
+					<p className="text-lg text-muted-foreground">{t("app.tagline")}</p>
+				</div>
 			</div>
 			<button
 				type="button"
