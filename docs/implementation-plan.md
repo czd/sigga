@@ -200,7 +200,7 @@ Code complete. Env vars set: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `JWT_PRIVAT
 
 ```
 common: save, cancel, edit, delete, add, back, loading, lastUpdated, by
-nav: dashboard ("Í dag"), log ("Dagbók"), appointments ("Tímar"), info ("Upplýsingar")
+nav: dashboard ("Í dag"), care ("Umönnun"), appointments ("Tímar"), people ("Fólk"), paperwork ("Gögn")
 auth: signIn, signInWithGoogle, signOut, notAllowed
 ```
 
@@ -275,13 +275,14 @@ Fill out the rest as each view is built.
    - `AuthGate` component — redirects to login if not authenticated
    - The warm color palette is declared inline in `src/app/globals.css` via shadcn's `:root` CSS variable scheme (Tailwind v4 idiom — no JS config file). The layout just imports `globals.css` once.
 
-2. Build `BottomNav.tsx` — fixed bottom, 4 tabs (routes evolved during implementation; see Phase 12 for final layout):
+2. Build `BottomNav.tsx` — fixed bottom nav (routes and count evolved during implementation; see Phase 12 and post-Phase-12 commits for final layout). Final shipped state: 5 items on mobile in centre-home order (Umönnun / Tímar / Í dag / Fólk / Gögn):
    | Icon (BookIcon kind) | Label | Route |
    |---|---|---|
-   | `today` | Í dag | `/` |
    | `care` | Umönnun | `/umonnun` |
+   | `time` | Tímar | `/timar` |
+   | `today` (centre, 32px) | Í dag | `/` |
    | `people` | Fólk | `/folk` |
-   | `docs` | Pappírar | `/pappirar` |
+   | `docs` | Gögn | `/pappirar` |
 
 3. Design rules (non-negotiable for the 60+ users):
    - Tap targets: **56px+ height** for nav items, **48px minimum** everywhere else
@@ -321,7 +322,7 @@ Fill out the rest as each view is built.
 
 ### Exit criteria
 
-- Can tap between all 4 tabs, active state is obvious
+- Can tap between all 5 nav items, active state is obvious
 - Shell feels warm, not clinical
 - 18px+ body text, large tap targets
 - Icelandic characters render correctly in nav labels
@@ -808,7 +809,7 @@ The info content was reorganised across **three** distinct routes matching the b
 - `EmergencyTiles` — large tappable tel: tiles for top 3 emergency contacts
 - `ContactList` — all other contacts grouped by category
 
-**`/pappirar` (Pappírar tab)** — contains `PappirarTabs.tsx` with:
+**`/pappirar` (Gögn tab)** — contains `PappirarTabs.tsx` with:
 - Tab "Réttindi" — `EntitlementList` + `EntitlementForm`; URL `?tab=rettindi` (default, no param set)
 - Tab "Skjöl" — `DocumentList` + `DocumentUpload`; URL `?tab=skjol`
 
@@ -823,12 +824,12 @@ The info content was reorganised across **three** distinct routes matching the b
 
 ### Exit criteria
 
-- [x] Bottom nav routes to correct views (Í dag, Umönnun, Fólk, Pappírar)
+- [x] Bottom nav routes to correct views (Í dag, Umönnun, Tímar, Fólk, Gögn)
 - [x] Umönnun Dagbók tab: add/edit log entries, pagination
 - [x] Umönnun Lyf tab: medication CRUD
 - [x] Fólk: tappable emergency tiles + full contact list with tappable phone numbers
-- [x] Pappírar Réttindi tab: entitlement CRUD; URL `?tab=rettindi`
-- [x] Pappírar Skjöl tab: document upload/list/delete; URL `?tab=skjol`
+- [x] Gögn Réttindi tab: entitlement CRUD; URL `?tab=rettindi`
+- [x] Gögn Skjöl tab: document upload/list/delete; URL `?tab=skjol`
 - [x] State preservation: tab-content forceMount so Convex subscriptions stay active
 
 The following exit-criteria items require user browser verification post-deploy:
@@ -836,6 +837,44 @@ The following exit-criteria items require user browser verification post-deploy:
 - [ ] Tab switching and URL persistence — visual check at 375×812
 - [ ] Emergency tiles: tapping initiates a phone call on mobile (physical device check)
 - [ ] Active bottom-nav tab is obvious at 60+ contrast — visual check
+
+---
+
+## Post-Phase-12: Analytics, Nav Polish, Calendar Rework
+
+### Status (2026-04-19) — Merged via PRs #5 and #6
+
+This work shipped after Phase 12 and before Phase 13. Documented here for traceability.
+
+### What shipped
+
+**Analytics + error tracking (PR #6):**
+- `@sentry/nextjs` added for client-side error capture. Errors are also mirrored to a new `events` Convex table via `events.log` mutation.
+- `convex/events.ts` — new module: `log` mutation (auth required), `isAdmin` query (soft-returns `false` for unauthenticated), `usage` query (admin-only via `ADMIN_EMAILS` env var).
+- `convex/schema.ts` — `events` table added (userId, type, path, message, stack, userAgent, metadata; indexes `by_user_and_time`, `by_type_and_time`).
+- `src/app/[locale]/(app)/nytjun/page.tsx` — admin-only usage analytics page. Access gated by `events.isAdmin`; non-admins see a plain redirect or blank view.
+- `convex/activity.ts` — new module: `sinceLastVisit` query (cross-table activity feed: log + appointments + documents + entitlements, sorted newest-first) and `unreadLogCount` query.
+
+**Nav polish + Tímar in bottom nav (PR #5 + commit 3f29ab4):**
+- Bottom nav expanded from 4 to 5 items. `/timar` added as second slot on mobile.
+- `src/components/nav/navItems.ts` — new file exporting `PRIMARY_ITEMS` (desktop order: dashboard, care, timar, folk, pappirar) and `MOBILE_ITEMS` (mobile centre-home order: care, timar, dashboard, folk, pappirar).
+- Í dag (dashboard) rendered at 32 px icon / `strokeWidth={2}` as visual anchor; other items at 26 px / 1.6.
+- Display label for `/pappirar` changed: `nav.paperwork = "Gögn"` (is) / `"Records"` (en); `pappirar.title = "Gögn"` / `"Records"`. Route and code identifiers (`/pappirar`, `pappirar.*`) unchanged.
+- Tímar calendar reworked: month/week/list layout with single top toolbar; month/week pill colors (`bg-sage/25` assigned, `bg-amber-bg-1` unassigned/virtual, `bg-sage-deep` selected); `Repeat` icon on virtual occurrences; virtual generation clamped to `max(startMs, now)` via `appointments.byRange`.
+- `Síðan síðast` activity feed copy fixed: entitlement items use `updatedByName` (resolved via `nameOf`) and ICU curly quotes for `{title}`.
+
+### Exit criteria
+
+- [x] `events` table in schema
+- [x] `events.log`, `events.isAdmin`, `events.usage` functions
+- [x] `/nytjun` admin page renders usage table; non-admins cannot access it
+- [x] Sentry integration configured (`@sentry/nextjs`)
+- [x] `convex/activity.ts` `sinceLastVisit` and `unreadLogCount`
+- [x] Bottom nav has 5 items; Tímar at slot 2; Í dag at centre slot
+- [x] `navItems.ts` exports `PRIMARY_ITEMS` and `MOBILE_ITEMS`
+- [x] Display label "Gögn" in Icelandic, "Records" in English
+- [x] Calendar pills colored by driver assignment; virtual occurrences marked with Repeat icon
+- [x] Virtual past-slot clamping in `appointments.byRange`
 
 ---
 
@@ -1001,7 +1040,8 @@ Every mutation **and** every data-returning query must:
 1. Call `getAuthUserId(ctx)` from `@convex-dev/auth/server` — if null, throw `ConvexError("Ekki innskráður")`.
 2. No roles or permissions in v1 — every authenticated family member can do everything.
 3. Exception: log entry editing — verify `authorId === currentUser`.
-4. Exception: `users.me` — returns `null` for unauthenticated callers by design.
+4. Exception: `users.me` — returns `null` for unauthenticated callers by design so the header can render a signed-out state.
+5. Exception: `events.isAdmin` — returns `false` for unauthenticated callers by design so the UI can gate admin views without try/catch.
 
 ---
 

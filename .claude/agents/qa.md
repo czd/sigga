@@ -51,16 +51,18 @@ Run these and report each as PASS / FAIL / SKIP with evidence.
 
 ### Convex conventions (once `convex/` exists)
 - Every mutation must call `ctx.auth.getUserIdentity()` or `getAuthUserId(ctx)` and throw `ConvexError("Ekki innskráður")` on null. Grep the diff for new mutations missing this.
-- Queries that return user-specific or sensitive data should also call `getAuthUserId(ctx)` and throw `ConvexError("Ekki innskráður")` on null. Auth failures in both mutations and queries must use `ConvexError` — never `new Error` — so the client can distinguish domain errors from server crashes.
+- Queries that return user-specific or sensitive data should also call `getAuthUserId(ctx)` and throw `ConvexError("Ekki innskráður")` on null. Auth failures in both mutations and queries must use `ConvexError` — never `new Error` — so the client can distinguish domain errors from server crashes. The two documented exceptions that may soft-return instead of throwing are `users.me` (returns `null`) and `events.isAdmin` (returns `false`) — both gate UI display only. Any new soft-returning query must be explicitly listed in CLAUDE.md before it can be exempt.
 - Log-entry edit mutations must verify `authorId === currentUserId`.
 - Document-delete mutations must delete both the row and the blob (`ctx.storage.delete`).
 - Function naming is `[table].[action]`.
+- **Deprecated cron helpers**: run `rg "crons\.(daily|hourly|weekly)\(" convex/` — any match is a FAIL. The Convex guidelines require only `crons.interval` or `crons.cron`; the deprecated helpers compile but behave differently at runtime.
 
 ### i18n
 - No hardcoded user-facing strings (English *or* Icelandic) in production UI. Strings should route through `next-intl` (`useTranslations` or `getTranslations`).
 - Route-level metadata must be per-locale: flag `export const metadata = { ... }` with hardcoded `title` / `description` in `src/app/[locale]/**`. Use `export async function generateMetadata({ params })` with `getTranslations({ locale })` instead, sourcing strings from `messages/{is,en}.json`.
 - Icelandic (`is`) is default — no URL prefix; English lives at `/en/...`.
 - **After any `bunx shadcn@latest add <component>` install**, do a one-pass grep for hardcoded user-facing strings in the new files — especially `<span className="sr-only">Close</span>` (and similar dismiss/cancel labels). Replace them with `tCommon("close")` or equivalent translation keys. `tCommon("close")` = `"Loka"` in `is.json` already exists; add it to `en.json` as `"Close"` if missing.
+- For any diff touching `src/components/ui/`, run: `rg 'className="sr-only">(Close|Submit|Cancel|OK|Open)<' src/components/ui/` — any English sr-only label in the primitives folder is a FAIL (these are shared by all locales).
 - **Exemption — domain-specific `<datalist>` suggestions in Icelandic**: native `<datalist>` `<option value="...">` elements whose values are a fixed, spec-defined list of Icelandic domain terms (e.g., document category suggestions "Lyfseðill", "Blóðprufa", "Bréf frá lækni", "Umsókn", "Vottorð") do **not** need to route through `next-intl`. The category field is free-text; the suggestions are a convenience hint. Do not FAIL a commit for this pattern.
 
 ### UX (for UI code)

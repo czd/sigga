@@ -32,6 +32,7 @@
 | Package manager | Bun | |
 | Hosting | Vercel | Auto-domain for v1. Default `.vercel.app` URL. Production deploys via `git push` to `main` — Vercel CI also runs `npx convex deploy`. |
 | Analytics | `@vercel/analytics` | Page-view tracking only; no PII per Vercel's data policy. `<Analytics />` component added to root locale layout. |
+| Error tracking | `@sentry/nextjs` | Client-side error and unhandled-rejection capture. Events are also mirrored to the Convex `events` table via `events.log` mutation for admin review at `/nytjun`. |
 | Testing | Vitest (unit/integration) + Playwright (e2e) | |
 | File storage | Convex built-in file storage | Upload via `generateUploadUrl()`, serve via `storage.getUrl()`. No Google Drive dependency. |
 
@@ -58,7 +59,9 @@ sigga/
 │   ├── recurringSeries.ts        # Recurring appointment series CRUD + invariant helper
 │   ├── crons.ts                  # Daily cron: ensure next occurrences for active series
 │   ├── backup.ts                 # Scheduled weekly JSON export (Phase 14 — not yet built)
-│   ├── users.ts                  # me + list queries
+│   ├── activity.ts               # sinceLastVisit query + unreadLogCount query (cross-table activity feed)
+│   ├── events.ts                 # Analytics event logging (app_open, page_view, error, …) + isAdmin query
+│   ├── users.ts                  # me + list + attentionCounts queries
 │   └── seed.ts                   # Dev seed data
 ├── messages/
 │   ├── is.json                   # Icelandic translations (primary)
@@ -86,16 +89,20 @@ sigga/
 │   │   │   │   │       └── ReglulegirView.tsx # Client: recurring series management list
 │   │   │   │   ├── folk/
 │   │   │   │   │   └── page.tsx      # People view: EmergencyTiles + ContactList
-│   │   │   │   └── pappirar/
-│   │   │   │       ├── page.tsx        # Paperwork view server wrapper
-│   │   │   │       └── PappirarTabs.tsx # Client: Réttindi + Skjöl tabs
+│   │   │   │   ├── pappirar/
+│   │   │   │   │   ├── page.tsx        # Gögn view server wrapper
+│   │   │   │   │   └── PappirarTabs.tsx # Client: Réttindi + Skjöl tabs
+│   │   │   │   └── nytjun/
+│   │   │   │       └── page.tsx        # Admin-only usage analytics view (admin-gated)
 │   │   │   └── login/
 │   │   │       └── page.tsx      # Login page (Google OAuth button)
 │   │   └── layout.tsx            # Bare html/body with fonts + analytics
 │   ├── components/
 │   │   ├── ui/                   # shadcn components (button, card, sheet, dialog, tabs, switch, …)
 │   │   ├── nav/
-│   │   │   └── BottomNav.tsx     # Fixed bottom nav (4 tabs: Í dag / Umönnun / Fólk / Pappírar)
+│   │   │   ├── BottomNav.tsx     # Mobile bottom nav (5 items: Umönnun / Tímar / Í dag / Fólk / Gögn — Í dag in centre slot)
+│   │   │   ├── navItems.ts       # PRIMARY_ITEMS (desktop order) + MOBILE_ITEMS (mobile, Í dag centred)
+│   │   │   └── SidebarAttentionBadge.tsx  # Compact badge for nav attention counts
 │   │   ├── dashboard/
 │   │   │   ├── NextAppointments.tsx  # Next 3 upcoming appointments (with driver + volunteer)
 │   │   │   ├── RecentLog.tsx         # Latest log entry with inline expand
@@ -271,6 +278,25 @@ export default defineSchema({
     notes: v.optional(v.string()),
     addedBy: v.id("users"),
   }),
+
+  // Events — analytics / error tracking (per-user, admin-only access)
+  events: defineTable({
+    userId: v.optional(v.id("users")),
+    type: v.union(
+      v.literal("app_open"),
+      v.literal("page_view"),
+      v.literal("error"),
+      v.literal("unhandled_rejection"),
+      v.literal("client_log"),
+    ),
+    path: v.optional(v.string()),
+    message: v.optional(v.string()),
+    stack: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    metadata: v.optional(v.string()),
+  })
+    .index("by_user_and_time", ["userId"])
+    .index("by_type_and_time", ["type"]),
 });
 ```
 
@@ -347,8 +373,9 @@ messages/
   "nav": {
     "dashboard": "Í dag",
     "care": "Umönnun",
+    "appointments": "Tímar",
     "people": "Fólk",
-    "paperwork": "Pappírar"
+    "paperwork": "Gögn"
   },
   "dashboard": { ... },
   "timar": { ... },
@@ -363,7 +390,7 @@ messages/
     "subtitle": "Sími, læknar, þjónusta."
   },
   "pappirar": {
-    "title": "Pappírar",
+    "title": "Gögn",
     "tabs": { "rettindi": "Réttindi", "skjol": "Skjöl" }
   },
   "medications": { ... },
@@ -454,7 +481,7 @@ export const config = {
 - **Icelandic text.** All UI labels, placeholders, empty states, and error messages in Icelandic.
 - **No jargon.** "Bæta við tíma" not "Búa til viðburð." "Vista" not "Senda inn."
 - **Feedback on every action.** Toast confirmations on save/delete. Loading states on async actions.
-- **Bottom navigation.** Fixed 4-tab bottom nav. Always visible. Active state is obvious.
+- **Bottom navigation.** Fixed 5-item bottom nav on mobile. Always visible. Active state is obvious.
 - **The app should feel warm, not clinical.** This is a family tool, not a hospital system. Soft colors, rounded corners, friendly empty states.
 
 ### Aesthetic Direction
@@ -545,7 +572,13 @@ See Medications section under Upplýsingar. `MedicationTable` component renders 
 
 ### View 3: Tímar (Appointments) — `/timar`
 
-All appointments — upcoming and past. **Not in the bottom nav** — accessible via the "Sjá alla" link from `NextAppointments` on the dashboard and from the `SeriesEntryRow` back link on `/timar/reglulegir`.
+All appointments — upcoming and past. Reachable via the bottom nav (second slot on mobile), via the "Sjá alla" link from `NextAppointments` on the dashboard, and via the back link from `/timar/reglulegir`.
+
+**Calendar visual language:**
+- The view uses a month/week/list layout with a toolbar at the top (month/week/list mode switcher + prev/next navigation). The top toolbar is the single navigation control — the week view has no separate inline prev/next header.
+- Month and week views render day/slot pills colored by driver assignment: `bg-sage/25` when a driver is assigned, `bg-amber-bg-1` when unassigned or virtual. The selected pill uses `bg-sage-deep`.
+- Virtual recurring occurrences render with a `Repeat` icon and are distinguished from materialized rows. Virtual generation is clamped to `max(startMs, now)` — past slots that were never materialized are never shown as virtual occurrences (implemented in `appointments.byRange`).
+
 
 **Layout:**
 
@@ -610,7 +643,7 @@ Series management sub-page. Route: `src/app/[locale]/(app)/timar/reglulegir/page
 
 ---
 
-### Views 4 & 5: Fólk and Pappírar — `/folk` and `/pappirar`
+### Views 4 & 5: Fólk and Gögn — `/folk` and `/pappirar`
 
 The reference section is split across two bottom-nav tabs. Lyf (medications) moved into the Umönnun view (tab 2). The remaining reference content is:
 
@@ -620,9 +653,9 @@ Contacts + emergency tiles. Route: `src/app/[locale]/(app)/folk/page.tsx` (serve
 
 **Layout:** Large `EmergencyTiles` row at top (tappable tel: tiles for the top 3 emergency contacts — Neyðarlína, Eitrunarmiðstöð, Læknavaktin), followed by `ContactList` for all other categories.
 
-**View 5: Pappírar (Paperwork) — `/pappirar`**
+**View 5: Gögn (Records) — `/pappirar`**
 
-Entitlements + Documents. Route: `src/app/[locale]/(app)/pappirar/page.tsx` (server wrapper) + `PappirarTabs.tsx` (client).
+Entitlements + Documents. Route: `src/app/[locale]/(app)/pappirar/page.tsx` (server wrapper) + `PappirarTabs.tsx` (client). Display label: "Gögn" (is) / "Records" (en). Route path `/pappirar` and code identifiers are unchanged.
 
 **Layout:** Tab bar (`PappirarTabs` using shadcn `Tabs`). Tabs: **Réttindi** | **Skjöl**. Default: Réttindi. Tab selection persists in URL via `?tab=` query param. Tab header shows a contextual headline ("Réttindi í vinnslu." / "Skjöl í safninu." etc.) that updates based on the entitlement/document state. All `TabsContent` regions are mounted once and toggled via CSS.
 
@@ -654,7 +687,7 @@ Entitlements + Documents. Route: `src/app/[locale]/(app)/pappirar/page.tsx` (ser
 
 **Phone numbers must be tappable.** This is the #1 use case: someone needs a number fast, they open the app, find it, tap to call. Zero extra steps.
 
-#### Réttindi (Entitlements) — Pappírar tab
+#### Réttindi (Entitlements) — Gögn tab
 
 **Status-grouped checklist:**
 - Section: "Í vinnslu" (In progress) — shown first, highlighted
@@ -679,7 +712,7 @@ Each item card:
 - Description (optional)
 - Notes (optional)
 
-#### Skjöl (Documents) — Pappírar tab
+#### Skjöl (Documents) — Gögn tab
 
 **Simple file list:**
 - Each row: title, filename, category tag (if set), upload date, uploaded by
@@ -703,19 +736,24 @@ Each item card:
 
 ### Bottom Navigation
 
-Fixed at the bottom of every view. 4 tabs rendered by `BottomNav.tsx` using the custom `BookIcon` kit:
+Fixed at the bottom of every view on mobile (`md:hidden`). Rendered by `BottomNav.tsx` using the custom `BookIcon` kit and `MOBILE_ITEMS` from `navItems.ts`. The desktop sidebar uses `PRIMARY_ITEMS` in a different order.
 
-| Icon kind | Label | Route |
-|-----------|-------|-------|
-| `today` | Í dag | `/` |
-| `care` | Umönnun | `/umonnun` |
-| `people` | Fólk | `/folk` |
-| `docs` | Pappírar | `/pappirar` |
+**Mobile layout (5 items, centre-home pattern):**
 
-Note: `/timar` (Appointments) is NOT in the bottom nav. It is reachable via the "Sjá alla" link in the `NextAppointments` card on the dashboard.
+| Slot | Icon kind | Label | Route |
+|------|-----------|-------|-------|
+| 1 | `care` | Umönnun | `/umonnun` |
+| 2 | `time` | Tímar | `/timar` |
+| 3 (centre) | `today` | Í dag | `/` |
+| 4 | `people` | Fólk | `/folk` |
+| 5 | `docs` | Gögn | `/pappirar` |
 
-Active tab: filled icon + `text-sage-shadow`. Inactive: `text-ink-faint`.
-Label text always visible (not icon-only). Bottom gradient fade + safe-area-inset padding.
+**Desktop sidebar order (PRIMARY_ITEMS):** dashboard → care → timar → folk → pappirar.
+
+**Home-slot prominence:** The Í dag item renders at 32 px icon size (vs 26 px for others), `strokeWidth={2}` when active or in the home slot, with `text-sage-shadow/80` even when inactive. The circle fill (`filled={active && isHome}`) activates only when the dashboard is the current route. This makes `/` the visual anchor on mobile.
+
+Active tab: `text-sage-shadow`. Inactive: `text-ink-faint` (home: `text-sage-shadow/80`).
+Label text always visible (not icon-only). Bottom gradient fade + safe-area-inset padding + `backdrop-filter: blur(6px)`.
 
 ---
 
@@ -736,6 +774,7 @@ Label text always visible (not icon-only). Bottom gradient fade + safe-area-inse
 - `update` — mutation: update appointment fields. Set `updatedBy`, `updatedAt`. **Side-effect:** if the updated row has a `seriesId` and transitions out of `"upcoming"` status (to `"completed"` or `"cancelled"`), calls `ensureNextOccurrence(ctx, seriesId)` to spawn the next occurrence immediately.
 - `remove` — mutation: delete appointment. **Side-effect:** if the deleted row had a `seriesId` and was `"upcoming"`, calls `ensureNextOccurrence(ctx, seriesId)`.
 - `volunteerToDrive` — mutation: sets `driverId` to current user. Simple, one-tap.
+- `byRange` — query: `{ startMs: number, endMs: number }`. Returns all appointments (materialized rows + virtual recurring occurrences) whose `startTime` falls in `[startMs, endMs)`. Virtual occurrences are computed from active `recurringSeries` entries rather than stored in the DB. Virtual generation is clamped to `max(startMs, now)` — past slots that were never materialized are never synthesized. Each result row carries a `virtual: boolean` flag; calendar UIs use this to distinguish virtual occurrences (show `Repeat` icon; no driver assignment / edit / cancel) from materialized rows.
 
 **recurringSeries.ts:**
 
@@ -783,6 +822,8 @@ Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guideline
 - `create` — mutation. Auto-set `updatedAt`, `updatedBy`.
 - `update` — mutation. Set `updatedAt`, `updatedBy`.
 - `remove` — mutation.
+- `claim` — mutation: `{ id }`. Sets `ownerId = currentUser` (i.e. the authenticated caller takes ownership). Throws `ConvexError` if the entitlement doesn't exist or if it is already owned by a different user. Does **not** allow overwriting ownership from another user — that guard is present in the implementation. The UI only surfaces the claim button when `ownerId` is null, but the server enforces it as well.
+- `get` — query: `{ id }`. Returns the entitlement or null.
 
 **documents.ts:**
 - `list` — query: all documents, ordered by `_creationTime` desc. Each row is enriched with a signed `url` (via `ctx.storage.getUrl` per row) and an `addedByUser` summary — no separate URL query needed.
@@ -794,6 +835,16 @@ Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guideline
 **users.ts:**
 - `me` — query: returns the authenticated user document, or `null` if unauthenticated.
 - `list` — query: returns all users as `{ _id, name, email, image }` summaries. Used by `DriverPicker` and entitlement owner pickers.
+- `attentionCounts` — query: returns `{ dashboard: number, care: number, paperwork: number }` — badge counts for the nav attention indicator.
+
+**activity.ts:**
+- `sinceLastVisit` — query: `{ cursorMs: number, limit?: number }`. Returns a mixed activity feed (log entries, appointments, documents, entitlements) created/updated after `cursorMs`, sorted newest-first, capped at `limit` (default 20). Each item is tagged by `kind` ("log" | "appointment" | "document" | "entitlement_status"). For `entitlement_status` items, the returned shape includes `updatedByName` (resolved via a `nameOf` helper that looks up the user by ID) and `newStatus`. Icelandic copy for the entitlement item uses curly quotes (e.g. `„{title}"`) — ICU brace syntax requires curly quotes to avoid treating `{title}` as a literal brace escape.
+- `unreadLogCount` — query: `{ cursorMs: number }`. Returns the count of log entries created after `cursorMs`.
+
+**events.ts:**
+- `log` — mutation: `{ type, path?, message?, stack?, userAgent?, metadata? }`. Inserts a row in the `events` table for analytics / error tracking. Requires auth (throws `ConvexError("Ekki innskráður")` if unauthenticated).
+- `isAdmin` — query: returns `boolean` — `true` if the caller's email is in the `ADMIN_EMAILS` env var, `false` otherwise. **Exception to the requireAuth pattern:** returns `false` for unauthenticated callers instead of throwing, so the UI can branch without a try/catch. This is one of two documented exceptions (the other is `users.me`).
+- `usage` — query: `{ sinceDays?: number }`. Returns per-user usage stats (total events, app opens, page views, errors, last active). Requires admin (throws if caller is not in `ADMIN_EMAILS`). Used by the `/nytjun` admin page.
 
 **backup.ts:** (Phase 14 — not yet built)
 - `weeklyExport` — scheduled action (Convex cron): runs weekly. Queries all data, serializes to JSON, stores as a file in Convex storage. Keeps last 4 backups, deletes older ones.
@@ -812,9 +863,13 @@ Every mutation **and** every data-returning query must:
 1. Call `getAuthUserId(ctx)` from `@convex-dev/auth/server`.
 2. If the result is `null`, throw `ConvexError("Ekki innskráður")`.
 
-`NEXT_PUBLIC_CONVEX_URL` ships in the client bundle, so any caller who inspects the JS can call `api.*.list` directly — only this server-side check enforces the whitelist. The one documented exception is `users.me`, which returns `null` for unauthenticated callers by design so the header can render a signed-out state.
+`NEXT_PUBLIC_CONVEX_URL` ships in the client bundle, so any caller who inspects the JS can call `api.*.list` directly — only this server-side check enforces the whitelist.
 
-No roles in v1 — every authenticated family member can do everything, except log-entry editing which checks `authorId === currentUser`.
+**Documented exceptions to the requireAuth throw pattern:**
+1. `users.me` — returns `null` for unauthenticated callers by design so the header can render a signed-out state.
+2. `events.isAdmin` — returns `false` for unauthenticated callers rather than throwing, so the UI can gate admin views without a try/catch.
+
+No roles in v1 — every authenticated family member can do everything, except log-entry editing which checks `authorId === currentUser` and the `/nytjun` admin view which requires the caller's email to be in the `ADMIN_EMAILS` env var.
 
 ---
 
@@ -1125,10 +1180,10 @@ Actual build sequence shipped:
 2. **Auth** — Convex Auth + Google OAuth + whitelist + `src/proxy.ts` (Phase 1)
 3. **i18n** — next-intl, `is`/`en`, locale layout (Phase 2)
 4. **Schema + seed** — full Convex schema + real seed data (Phase 3)
-5. **App shell** — bottom nav (Í dag / Umönnun / Fólk / Pappírar), header, layout (Phase 4)
+5. **App shell** — bottom nav (Í dag / Umönnun / Tímar / Fólk / Gögn), header, layout (Phase 4 + post-Phase-12 nav polish)
 6. **Dashboard** — greeting + AttentionCard + DrivingCta + NextAppointments + RecentLog (Phase 5)
 7. **Umönnun/Dagbók** — log CRUD in Dagbók tab inside `/umonnun` (Phase 6)
-8. **Tímar** — appointments CRUD, driver volunteering (Phase 7; `/timar` reachable via dashboard link, not bottom nav)
+8. **Tímar** — appointments CRUD, driver volunteering (Phase 7; `/timar` in bottom nav as second item)
 9. **Umönnun/Lyf** — medication CRUD in Lyf tab inside `/umonnun` (Phase 8)
 10. **Reglulegir tímar** — recurring series management + cron invariant (Phase 8.5)
 11. **Fólk** — emergency tiles + contacts CRUD on `/folk` (Phase 9)

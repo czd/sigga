@@ -29,47 +29,71 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 
 ## Open Items
 
-### 2026-04-17 · qa · `appointments.past` query skips auth check, inconsistent with `users.list`
-
-**Context:** Phase 7 QA. The new `appointments.past` query does not call `requireAuth`, while `users.list` (added in the same commit) does. Other read queries in `appointments.ts` (`list`, `upcoming`, `get`) also skip auth. The app is behind an auth proxy so unauthenticated browser access is blocked, but the Convex backend itself enforces no auth on these reads.
-**Observation:** There is currently no documented policy for whether Convex *queries* must check auth. CLAUDE.md says "every mutation calls `ctx.auth.getUserIdentity()` and throws…" — queries are not mentioned. In practice some queries check auth (`users.list`) and some don't (`appointments.*`). This inconsistency could confuse future contributors and leaves appointment data accessible to any Convex client with the deployment URL. Note: `users.ts` no longer has the `requireAuth` helper from the original QA report; `users.list` currently has no auth check either.
-**Suggested action:** Decide on a policy and document it: either (a) all queries also require auth (best for defence-in-depth — recommended), or (b) mutations require auth, queries may or may not (current implicit state). If (a), update CLAUDE.md's Architecture Notes to say "every Convex function — query or mutation — calls `getAuthUserId(ctx)` and throws `ConvexError('Ekki innskráður')` if null", then add `requireAuth` calls to the unauthenticated queries. **Needs Nic's decision on policy.**
-
-### 2026-04-17 · qa · `dialog.tsx` sr-only "Close" label should source from translations (medium-term)
-
-**Context:** Phase 6 QA flagged `dialog.tsx` line 77 (`<span className="sr-only">Close</span>`). Phase 7 triggered it; the short-term fix (`showCloseButton={false}` on the confirm dialog in `AppointmentForm.tsx`) is already applied. The underlying issue remains: any future `DialogContent` with the default `showCloseButton={true}` will render English to screen readers.
-**Observation:** `dialog.tsx` is a shared primitive used by all dialogs. Making it locale-safe at the source is better than requiring every caller to pass `showCloseButton={false}`.
-**Suggested action:** Update `src/components/ui/dialog.tsx` to accept an optional `closeLabel` prop (defaulting to a value sourced from context or passed by the caller), or thread `useTranslations("common")` into `DialogContent` so the sr-only span reads `tCommon("close")` = "Loka". Apply the same pattern to `sheet.tsx` which has the same hardcoded string. This is a code fix, not a harness fix — route to the next applicable phase.
-
-### 2026-04-17 · qa · QA gate should catch use of deprecated Convex cron helpers (`crons.daily`, `crons.hourly`, `crons.weekly`)
-
-**Context:** Reviewing a fix that swapped `crons.daily(name, { hourUTC, minuteUTC }, fn)` for `crons.cron(name, "10 0 * * *", fn)` to comply with the Convex guidelines in `convex/_generated/ai/guidelines.md`. The violation was only caught by a human reading the guidelines file, not by any automated check.
-**Observation:** There is no grep-level check in the QA agent for deprecated Convex cron registration helpers. They compile fine (TypeScript accepts them), so lint and typecheck cannot catch the regression. A simple grep for `crons\.daily\b|crons\.hourly\b|crons\.weekly\b` in `convex/` would surface this instantly.
-**Suggested action:** Add a Convex conventions check to `.claude/agents/qa.md`: "Grep `convex/` for `crons\.daily(`, `crons\.hourly(`, `crons\.weekly(` — any match is a FAIL; the Convex guidelines require only `crons.interval` or `crons.cron`."
-Note: The code violation was fixed in commit 58856bc (uses `crons.cron` throughout). This item remains Open because the *harness rule* (grep in QA agent) has not yet been added.
-
-### 2026-04-18 · docs-sync · `recurring.pauseToast` / `recurring.resumeToast` i18n keys exist but are not consumed
-
-**Context:** Phase 8.5 recurring appointments. `messages/is.json` and `messages/en.json` both define `recurring.pauseToast` and `recurring.resumeToast`, but no UI component uses them — no toast is shown when pausing or resuming a series.
-**Observation:** The design spec called for pause/resume toasts; the translation keys were added but the toast call was not implemented in `SeriesCard`. Users get no feedback when toggling a series beyond the switch state changing. This may be intentional deferral or an oversight.
-**Suggested action:** Decide: (a) implement the toast in `SeriesCard.setActive` handler (need sonner or shadcn toast primitive installed), or (b) mark the keys as "reserved for future use" and document the deferral. Either way, `docs/spec.md` should not describe these toasts as implemented until the code fires them.
-**Resolution:** 2026-04-18 · code · Took option (b) with cleanup — the orphan keys were removed from both `messages/is.json` and `messages/en.json` in the Phase 8 polish commit. No consumer existed; no toast is planned for v1. The error state in `SeriesCard` (inline `<p role="alert">`) now covers the failure-feedback gap instead.
-
-### 2026-04-18 · docs-sync · Nav/route architecture diverged substantially from the original plan with no intermediate docs update
-
-**Context:** Full reconciliation sweep. The original plan described four bottom-nav tabs: Í dag / Dagbók / Tímar / Upplýsingar. The shipped app has: Í dag / Umönnun / Fólk / Pappírar. Dagbók moved to a tab inside Umönnun. Tímar is reachable only via dashboard link. The four-tab Upplýsingar view was split into standalone Folk and Pappirar routes plus the Umönnun/Lyf tab.
-**Observation:** This is a large intentional design pivot that happened without an intermediate docs-sync. Both `docs/spec.md` and `docs/implementation-plan.md` described the old architecture until this sweep. The drift accumulated across multiple commits. CLAUDE.md's "Current Repo State" section was also stale ("Phase 0 not yet started") — but that file is out of scope for docs-sync.
-**Suggested action:** Consider adding a harness rule or CLAUDE.md convention: when a phase involves route renames or bottom-nav changes, the implementer should invoke docs-sync immediately rather than deferring it. The nav is a high-impact, high-visibility piece of the architecture and stale docs here are especially confusing.
-
-### 2026-04-19 · qa · `events.isAdmin` soft-returns `false` for unauthenticated callers — CLAUDE.md policy says throw, but this is a deliberate exception like `users.me`
-
-**Context:** Reviewing admin-gating commit for `/nytjun`. `events.isAdmin` calls `getAuthUserId` directly and returns `false` rather than throwing `ConvexError("Ekki innskráður")` for unauthenticated callers. This mirrors the documented `users.me` exception.
-**Observation:** CLAUDE.md states "Every mutation AND every data-returning query calls `requireAuth(ctx)` and throws `ConvexError('Ekki innskráður')` if null" with a single documented exception (`users.me`). `events.isAdmin` is a second exception but is not documented as such. Any future QA run will flag this as a Convex convention violation unless the exception is noted.
-**Suggested action:** Update CLAUDE.md Architecture Notes and/or `docs/spec.md` to document the second exception: `events.isAdmin` returns `boolean` (false for unauthenticated) rather than throwing, by design, so the UI can branch without a try/catch. The pattern is: "soft-returning queries that gate UI display" are exempt from the throw convention; both must be listed explicitly.
+_(empty — all items processed in 2026-04-19 audit run)_
 
 ---
 
 ## Resolved
+
+### 2026-04-19 · user-correction · Site-wide UX inconsistency — edit affordances and card-vs-detail patterns diverge across views
+
+**Context:** User observed while reviewing the app that similar interactions are handled differently across views — e.g. some cards expose an inline pencil/edit icon, others require tapping the card itself to open detail, and the edit-sheet vs. inline-edit split is not consistent. The site has had rapid feature addition (Tímar, recurring series, analytics, admin gating, calendar polish, Dagbók, Réttindi, Skjöl, Símaskrá) with patterns added incrementally rather than audited holistically.
+**Observation:** This is not a single missing rule — it's a systemic drift that needs a full-site audit + a canonicalization pass. Candidate inconsistencies to verify: (1) Edit affordance: pencil icon vs card-tap vs swipe vs kebab menu — which is canonical? (2) Destroy affordance: inline delete button vs confirm dialog vs long-press — canonical flow? (3) Empty-state copy tone and illustration style. (4) Headline style (font-serif size/weight) across Umönnun / Fólk / Gögn / Tímar. (5) Tap targets below 48px (already flagged in separate queue items for filter chips and claim CTA). (6) List-detail vs full-page-swap on mobile vs desktop. (7) Date formatting (relative vs absolute) across cards. (8) Form-sheet structure (Sheet vs Dialog, primary CTA position, Cancel placement, validation-error display).
+**Resolution:** 2026-04-19 · docs · Classification: docs. Deferred to plan at `docs/superpowers/plans/2026-04-19-ux-alignment.md` — see plan for audit + remediation sequence. Root cause: rapid incremental feature addition with no holistic UX audit step. The plan IS the resolution vehicle; individual inconsistencies will be picked off there in sequence.
+
+### 2026-04-19 · qa · spec.md describes 4-tab bottom nav and "Pappírar"; both are stale after this commit
+
+**Context:** Reviewing the nav-redesign + Pappírar→Gögn rename commit. `docs/spec.md` references "4-tab bottom nav", Tímar as "not in bottom nav", and the label "Pappírar" in multiple places (file tree, nav table, view headers, seed data). The implementation now ships a 5-item mobile `MOBILE_ITEMS` array with Tímar included, and the label is "Gögn" in Icelandic / "Records" in English.
+**Observation:** The spec is stale in at least: line 98 (BottomNav comment), lines 351/366 (messages seed), line 457 (4-tab description), line 548 (Tímar not in bottom nav), lines 613/623/657/682/713/715 (Pappírar view section and nav table). The user has explicitly deferred docs-sync to after this commit lands.
+**Resolution:** 2026-04-19 · docs-sync · All of the above applied. Bottom nav table replaced with 5-item centre-home layout; "Pappírar" → "Gögn" in display-label contexts; View 3 Tímar updated; nav key namespace updated; `PRIMARY_ITEMS`/`MOBILE_ITEMS` split documented. Also added calendar visual language notes, `byRange` contract, `activity.ts` and `events.ts` contracts, `events.isAdmin` auth exception, `entitlements.claim`, Sentry stack entry, `nytjun` route, and `events` schema table.
+
+### 2026-04-19 · docs-sync · `entitlements.claim` open item had wrong assertion — code DOES guard against owner overwrite
+
+**Context:** The 2026-04-17 qa open item says `entitlements.claim` "does not guard against overwriting an existing `ownerId`". However, the actual code at `convex/entitlements.ts` lines 169-172 throws `ConvexError("Réttindi eru þegar í umsjón annars.")` when `existing.ownerId && existing.ownerId !== userId`. The guard exists and is correct.
+**Resolution:** 2026-04-19 · won't-fix (already correct) · Guard verified present at lines 169-172 of `convex/entitlements.ts`. The spec was updated by docs-sync to document `claim` accurately. The 2026-04-17 `entitlements.claim` open item is closed — both its sub-items are resolved: the "no server-side guard" assertion was incorrect, and `docs-sync` added the missing spec documentation.
+
+### 2026-04-19 · qa · `events.isAdmin` soft-returns `false` for unauthenticated callers — CLAUDE.md policy says throw, but this is a deliberate exception like `users.me`
+
+**Context:** Reviewing admin-gating commit for `/nytjun`. `events.isAdmin` calls `getAuthUserId` directly and returns `false` rather than throwing `ConvexError("Ekki innskráður")` for unauthenticated callers. This mirrors the documented `users.me` exception.
+**Observation:** CLAUDE.md stated one documented exception (`users.me`). `events.isAdmin` is a second exception but was not documented as such.
+**Resolution:** 2026-04-19 · rule · docs-sync added `events.isAdmin` to `docs/spec.md` and `docs/implementation-plan.md`. Harness-auditor updated `CLAUDE.md` Architecture Notes to name both soft-returning exceptions (`users.me` and `events.isAdmin`) and define the pattern: "soft-returning queries that gate UI display" are exempt from the throw rule; any new one must be explicitly listed in CLAUDE.md. Also tightened `.claude/agents/qa.md` Convex section to name both exceptions explicitly so future QA runs do not flag them as violations.
+
+### 2026-04-18 · docs-sync · Nav/route architecture diverged substantially from the original plan with no intermediate docs update
+
+**Context:** Full reconciliation sweep. The original plan described four bottom-nav tabs: Í dag / Dagbók / Tímar / Upplýsingar. The shipped app has: Í dag / Umönnun / Fólk / Pappírar (later Gögn). This drift accumulated across multiple commits.
+**Observation:** Large intentional design pivot happened without an intermediate docs-sync. The nav is a high-impact piece of the architecture and stale docs here are especially confusing.
+**Resolution:** 2026-04-19 · rule · Added a "Route or nav changes require immediate docs-sync" bullet to the Conventions section of `CLAUDE.md`: when a phase renames a route, adds a tab, removes a bottom-nav item, or restructures the routing hierarchy, `docs-sync` must be invoked before or immediately after the commit — not deferred. Root cause: no written convention said nav changes were high-priority for docs-sync invocation.
+
+### 2026-04-18 · docs-sync · `recurring.pauseToast` / `recurring.resumeToast` i18n keys exist but are not consumed
+
+**Context:** Phase 8.5 recurring appointments. `messages/is.json` and `messages/en.json` both defined `recurring.pauseToast` and `recurring.resumeToast`, but no UI component used them.
+**Resolution:** 2026-04-18 · code · Orphan keys removed from both `messages/is.json` and `messages/en.json` in the Phase 8 polish commit. No toast is planned for v1. The error state in `SeriesCard` (inline `<p role="alert">`) covers the failure-feedback gap instead. No harness rule needed.
+
+### 2026-04-17 · qa · `appointments.past` query skips auth check, inconsistent with `users.list`
+
+**Context:** Phase 7 QA. The new `appointments.past` query did not call `requireAuth`, while `users.list` did. Other read queries in `appointments.ts` also skipped auth at the time of the report. No documented policy existed for whether queries must check auth.
+**Resolution:** 2026-04-19 · rule · Policy resolved: all data-returning queries call `requireAuth` (policy (a)). Verified — every Convex module (`appointments.ts`, `contacts.ts`, `documents.ts`, `entitlements.ts`, `logEntries.ts`, `medications.ts`, `recurringSeries.ts`, `users.ts`, `events.ts`, `activity.ts`) now has `requireAuth` on all queries. CLAUDE.md already states "Every mutation AND every data-returning query calls `requireAuth(ctx)`". Root cause was a missing policy at time of report; the policy was set and code was hardened in a subsequent commit. No further harness change needed beyond the `events.isAdmin` exception documentation handled above.
+
+### 2026-04-17 · qa · `dialog.tsx` sr-only "Close" label should source from translations (medium-term)
+
+**Context:** Phase 6 QA flagged `dialog.tsx` line 77 (`<span className="sr-only">Close</span>`). The short-term fix (`showCloseButton={false}` on confirm dialogs) is already applied. The underlying issue — any future `DialogContent` with `showCloseButton={true}` will render English to screen readers — remains.
+**Resolution:** 2026-04-19 · code-fix-route + agent · The long-term code fix (threading `useTranslations("common")` into `dialog.tsx` / `sheet.tsx`) is routed to the UX-alignment plan at `docs/superpowers/plans/2026-04-19-ux-alignment.md`. Harness-auditor added a grep check to `.claude/agents/qa.md` i18n section: for any diff touching `src/components/ui/`, run `rg 'className="sr-only">(Close|Submit|Cancel|OK|Open)<' src/components/ui/` — any English sr-only label in the primitives folder is a FAIL.
+
+### 2026-04-17 · qa · Filter chips (`h-10`, 40px) and claim CTA (`min-h-11`, 44px) are below the 48px minimum tap-target rule
+
+**Context:** Phase 7-8 UI redesign — `EntitlementList.tsx` filter chips use `h-10` (40px) and the claim CTA uses `min-h-11` (44px), both below the 48px project minimum. This is a recurring pattern.
+**Resolution:** 2026-04-19 · rule + code-fix-route · (1) Added explicit language to the CLAUDE.md Stack section: "48px min tap targets … this floor applies to all interactive elements, including filter chips and inline CTAs; use `min-h-12` + `px-4` for pill-shaped chips, not `h-10` or `min-h-11`." (2) The specific `EntitlementList.tsx` code violations are routed to the UX-alignment plan for remediation. Root cause: tap-target rule was stated for primary buttons but did not call out compact/decorative controls explicitly.
+
+### 2026-04-17 · qa · QA gate should catch use of deprecated Convex cron helpers (`crons.daily`, `crons.hourly`, `crons.weekly`)
+
+**Context:** A fix swapped deprecated `crons.daily` for `crons.cron`; the violation was caught by a human reading guidelines, not by any automated check. Code fix was in commit 58856bc.
+**Resolution:** 2026-04-19 · agent · Added a "Deprecated cron helpers" bullet to the Convex conventions section of `.claude/agents/qa.md`: `rg "crons\.(daily|hourly|weekly)\(" convex/` — any match is a FAIL. Root cause: no grep check existed for deprecated helpers that compile cleanly but behave differently at runtime.
+
+### 2026-04-17 · qa · `entitlements.claim` mutation not documented in spec; allows owner overwrite
+
+**Context:** Phase 7-8 UI redesign adds `convex/entitlements.claim` — a new mutation not listed in `docs/spec.md`'s `entitlements.ts:` function contract table.
+**Observation:** (1) `claim` was undocumented in spec. (2) A later docs-sync correction note (2026-04-19) confirmed the server-side guard does in fact exist at lines 169-172.
+**Resolution:** 2026-04-19 · docs + won't-fix (guard already present) · `docs-sync` added `claim` to the entitlements function contract in `docs/spec.md` with accurate guard documentation. The "allows owner overwrite" assertion was incorrect — the guard was already present. Both sub-items closed.
 
 ### 2026-04-17 · qa · `ensureNextOccurrence` algorithm diverges from spec — blocked-slot walk not documented
 
