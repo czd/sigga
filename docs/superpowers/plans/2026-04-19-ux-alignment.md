@@ -202,7 +202,7 @@ Do these first. Token-level fixes cascade through the whole app, so later tasks 
 - *Exit:* No shadcn button variant under 48 px remains in the codebase. QA grep for `size="sm"` or `size="icon-sm"` returns zero.
 - *Size:* L · *Deps:* none — but batch with C2/C3 since they share primitives.
 
-**C5. Localise primitive sr-only labels.** Pattern 17, 18.
+**C5. ✅ Localise primitive sr-only labels.** Pattern 17, 18. *Done: commit `087454a`.*
 - *Files:* `src/components/ui/dialog.tsx`, `src/components/ui/sheet.tsx`.
 - *Exit:* `DialogContent` / `SheetContent` read `tCommon("close")` = "Loka"; no English sr-only string in `src/components/ui/`. QA grep clean.
 - *Size:* S · *Deps:* none.
@@ -211,32 +211,32 @@ Do these first. Token-level fixes cascade through the whole app, so later tasks 
 
 The substance of the initiative. **C6 introduces the `<ConfirmDialog>` primitive — several later tasks depend on it.**
 
-**C6. Introduce `<ConfirmDialog>` primitive.** Pattern 2, 19.
+**C6. ✅ Introduce `<ConfirmDialog>` primitive.** Pattern 2, 19. *Done: commit `de682e2`.*
 - *Files:* `src/components/ui/confirm-dialog.tsx` (new).
 - *Exit:* One component accepting `{title, body, confirmLabel, confirmVariant, onConfirm, onCancel}` encapsulates the destroy and commitment dialog layouts per rulebook Pattern 2 & 19. All existing destroy + claim dialogs migrate to use it in subsequent tasks.
 - *Size:* M · *Deps:* C4 (close X fixed).
 
-**C7. Add commitment confirmation to every volunteer/assign surface.** Pattern 19 — **addresses user-reported pain (accidental self-assignment).**
+**C7. ✅ Add commitment confirmation to every volunteer/assign surface.** Pattern 19 — **addresses user-reported pain (accidental self-assignment).** *Done: commit `92f979f`.*
 - *Files:* `src/components/dashboard/DrivingCta.tsx`, `src/components/dashboard/NextAppointments.tsx`, `src/components/appointments/AppointmentCard.tsx`, `src/components/timar/TimarDetail.tsx` driver `Select`. Week-grid drag-to-assign (`src/components/timar/WeekGrid.tsx:208-237`) is exempt per rulebook.
 - *Exit:* 4 of 5 instant-commit surfaces route through `<ConfirmDialog>`; new `driving.confirm.{title,body,action,assignOtherTitle,assignOtherAction}` keys in both locales with feminine-first copy; no `try/finally` error-swallowing (errors surface per Pattern 13).
 - *Size:* M · *Deps:* C6.
 
-**C8. Remove Tímar desktop cancel-without-confirm bypass.** Pattern 2 — **single highest-risk UX finding (one misclick = cancelled appointment).**
+**C8. ✅ Remove Tímar desktop cancel-without-confirm bypass.** Pattern 2 — **single highest-risk UX finding (one misclick = cancelled appointment).** *Done: commit `61d2d1e`.*
 - *Files:* `src/components/timar/TimarDetail.tsx:170-181`.
 - *Exit:* Cancel button routes through `<ConfirmDialog>` with `variant="destructive"` and the standard destroy copy template; keyboard-reachable; Escape dismisses (fixes the related cross-cutting observation).
 - *Size:* S · *Deps:* C6.
 
-**C9. Unify destroy confirm copy.** Pattern 2.
+**C9. ✅ Unify destroy confirm copy.** Pattern 2. *Done: commit `ce04649` — also migrated 6 consumers to the ConfirmDialog primitive.*
 - *Files:* `messages/{is,en}.json` (new keys `common.deleteConfirm.{title,body}` + per-subject override keys), plus per-subject consumers.
 - *Exit:* Two canonical templates per rulebook: "standard destroy" (Ertu viss? Þetta er ekki hægt að afturkalla.) and "destroy-with-context" (subject-specific body). Skjöl's stronger copy moves to the context template.
 - *Size:* S · *Deps:* C6.
 
-**C10. Feminine-first Icelandic sweep.** Pattern 17.
+**C10. ✅ Feminine-first Icelandic sweep.** Pattern 17. *Done: commit `f9d73b4` (combined with C11).*
 - *Files:* `messages/is.json` (`rettindi.claim.confirmBody` and any other `skráð(ur)` / `viss(ur)` / parenthetical gender patterns).
 - *Exit:* No parenthetical gender forms remain; English mirror untouched.
 - *Size:* S · *Deps:* none.
 
-**C11. Curly-quote sweep.** Pattern 17.
+**C11. ✅ Curly-quote sweep.** Pattern 17. *Done: commit `f9d73b4` (combined with C10).*
 - *Files:* `messages/is.json` `entitlements.claim.confirmBody` (currently `\"{title}\"` straight — breaks ICU in principle, reads inconsistent with `activity.entitlementStatus` which uses `„…"`).
 - *Exit:* All confirm/prompt copy uses Icelandic curly quotes; grep for `\\\"` in is.json returns only non-interpolated literal contexts.
 - *Size:* S · *Deps:* none.
