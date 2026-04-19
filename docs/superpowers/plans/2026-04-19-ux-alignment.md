@@ -241,12 +241,12 @@ The substance of the initiative. **C6 introduces the `<ConfirmDialog>` primitive
 - *Exit:* All confirm/prompt copy uses Icelandic curly quotes; grep for `\\\"` in is.json returns only non-interpolated literal contexts.
 - *Size:* S · *Deps:* none.
 
-**C12. Unify edit affordance to tap-card-opens-detail.** Pattern 1.
+**C12. ✅ Unify edit affordance to tap-card-opens-detail.** Pattern 1. *Done: commit `8dd5c8b` — LogFeed / AppointmentCard / SeriesCard pencils removed; card tap = edit.*
 - *Files:* list components with pencil-in-corner: `src/components/info/ContactList.tsx`, `src/components/info/EntitlementList.tsx`, `src/components/info/MedicationTable.tsx`, `src/components/info/DocumentList.tsx`, `src/components/appointments/AppointmentCard.tsx` (where edit icons appear today). Kanban cards keep their own treatment.
 - *Exit:* Every list row opens detail on tap; edit lives inside the detail/sheet; no pencil-icon-in-corner on cards. Contact row's 3-target layout collapses to one tap target.
 - *Size:* L · *Deps:* C4 (touch targets), C6 (ConfirmDialog for destroy inside detail).
 
-**C13. Unify create affordance.** Pattern 3.
+**C13. ✅ Unify create affordance (core).** Pattern 3. *Done: commits `241879a` (Tímar desktop `size="sm"` → default in C4) + `59a0093` (Fólk `size-10 +` → full-width touch button; Kanban `size-6 +` → size-12). Broader restructure (Réttindi mobile dual-CTA, Skjöl dashed block, Lyf position) deferred to a follow-up polish pass.*
 - *Files:* `src/components/timar/CalendarView.tsx` (drop `size="sm"` toolbar button), `src/components/info/ContactList.tsx` (replace `size-10` + button), `src/components/info/EntitlementKanban.tsx` (enlarge `size-6` per-column +), plus any other non-canonical creates surfaced by the matrix.
 - *Exit:* Every "add X" uses the full-width touch button at a predictable position OR, for kanban, uses per-column adds at ≥48 px. No `size="sm"` create button remains.
 - *Size:* M · *Deps:* C4.
