@@ -57,6 +57,7 @@ The primary audience — 60+ Icelandic women migrating from Messenger — benefi
 
 1. **Edit affordance.** How does a user start editing a log entry, an appointment, a recurring series, a contact, an entitlement, a document's metadata, a medication?
 2. **Destroy affordance.** How does a user delete any of those? Confirmation mechanism, wording, button tone.
+2b. **Commitment confirmation** (distinct from destroy — same UX weight). Volunteering to drive, claiming an entitlement, assigning a driver to somebody else — any button that creates unwanted state on a misclick. Does every such action have a confirm gate? What's the canonical copy template?
 3. **Create/new affordance.** FAB? Header button? Empty-state CTA? Bottom sheet trigger? Position.
 4. **Form container.** `Sheet` (bottom sheet mobile / centered modal desktop) vs `Dialog` vs inline expansion. Primary-CTA position (top-right header vs bottom-anchored footer). Cancel button placement and label. Validation-error placement and style.
 5. **Empty state.** Text tone, icon usage, secondary-CTA presence. The Bókasafn principle is warm/reassuring — check every empty state conforms.
@@ -158,6 +159,7 @@ Any learning from Phase D that changes a canonical answer gets back-ported to `d
 
 - **Edit affordance split**: pencil icon vs card-tap vs kebab vs sheet.
 - **Destroy affordance split**: inline delete vs confirm dialog vs long-press. Destructive button tone.
+- **Commitment-action confirmation missing on 5 of 6 surfaces**: "Ég skutla" / "Ég get skutlað" / driver-assignment dropdown / week-grid drag-to-assign all commit instantly with no confirm. Family members have repeatedly assigned themselves as drivers by accident. The one surface that *does* confirm — `entitlements.claim` — is the template. (Seeded from user report 2026-04-19; see Pattern 19 in the inventory matrix.)
 - **Tap-target floor**: `EntitlementList.tsx` chips (`h-10`, 40 px) and claim CTA (`min-h-11`, 44 px) are below 48 px.
 - **Hardcoded English in primitives**: `dialog.tsx` / `sheet.tsx` `sr-only` "Close" labels bypass i18n.
 - **Unused toast keys**: `recurring.pauseToast` / `recurring.resumeToast` defined but not fired — signals a missing site-wide toast decision.
