@@ -29,6 +29,14 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 
 ## Open Items
 
+### 2026-04-21 · qa · APP_TIME_ZONE convention not documented — future Intl.DateTimeFormat sites may omit it
+
+**Context:** Timezone-pinning fix (`claude/fix-timezone-storage-thXLq`). `src/lib/formatDate.ts` exports `APP_TIME_ZONE = "Atlantic/Reykjavik"` and every `Intl.DateTimeFormat` in `src/` now passes `timeZone: APP_TIME_ZONE`. Appointment-form date-string helpers (`toDatetimeLocal`/`fromDatetimeLocal`) use `getUTC*` + `Date.UTC` accessors to treat the input as Reykjavík wall-clock.
+
+**Observation:** The convention is enforced in code but not in CLAUDE.md or any automated check. A future contributor adding a date display component will not be warned, and lint/typecheck will not catch the omission.
+
+**Suggested action:** (1) Add a `qa` grep: any diff introducing `new Intl.DateTimeFormat(` without `timeZone` in the options → FAIL. (2) Add a CLAUDE.md Conventions bullet: "All `Intl.DateTimeFormat` calls in `src/` must pass `timeZone: APP_TIME_ZONE`; date-input parsing must use `Date.UTC` / `getUTC*` accessors so the wall-clock string is treated as Reykjavík time." (3) Optionally add a biome lint rule or a unit test that fails if the rule is broken.
+
 ### 2026-04-19 · manual · Known Next.js 16.2.x dev-cache bug: 'Expected RSC response, got text/html' log noise
 
 **Context:** On every authenticated route load in `bun dev`, the terminal logs a 500 followed by a 200 for each path, with `Error [InvariantError]: Expected RSC response, got text/html; charset=utf-8. This is a bug in Next.js.` The user never sees a broken page — Turbopack auto-recovers and serves the 200.

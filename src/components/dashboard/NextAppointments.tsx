@@ -10,17 +10,22 @@ import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Link } from "@/i18n/navigation";
-import { formatAbsoluteWithTime } from "@/lib/formatDate";
+import { APP_TIME_ZONE, formatAbsoluteWithTime } from "@/lib/formatDate";
 
 type AppointmentWithDriver = FunctionReturnType<
 	typeof api.appointments.upcoming
 >[number];
 
 const WEEKDAY_FMT: Record<string, Intl.DateTimeFormatOptions> = {
-	weekday: { weekday: "short" },
-	day: { day: "numeric" },
-	month: { month: "short" },
-	time: { hour: "2-digit", minute: "2-digit", hour12: false },
+	weekday: { weekday: "short", timeZone: APP_TIME_ZONE },
+	day: { day: "numeric", timeZone: APP_TIME_ZONE },
+	month: { month: "short", timeZone: APP_TIME_ZONE },
+	time: {
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+		timeZone: APP_TIME_ZONE,
+	},
 };
 
 function useAppointmentDateParts(timestamp: number, locale: string) {

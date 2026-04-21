@@ -7,6 +7,7 @@ import type { Id } from "@/../convex/_generated/dataModel";
 import { ClientOnly } from "@/components/shared/ClientOnly";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Link } from "@/i18n/navigation";
+import { APP_TIME_ZONE } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -69,13 +70,23 @@ function WeekStripContent() {
 		weekStartMs: weekStart.getTime(),
 	});
 
-	const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
-	const dayFmt = new Intl.DateTimeFormat(locale, { day: "numeric" });
-	const monthFmt = new Intl.DateTimeFormat(locale, { month: "short" });
+	const weekdayFmt = new Intl.DateTimeFormat(locale, {
+		weekday: "short",
+		timeZone: APP_TIME_ZONE,
+	});
+	const dayFmt = new Intl.DateTimeFormat(locale, {
+		day: "numeric",
+		timeZone: APP_TIME_ZONE,
+	});
+	const monthFmt = new Intl.DateTimeFormat(locale, {
+		month: "short",
+		timeZone: APP_TIME_ZONE,
+	});
 	const timeFmt = new Intl.DateTimeFormat(locale, {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
+		timeZone: APP_TIME_ZONE,
 	});
 
 	const weekEnd = new Date(weekStart.getTime() + 6 * DAY_MS);

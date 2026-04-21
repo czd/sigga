@@ -9,6 +9,7 @@ import { AppointmentList } from "@/components/appointments/AppointmentList";
 import { ClientOnly } from "@/components/shared/ClientOnly";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { APP_TIME_ZONE } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 import { MonthGrid, type RangeRow } from "./MonthGrid";
 import { TimarDetail } from "./TimarDetail";
@@ -77,13 +78,20 @@ export function CalendarView() {
 	const monthLabel = new Intl.DateTimeFormat(locale, {
 		month: "long",
 		year: "numeric",
+		timeZone: APP_TIME_ZONE,
 	}).format(monthStart);
 
 	const weekLabel = (() => {
 		const ws = new Date(weekStartMs);
 		const we = new Date(weekStartMs + 6 * DAY_MS);
-		const dayFmt = new Intl.DateTimeFormat(locale, { day: "numeric" });
-		const monthFmt = new Intl.DateTimeFormat(locale, { month: "short" });
+		const dayFmt = new Intl.DateTimeFormat(locale, {
+			day: "numeric",
+			timeZone: APP_TIME_ZONE,
+		});
+		const monthFmt = new Intl.DateTimeFormat(locale, {
+			month: "short",
+			timeZone: APP_TIME_ZONE,
+		});
 		return `${dayFmt.format(ws)}.–${dayFmt.format(we)}. ${monthFmt.format(we).replace(/\.$/, "")}`;
 	})();
 

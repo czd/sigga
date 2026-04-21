@@ -10,6 +10,7 @@ import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import {
+	APP_TIME_ZONE,
 	classifyRelative,
 	formatAbsolute,
 	formatAbsoluteWithTime,
@@ -22,6 +23,7 @@ function formatEntryDate(timestamp: number, locale: string): string {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
+		timeZone: APP_TIME_ZONE,
 	}).format(new Date(timestamp));
 	if (c.kind === "today" || c.kind === "yesterday") {
 		return `${formatAbsolute(timestamp, locale)} · ${time}`;

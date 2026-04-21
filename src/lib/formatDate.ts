@@ -2,8 +2,14 @@ const MS_PER_MINUTE = 60_000;
 const MS_PER_HOUR = 3_600_000;
 const MS_PER_DAY = 86_400_000;
 
+// All appointments happen in Sigga's home timezone. Rendering and day-bucketing
+// are pinned here so a family member whose device is on a different timezone
+// still sees Reykjavík wall-clock time. Atlantic/Reykjavik is UTC+0 year-round
+// (no DST), which is also why UTC math elsewhere in the code is safe.
+export const APP_TIME_ZONE = "Atlantic/Reykjavik";
+
 function startOfDay(d: Date): number {
-	return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+	return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
 export type RelativeDate =
@@ -44,6 +50,7 @@ export function formatAbsolute(timestamp: number, locale: string): string {
 		weekday: "short",
 		day: "numeric",
 		month: "long",
+		timeZone: APP_TIME_ZONE,
 	}).format(new Date(timestamp));
 }
 
@@ -55,11 +62,13 @@ export function formatAbsoluteWithTime(
 		weekday: "short",
 		day: "numeric",
 		month: "long",
+		timeZone: APP_TIME_ZONE,
 	});
 	const timeFmt = new Intl.DateTimeFormat(locale, {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
+		timeZone: APP_TIME_ZONE,
 	});
 	const date = new Date(timestamp);
 	const prefix = locale.startsWith("is") ? "kl." : "at";

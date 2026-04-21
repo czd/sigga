@@ -6,6 +6,7 @@ import { Repeat } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { api } from "@/../convex/_generated/api";
+import { APP_TIME_ZONE } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -64,11 +65,15 @@ export function MonthGrid({
 	const now = new Date();
 	const currentMonth = monthStart.getUTCMonth();
 
-	const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
+	const weekdayFmt = new Intl.DateTimeFormat(locale, {
+		weekday: "short",
+		timeZone: APP_TIME_ZONE,
+	});
 	const timeFmt = new Intl.DateTimeFormat(locale, {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
+		timeZone: APP_TIME_ZONE,
 	});
 
 	const weeksToRender = useMemo(() => {

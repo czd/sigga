@@ -12,6 +12,7 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+	APP_TIME_ZONE,
 	classifyRelative,
 	formatAbsolute,
 	formatAbsoluteWithTime,
@@ -30,6 +31,7 @@ function formatEntryDate(timestamp: number, locale: string): string {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
+		timeZone: APP_TIME_ZONE,
 	}).format(new Date(timestamp));
 	switch (classification.kind) {
 		case "justNow":
