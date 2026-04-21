@@ -21,6 +21,7 @@ import type { Id } from "@/../convex/_generated/dataModel";
 import { ClientOnly } from "@/components/shared/ClientOnly";
 import { useLiveRegion } from "@/components/shared/LiveRegion";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { APP_TIME_ZONE } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 import type { RangeRow } from "./MonthGrid";
 
@@ -193,11 +194,15 @@ function WeekGridContent({ weekStartMs, activeId, onSelect }: Props) {
 	);
 	const now = new Date();
 
-	const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
+	const weekdayFmt = new Intl.DateTimeFormat(locale, {
+		weekday: "short",
+		timeZone: APP_TIME_ZONE,
+	});
 	const timeFmt = new Intl.DateTimeFormat(locale, {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
+		timeZone: APP_TIME_ZONE,
 	});
 
 	function handleDragStart(ev: DragStartEvent) {

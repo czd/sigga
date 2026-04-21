@@ -28,22 +28,30 @@ type AppointmentFormProps = {
 	editAppointment?: AppointmentDoc | null;
 };
 
+// The <input type="datetime-local"> value is a naive wall-clock string with no
+// timezone. We interpret it as Reykjavík time (and format it back the same
+// way) so the time the user types is the time Sigga actually has the
+// appointment — regardless of what timezone the user's device is on.
 function toDatetimeLocal(ts: number | null): string {
 	if (ts === null) return "";
 	const d = new Date(ts);
 	const pad = (n: number) => String(n).padStart(2, "0");
-	const year = d.getFullYear();
-	const month = pad(d.getMonth() + 1);
-	const day = pad(d.getDate());
-	const hours = pad(d.getHours());
-	const minutes = pad(d.getMinutes());
+	const year = d.getUTCFullYear();
+	const month = pad(d.getUTCMonth() + 1);
+	const day = pad(d.getUTCDate());
+	const hours = pad(d.getUTCHours());
+	const minutes = pad(d.getUTCMinutes());
 	return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 function fromDatetimeLocal(value: string): number | null {
 	if (!value) return null;
-	const ts = new Date(value).getTime();
-	return Number.isNaN(ts) ? null : ts;
+	const m = value.match(
+		/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/,
+	);
+	if (!m) return null;
+	const [, y, mo, d, h, mi, s] = m;
+	return Date.UTC(+y, +mo - 1, +d, +h, +mi, s ? +s : 0);
 }
 
 export function AppointmentForm({

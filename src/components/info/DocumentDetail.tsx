@@ -10,6 +10,7 @@ import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { APP_TIME_ZONE } from "@/lib/formatDate";
 
 function formatSize(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`;
@@ -48,6 +49,7 @@ export function DocumentDetail({
 		day: "numeric",
 		month: "long",
 		year: "numeric",
+		timeZone: APP_TIME_ZONE,
 	}).format(new Date(doc._creationTime));
 
 	async function handleDelete() {

@@ -16,6 +16,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
+import { APP_TIME_ZONE } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 import { DocumentDetail } from "./DocumentDetail";
 import { DocumentUpload } from "./DocumentUpload";
@@ -52,6 +53,7 @@ function formatShortDate(ts: number, locale: string): string {
 	return new Intl.DateTimeFormat(locale, {
 		day: "numeric",
 		month: "short",
+		timeZone: APP_TIME_ZONE,
 	}).format(new Date(ts));
 }
 

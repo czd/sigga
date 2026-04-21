@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { api } from "@/../convex/_generated/api";
 import { ClientOnly } from "@/components/shared/ClientOnly";
 import { Link } from "@/i18n/navigation";
+import { APP_TIME_ZONE } from "@/lib/formatDate";
 import { cn } from "@/lib/utils";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -56,11 +57,13 @@ function SidebarWeekCalendarContent() {
 
 	const weekdayFormatter = new Intl.DateTimeFormat(locale, {
 		weekday: "narrow",
+		timeZone: APP_TIME_ZONE,
 	});
 	const fullDateFormatter = new Intl.DateTimeFormat(locale, {
 		weekday: "long",
 		day: "numeric",
 		month: "long",
+		timeZone: APP_TIME_ZONE,
 	});
 
 	return (
