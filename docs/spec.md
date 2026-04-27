@@ -26,7 +26,7 @@
 | Framework | Next.js 16 (App Router) | `proxy.ts` replaces deprecated `middleware.ts`; because `app/` is under `src/`, the proxy file lives at `src/proxy.ts` and must `export default` (not a named `proxy` export). Turbopack is default bundler. `next lint` removed — use Biome or ESLint directly. All parallel route slots require explicit `default.js`. |
 | Language | TypeScript (strict) | |
 | Backend / DB | Convex | Real-time subscriptions, file storage, scheduled functions. Hobby tier (free). |
-| Auth | Convex Auth (`@convex-dev/auth`) | Google OAuth provider. Whitelist family email addresses server-side. |
+| Auth | Convex Auth (`@convex-dev/auth`) | Google OAuth + email OTP (Resend). Whitelist enforced server-side via `ALLOWED_EMAILS` for both providers. No invite system. |
 | i18n | `next-intl` | Confirmed Next.js 16 compatible. Uses `src/proxy.ts` for locale routing. Default locale `is` (Icelandic), secondary `en`. No locale prefix for default. |
 | UI | shadcn/ui + Tailwind CSS 4 | Mobile-first. Large tap targets. High contrast. |
 | Package manager | Bun | |
@@ -48,7 +48,8 @@ sigga/
 ├── convex/
 │   ├── _generated/
 │   ├── schema.ts
-│   ├── auth.ts                   # Convex Auth config (Google OAuth)
+│   ├── auth.ts                   # Convex Auth config (Google OAuth + email OTP)
+│   ├── ResendOTP.ts              # Email OTP provider (Resend API, 6-digit code, 20-min TTL)
 │   ├── http.ts                   # HTTP router for auth callbacks
 │   ├── appointments.ts
 │   ├── logEntries.ts
@@ -95,7 +96,7 @@ sigga/
 │   │   │   │   └── nytjun/
 │   │   │   │       └── page.tsx        # Admin-only usage analytics view (admin-gated)
 │   │   │   └── login/
-│   │   │       └── page.tsx      # Login page (Google OAuth button)
+│   │   │       └── page.tsx      # Login page (Google OAuth + email OTP; three modes: choose / email / code)
 │   │   └── layout.tsx            # Bare html/body with fonts + analytics
 │   ├── components/
 │   │   ├── ui/                   # shadcn components (button, card, sheet, dialog, tabs, switch, …)
@@ -304,23 +305,42 @@ export default defineSchema({
 
 ## Authentication
 
-### Strategy: Convex Auth with Google OAuth
+### Strategy: Convex Auth with Google OAuth and email OTP
 
-**Why Google OAuth:**
-- All family members have Google accounts (assumption — verify with Nic).
-- Single-tap sign-in on mobile, no passwords to remember.
-- Convex Auth has a dedicated Google OAuth setup guide.
+Two providers are active: Google OAuth (primary) and a 6-digit email OTP via Resend (secondary). Both go through the same `createOrUpdateUser` callback and the same `ALLOWED_EMAILS` whitelist check.
+
+**Why both:**
+- Google OAuth: single-tap on mobile, no passwords — preferred path for daughters who already use Google.
+- Email OTP: covers family members without a Google account and avoids the magic-link → external browser break that defeats the standalone PWA. Users read the 6-digit code from their email client and type it back into the same login screen.
+- There is no invite system. Any email not in `ALLOWED_EMAILS` is rejected at both providers with the same Icelandic message: "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic."
+
+**OTP shape:**
+- 6-digit numeric code generated via `crypto.getRandomValues`.
+- 20-minute expiry (`maxAge: 1200`).
+- Sent via Resend HTTP API (`https://api.resend.com/emails`).
+- Email subject/body written in Icelandic.
 
 **Whitelist enforcement:**
-- After OAuth completes, a Convex mutation checks the user's email against an allowed list stored in a Convex environment variable (comma-separated emails).
-- If the email is not whitelisted, the session is rejected and the user sees a friendly Icelandic message: "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic."
-- This keeps the app private without building a full invite system.
+- `convex/auth.ts` `createOrUpdateUser` callback checks `args.profile.email` against `ALLOWED_EMAILS` (comma-separated env var) for **both** providers. Rejected sessions throw `ConvexError("Þetta netfang hefur ekki aðgang. Hafðu samband við Nic.")`.
 
 **Implementation notes:**
+- `convex/ResendOTP.ts` — `EmailConfig` with `id: "resend-otp"`. `generateVerificationToken` returns a 6-digit string. `sendVerificationRequest` POSTs to `https://api.resend.com/emails` using `AUTH_RESEND_KEY`. Falls back to `"Sigga <onboarding@resend.dev>"` as sender if `AUTH_EMAIL_FROM` is not set (dev-only fallback — Resend only delivers to the account owner's verified address from that domain).
+- `convex/auth.ts` — `providers: [Google, ResendOTP]`.
+- `src/app/[locale]/login/page.tsx` — three `Mode` states: `"choose"` (two buttons: Google / email), `"email"` (email input → send code), `"code"` (6-digit code input → verify). Resend-code and use-different-email affordances on the verify screen.
 - Follow the Convex Auth Google OAuth guide: https://labs.convex.dev/auth/config/oauth/google
-- Set env vars: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `SITE_URL`, `ALLOWED_EMAILS`
-- The `src/proxy.ts` file should check auth state and redirect unauthenticated users to `/login`. Use `convexAuthNextjsMiddleware` adapted for Next.js 16's `proxy` convention and `export default` the result.
-- Important: Convex Auth's Next.js support references `middleware.ts` in docs — rename to `src/proxy.ts` and use `export default` for the function. A named `export const proxy` works only for trivial unwrapped proxy bodies; when the export is produced by a wrapper like `convexAuthNextjsMiddleware` or `createMiddleware` from next-intl, Next.js 16 / Turbopack resolves the server bundle via `middlewareModule.default || middlewareModule` and a named-only export throws `TypeError: adapterFn is not a function` at request time. Always default-export.
+- Proxy: `src/proxy.ts` redirects unauthenticated users to `/login`. Use `convexAuthNextjsMiddleware` adapted for Next.js 16's `proxy` convention and `export default` the result. A named-only export throws `TypeError: adapterFn is not a function` at request time — always `export default`.
+
+**Env vars:**
+| Var | Description |
+|-----|-------------|
+| `AUTH_GOOGLE_ID` | Google OAuth client ID |
+| `AUTH_GOOGLE_SECRET` | Google OAuth client secret |
+| `AUTH_RESEND_KEY` | Resend API key |
+| `AUTH_EMAIL_FROM` | Sender address, e.g. `Sigga <noreply@yourdomain.is>`. Without this, falls back to `Sigga <onboarding@resend.dev>` (dev only). |
+| `SITE_URL` | Vercel production URL |
+| `ALLOWED_EMAILS` | Comma-separated list of permitted family email addresses |
+
+Set all vars on the Convex deployment: `npx convex env set KEY "value"`.
 
 **Google Cloud Console setup:**
 - Create OAuth 2.0 client credentials
@@ -423,8 +443,25 @@ messages/
   "auth": {
     "signIn": "Skrá inn",
     "signInWithGoogle": "Skrá inn með Google",
+    "signInWithEmail": "Skrá inn með tölvupósti",
     "signOut": "Skrá út",
-    "notAllowed": "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic."
+    "notAllowed": "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic.",
+    "greetingWithName": "Halló {name}",
+    "notSignedIn": "Ekki innskráður",
+    "signInFailed": "Innskráning tókst ekki. Reyndu aftur.",
+    "email": "Netfang",
+    "emailPlaceholder": "nafn@domain.is",
+    "emailRequired": "Sláðu inn netfang.",
+    "sendCode": "Senda kóða",
+    "sendingCode": "Sendi kóða...",
+    "codeSent": "Við sendum 6 stafa kóða á {email}. Skoðaðu pósthólfið þitt.",
+    "codeResent": "Nýr kóði sendur.",
+    "codeLabel": "Kóði úr tölvupósti",
+    "codeRequired": "Sláðu inn kóðann úr tölvupóstinum.",
+    "verify": "Staðfesta",
+    "verifying": "Staðfesti...",
+    "resendCode": "Senda kóða aftur",
+    "useDifferentEmail": "Nota annað netfang"
   }
 }
 ```

@@ -1063,6 +1063,32 @@ Test files live adjacent to the code they cover — `convex/*.test.ts` for backe
 
 ---
 
+## Post-Phase-17: Email OTP Login
+
+### Status (2026-04-27) — Shipped
+
+Added alongside the existing Google OAuth path so family members without a Google account can sign in. The PWA standalone constraint was the deciding factor: magic links open in the system browser, breaking the fullscreen experience; a typed 6-digit code stays inside the PWA.
+
+### What shipped
+
+- `convex/ResendOTP.ts` — `EmailConfig` provider (`id: "resend-otp"`). `generateVerificationToken` returns a 6-digit numeric code via `crypto.getRandomValues`. `sendVerificationRequest` POSTs to `https://api.resend.com/emails`. Email subject/body written in Icelandic. Code TTL: 20 minutes.
+- `convex/auth.ts` — `providers` array extended to `[Google, ResendOTP]`. The existing `createOrUpdateUser` callback's `ALLOWED_EMAILS` whitelist check applies to both providers unchanged.
+- `src/app/[locale]/login/page.tsx` — rewritten from single Google button to three modes: `"choose"` (Google button + email button), `"email"` (email input → send code), `"code"` (6-digit input → verify). Resend-code and use-different-email affordances on the verify screen.
+- `messages/{is,en}.json` `auth` namespace extended with 16 new keys: `signInWithEmail`, `email`, `emailPlaceholder`, `emailRequired`, `sendCode`, `sendingCode`, `codeSent`, `codeResent`, `codeLabel`, `codeRequired`, `verify`, `verifying`, `resendCode`, `useDifferentEmail`, `greetingWithName`, `signInFailed`.
+- New env vars: `AUTH_RESEND_KEY` (Resend API key) and `AUTH_EMAIL_FROM` (sender address, e.g. `Sigga <noreply@yourdomain.is>`). Without `AUTH_EMAIL_FROM`, falls back to `Sigga <onboarding@resend.dev>` — dev-only; Resend only delivers from that address to the account owner's verified email.
+
+### Exit criteria
+
+- [x] Both `google` and `resend-otp` listed in `convex/auth.ts` providers.
+- [x] OTP email sends and delivers 6-digit code.
+- [x] Code verifies and creates an authenticated Convex session.
+- [x] Whitelist rejects non-allowed emails from either provider with Icelandic error.
+- [x] Login page shows three-mode flow; back-navigation works between all modes.
+- [x] All OTP-related translation keys present in `is.json` and `en.json`.
+- [x] `AUTH_RESEND_KEY` and `AUTH_EMAIL_FROM` documented in spec env-vars table.
+
+---
+
 ## Authorization Pattern (All Mutations and Data-Returning Queries)
 
 Every mutation **and** every data-returning query must:

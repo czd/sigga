@@ -489,11 +489,25 @@
 	"auth": {
 		"signIn": "Skrá inn",
 		"signInWithGoogle": "Skrá inn með Google",
+		"signInWithEmail": "Skrá inn með tölvupósti",
 		"signOut": "Skrá út",
 		"notAllowed": "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic.",
 		"greetingWithName": "Halló {name}",
 		"notSignedIn": "Ekki innskráður",
-		"signInFailed": "Innskráning tókst ekki. Reyndu aftur."
+		"signInFailed": "Innskráning tókst ekki. Reyndu aftur.",
+		"email": "Netfang",
+		"emailPlaceholder": "nafn@domain.is",
+		"emailRequired": "Sláðu inn netfang.",
+		"sendCode": "Senda kóða",
+		"sendingCode": "Sendi kóða...",
+		"codeSent": "Við sendum 6 stafa kóða á {email}. Skoðaðu pósthólfið þitt.",
+		"codeResent": "Nýr kóði sendur.",
+		"codeLabel": "Kóði úr tölvupósti",
+		"codeRequired": "Sláðu inn kóðann úr tölvupóstinum.",
+		"verify": "Staðfesta",
+		"verifying": "Staðfesti...",
+		"resendCode": "Senda kóða aftur",
+		"useDifferentEmail": "Nota annað netfang"
 	},
 	"errors": {
 		"title": "Eitthvað fór úrskeiðis",
