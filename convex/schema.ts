@@ -123,4 +123,13 @@ export default defineSchema({
 		storageId: v.id("_storage"),
 		size: v.number(),
 	}),
+
+	accessCodes: defineTable({
+		code: v.string(),
+		name: v.string(),
+		email: v.optional(v.string()),
+		isActive: v.boolean(),
+		userId: v.optional(v.id("users")),
+		lastUsedAt: v.optional(v.number()),
+	}).index("by_code", ["code"]),
 });

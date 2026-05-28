@@ -489,25 +489,18 @@
 	"auth": {
 		"signIn": "Sign in",
 		"signInWithGoogle": "Sign in with Google",
-		"signInWithEmail": "Sign in with email",
+		"signInWithCode": "Use a family code",
 		"signOut": "Sign out",
 		"notAllowed": "This email does not have access. Contact Nic.",
 		"greetingWithName": "Hello {name}",
 		"notSignedIn": "Not signed in",
 		"signInFailed": "Sign-in failed. Try again.",
-		"email": "Email",
-		"emailPlaceholder": "name@domain.com",
-		"emailRequired": "Enter your email.",
-		"sendCode": "Send code",
-		"sendingCode": "Sending code...",
-		"codeSent": "We sent a 6-digit code to {email}. Check your inbox.",
-		"codeResent": "New code sent.",
-		"codeLabel": "Code from email",
-		"codeRequired": "Enter the code from the email.",
-		"verify": "Verify",
-		"verifying": "Verifying...",
-		"resendCode": "Send code again",
-		"useDifferentEmail": "Use a different email"
+		"codeFieldLabel": "Family code",
+		"codePlaceholder": "e.g. abcd-2468",
+		"codeHint": "Nic gives you the code.",
+		"codeRequired": "Enter your family code.",
+		"continue": "Continue",
+		"signingIn": "Signing in..."
 	},
 	"errors": {
 		"title": "Something went wrong",
@@ -530,6 +523,31 @@
 			"unknownUser": "Unknown user",
 			"notAuthorizedTitle": "Not authorized",
 			"notAuthorizedBody": "This page is for administrators only."
+		},
+		"codes": {
+			"heading": "Family codes",
+			"subtitle": "Create a code for each family member and send it in the Messenger group.",
+			"empty": "No codes yet.",
+			"namePlaceholder": "Name — e.g. Helga",
+			"emailPlaceholder": "Email (optional)",
+			"addButton": "Create code",
+			"adding": "Creating...",
+			"active": "Active",
+			"paused": "Paused",
+			"lastUsed": "Last used",
+			"neverUsed": "Never used",
+			"rotate": "New code",
+			"pause": "Pause",
+			"activate": "Activate",
+			"remove": "Delete",
+			"removeConfirm": {
+				"title": "Delete {name}'s code?",
+				"body": "They will no longer be able to sign in with this code. This cannot be undone."
+			},
+			"copy": "Copy",
+			"copied": "Copied",
+			"nameRequired": "Name cannot be empty.",
+			"error": "Could not save. Try again."
 		}
 	}
 }

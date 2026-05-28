@@ -1063,29 +1063,33 @@ Test files live adjacent to the code they cover — `convex/*.test.ts` for backe
 
 ---
 
-## Post-Phase-17: Email OTP Login
+## Post-Phase-17: Family-Code Login
 
-### Status (2026-04-27) — Shipped
+### Status (2026-05-28) — Shipped
 
-Added alongside the existing Google OAuth path so family members without a Google account can sign in. The PWA standalone constraint was the deciding factor: magic links open in the system browser, breaking the fullscreen experience; a typed 6-digit code stays inside the PWA.
+Replaced email OTP (Resend) with a "family code" sign-in path alongside existing Google OAuth. The Resend path was removed because adding a second sending domain requires a paid plan and email-from-Gmail is not an option. Family codes keep sign-in inside the PWA (no browser handoff) and are simpler to manage: Nic creates a per-person code in the admin UI and pastes it into the family Messenger group.
 
 ### What shipped
 
-- `convex/ResendOTP.ts` — `EmailConfig` provider (`id: "resend-otp"`). `generateVerificationToken` returns a 6-digit numeric code via `crypto.getRandomValues`. `sendVerificationRequest` POSTs to `https://api.resend.com/emails`. Email subject/body written in Icelandic. Code TTL: 20 minutes.
-- `convex/auth.ts` — `providers` array extended to `[Google, ResendOTP]`. The existing `createOrUpdateUser` callback's `ALLOWED_EMAILS` whitelist check applies to both providers unchanged.
-- `src/app/[locale]/login/page.tsx` — rewritten from single Google button to three modes: `"choose"` (Google button + email button), `"email"` (email input → send code), `"code"` (6-digit input → verify). Resend-code and use-different-email affordances on the verify screen.
-- `messages/{is,en}.json` `auth` namespace extended with 16 new keys: `signInWithEmail`, `email`, `emailPlaceholder`, `emailRequired`, `sendCode`, `sendingCode`, `codeSent`, `codeResent`, `codeLabel`, `codeRequired`, `verify`, `verifying`, `resendCode`, `useDifferentEmail`, `greetingWithName`, `signInFailed`.
-- New env vars: `AUTH_RESEND_KEY` (Resend API key) and `AUTH_EMAIL_FROM` (sender address, e.g. `Sigga <noreply@yourdomain.is>`). Without `AUTH_EMAIL_FROM`, falls back to `Sigga <onboarding@resend.dev>` — dev-only; Resend only delivers from that address to the account owner's verified email.
+- `convex/FamilyCode.ts` — `ConvexCredentials` provider (`id: "family-code"`). `authorize` calls the internal mutation `accessCodes.verifyAndResolveUser` with the typed code and returns `{ userId }`, or throws `ConvexError(WRONG_CODE_MESSAGE)` on a bad/inactive code. The export carries an explicit `: ConvexCredentialsConfig` type annotation — required to avoid TS7022 caused by the module importing `internal` from the generated API while the generated API references this module. Do not remove the annotation.
+- `convex/accessCodes.ts` — new module for the `accessCodes` table. `verifyAndResolveUser` (internalMutation): looks up the code via `by_code` index, checks `isActive`, find-or-creates the linked `users` record, stamps `lastUsedAt`, returns `Id<"users"> | null`. `list`, `add`, `rotate`, `setActive`, `remove` are admin-gated via a module-local `requireAdmin` checking `ADMIN_EMAILS`. `add` auto-generates a friendly code from an unambiguous alphabet (no `0/O/1/l/I`), format `abcd-2468`, or accepts a custom code; returns `{ id, code }`.
+- `convex/auth.ts` — `providers` changed to `[Google, FamilyCode]`. `createOrUpdateUser` whitelist check (`ALLOWED_EMAILS`) applies to Google only; `FamilyCode` bypasses it.
+- `convex/ResendOTP.ts` — deleted. `convex/whitelist.ts` unchanged (still used by Google).
+- `convex/schema.ts` — `accessCodes` table added: `{ code, name, email?, isActive, userId?, lastUsedAt? }` with `by_code` index.
+- `src/app/[locale]/login/page.tsx` — two modes: `"choose"` (Google button + "Nota fjölskyldukóða" button) and `"code"` (one text input for the family code + "Halda áfram" + back). No email/OTP UI.
+- `src/app/[locale]/(app)/nytjun/AccessCodesManager.tsx` — admin UI rendered inside `UsageView` on the `/nytjun` page. Nic creates, rotates, pauses, and deletes codes here; copies a code to paste into Messenger. No new route, no bottom-nav change.
+- `messages/{is,en}.json` `auth` namespace: email-OTP keys removed; new keys `signInWithCode`, `codeFieldLabel`, `codePlaceholder`, `codeHint`, `codeRequired`, `continue`, `signingIn` added. New `admin.codes` namespace added (heading, subtitle, add/rotate/pause/activate/remove, copy/copied, lastUsed/neverUsed, removeConfirm).
 
 ### Exit criteria
 
-- [x] Both `google` and `resend-otp` listed in `convex/auth.ts` providers.
-- [x] OTP email sends and delivers 6-digit code.
-- [x] Code verifies and creates an authenticated Convex session.
-- [x] Whitelist rejects non-allowed emails from either provider with Icelandic error.
-- [x] Login page shows three-mode flow; back-navigation works between all modes.
-- [x] All OTP-related translation keys present in `is.json` and `en.json`.
-- [x] `AUTH_RESEND_KEY` and `AUTH_EMAIL_FROM` documented in spec env-vars table.
+- [x] `convex/auth.ts` lists `[Google, FamilyCode]`.
+- [x] `accessCodes` table in schema with `by_code` index.
+- [x] `verifyAndResolveUser` is internal; clients cannot probe codes.
+- [x] `add` generates unambiguous-alphabet codes; admin CRUD functions gate on `ADMIN_EMAILS`.
+- [x] Login page has two-mode flow (`choose` / `code`); back-navigation works.
+- [x] `AccessCodesManager` renders on `/nytjun` for admin users.
+- [x] Family-code auth keys present in `is.json` and `en.json`; OTP keys removed.
+- [x] `AUTH_RESEND_KEY` and `AUTH_EMAIL_FROM` removed from env-var docs; `ADMIN_EMAILS` documented.
 
 ---
 

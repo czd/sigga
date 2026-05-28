@@ -8,6 +8,7 @@ import { LoadingLine } from "@/components/shared/LoadingLine";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatAbsoluteWithTime } from "@/lib/formatDate";
+import { AccessCodesManager } from "./AccessCodesManager";
 
 function formatLastActive(
 	ts: number | null,
@@ -60,6 +61,8 @@ export function UsageView() {
 				</h1>
 				<p className="text-base text-ink-soft">{t("admin.usage.subtitle")}</p>
 			</header>
+
+			<AccessCodesManager />
 
 			<section className="flex flex-col gap-3">
 				<h2 className="font-serif text-xl font-normal">

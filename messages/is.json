@@ -489,25 +489,18 @@
 	"auth": {
 		"signIn": "Skrá inn",
 		"signInWithGoogle": "Skrá inn með Google",
-		"signInWithEmail": "Skrá inn með tölvupósti",
+		"signInWithCode": "Nota fjölskyldukóða",
 		"signOut": "Skrá út",
 		"notAllowed": "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic.",
 		"greetingWithName": "Halló {name}",
 		"notSignedIn": "Ekki innskráður",
 		"signInFailed": "Innskráning tókst ekki. Reyndu aftur.",
-		"email": "Netfang",
-		"emailPlaceholder": "nafn@domain.is",
-		"emailRequired": "Sláðu inn netfang.",
-		"sendCode": "Senda kóða",
-		"sendingCode": "Sendi kóða...",
-		"codeSent": "Við sendum 6 stafa kóða á {email}. Skoðaðu pósthólfið þitt.",
-		"codeResent": "Nýr kóði sendur.",
-		"codeLabel": "Kóði úr tölvupósti",
-		"codeRequired": "Sláðu inn kóðann úr tölvupóstinum.",
-		"verify": "Staðfesta",
-		"verifying": "Staðfesti...",
-		"resendCode": "Senda kóða aftur",
-		"useDifferentEmail": "Nota annað netfang"
+		"codeFieldLabel": "Fjölskyldukóði",
+		"codePlaceholder": "t.d. abcd-2468",
+		"codeHint": "Kóðann færðu hjá Nic.",
+		"codeRequired": "Sláðu inn fjölskyldukóðann.",
+		"continue": "Halda áfram",
+		"signingIn": "Skrái inn..."
 	},
 	"errors": {
 		"title": "Eitthvað fór úrskeiðis",
@@ -530,6 +523,31 @@
 			"unknownUser": "Óþekktur notandi",
 			"notAuthorizedTitle": "Ekki heimill aðgangur",
 			"notAuthorizedBody": "Þessi síða er aðeins fyrir kerfisstjóra."
+		},
+		"codes": {
+			"heading": "Fjölskyldukóðar",
+			"subtitle": "Búðu til kóða fyrir hvern fjölskyldumeðlim og sendu hann í Messenger-hópinn.",
+			"empty": "Engir kóðar ennþá.",
+			"namePlaceholder": "Nafn — t.d. Helga",
+			"emailPlaceholder": "Netfang (valfrjálst)",
+			"addButton": "Búa til kóða",
+			"adding": "Bý til...",
+			"active": "Virkur",
+			"paused": "Í hléi",
+			"lastUsed": "Síðast notað",
+			"neverUsed": "Aldrei notað",
+			"rotate": "Nýr kóði",
+			"pause": "Setja í hlé",
+			"activate": "Virkja",
+			"remove": "Eyða",
+			"removeConfirm": {
+				"title": "Eyða kóða {name}?",
+				"body": "Manneskjan kemst ekki inn með þessum kóða aftur. Þetta er ekki hægt að afturkalla."
+			},
+			"copy": "Afrita",
+			"copied": "Afritað",
+			"nameRequired": "Nafn má ekki vera tómt.",
+			"error": "Ekki tókst að vista. Reyndu aftur."
 		}
 	}
 }
