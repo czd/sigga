@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as FamilyCode from "../FamilyCode.js";
 import type * as accessCodes from "../accessCodes.js";
 import type * as activity from "../activity.js";
 import type * as appointments from "../appointments.js";
@@ -24,6 +25,7 @@ import type * as medications from "../medications.js";
 import type * as recurringSeries from "../recurringSeries.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
+import type * as whitelist from "../whitelist.js";
 
 import type {
   ApiFromModules,
@@ -32,6 +34,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  FamilyCode: typeof FamilyCode;
   accessCodes: typeof accessCodes;
   activity: typeof activity;
   appointments: typeof appointments;
@@ -48,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   recurringSeries: typeof recurringSeries;
   seed: typeof seed;
   users: typeof users;
+  whitelist: typeof whitelist;
 }>;
 
 /**
