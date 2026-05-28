@@ -58,6 +58,14 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 **Observation:** There is no automated check that flags "a `tCommon` declaration was removed but the identifier still appears elsewhere in the file" vs "the declaration was removed because no more usages remain." TypeScript would catch a leftover usage with no declaration, but it would not catch a *missing cleanup* (orphan declaration after all usages were replaced).
 **Suggested action:** Add to the QA checklist: after `tCommon` declaration removals, grep the post-diff file for remaining `tCommon` and confirm each surviving reference is in a *different* component scope. Alternatively, document in CLAUDE.md that shared-namespace hooks (`tCommon`, `tShared`) may appear in inner components — don't remove the outer declaration without scanning for inner scopes.
 
+### 2026-05-28 · qa · Convex bundler test-file exclusion rule (multi-dot filenames) not documented
+
+**Context:** First test suite landed (`convex/accessCodes.test.ts`, Vitest + convex-test) on the family-code auth branch. The `.test.ts` file lives in `convex/` alongside real function modules. Convex would try to bundle and deploy it — except the bundler skips any file whose basename contains more than one dot (`node_modules/convex/dist/esm/bundler/index.js`: `(base.match(/\./g) || []).length > 1`). `accessCodes.test.ts` has two dots, so it's correctly excluded. A future contributor naming a test `accessCodesTest.ts` or `accessCodes-test.ts` (single dot) would have it bundled, breaking `convex deploy` because it imports vitest/convex-test.
+
+**Observation:** The naming convention is load-bearing for deploy safety but is documented nowhere in CLAUDE.md or the QA agent. The failure mode (broken Vercel deploy) is non-obvious and would only surface on `main`.
+
+**Suggested action:** (1) Add a CLAUDE.md Convex-conventions bullet: "Convex test files MUST use the `*.test.ts` naming convention — the bundler skips files whose basename has >1 dot, so single-dot names like `fooTest.ts` would be deployed and break `convex deploy` (they import vitest)." (2) Add a QA check: for any new `convex/**/*.ts` that imports `vitest` or `convex-test`, FAIL unless the basename matches `*.test.ts` (or `*.spec.ts`).
+
 ---
 
 ## Resolved

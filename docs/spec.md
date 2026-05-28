@@ -26,7 +26,7 @@
 | Framework | Next.js 16 (App Router) | `proxy.ts` replaces deprecated `middleware.ts`; because `app/` is under `src/`, the proxy file lives at `src/proxy.ts` and must `export default` (not a named `proxy` export). Turbopack is default bundler. `next lint` removed — use Biome or ESLint directly. All parallel route slots require explicit `default.js`. |
 | Language | TypeScript (strict) | |
 | Backend / DB | Convex | Real-time subscriptions, file storage, scheduled functions. Hobby tier (free). |
-| Auth | Convex Auth (`@convex-dev/auth`) | Google OAuth provider. Whitelist family email addresses server-side. |
+| Auth | Convex Auth (`@convex-dev/auth`) | Google OAuth + family codes (`ConvexCredentials`). Google enforces `ALLOWED_EMAILS` whitelist; family codes are admin-issued and bypass the whitelist (issuing a code IS the authorization). No invite system. |
 | i18n | `next-intl` | Confirmed Next.js 16 compatible. Uses `src/proxy.ts` for locale routing. Default locale `is` (Icelandic), secondary `en`. No locale prefix for default. |
 | UI | shadcn/ui + Tailwind CSS 4 | Mobile-first. Large tap targets. High contrast. |
 | Package manager | Bun | |
@@ -48,7 +48,9 @@ sigga/
 ├── convex/
 │   ├── _generated/
 │   ├── schema.ts
-│   ├── auth.ts                   # Convex Auth config (Google OAuth)
+│   ├── auth.ts                   # Convex Auth config (Google OAuth + family codes)
+│   ├── FamilyCode.ts             # ConvexCredentials provider for family-code sign-in
+│   ├── accessCodes.ts            # accessCodes table: verifyAndResolveUser + admin CRUD
 │   ├── http.ts                   # HTTP router for auth callbacks
 │   ├── appointments.ts
 │   ├── logEntries.ts
@@ -93,9 +95,10 @@ sigga/
 │   │   │   │   │   ├── page.tsx        # Gögn view server wrapper
 │   │   │   │   │   └── PappirarTabs.tsx # Client: Réttindi + Skjöl tabs
 │   │   │   │   └── nytjun/
-│   │   │   │       └── page.tsx        # Admin-only usage analytics view (admin-gated)
+│   │   │   │       ├── page.tsx        # Admin-only usage analytics view (admin-gated)
+│   │   │   │       └── AccessCodesManager.tsx  # Family-code CRUD UI (rendered inside UsageView)
 │   │   │   └── login/
-│   │   │       └── page.tsx      # Login page (Google OAuth button)
+│   │   │       └── page.tsx      # Login page (Google OAuth + family code; two modes: choose / code)
 │   │   └── layout.tsx            # Bare html/body with fonts + analytics
 │   ├── components/
 │   │   ├── ui/                   # shadcn components (button, card, sheet, dialog, tabs, switch, …)
@@ -279,6 +282,16 @@ export default defineSchema({
     addedBy: v.id("users"),
   }),
 
+  // Aðgangskóðar — family sign-in codes (admin-managed)
+  accessCodes: defineTable({
+    code: v.string(),                      // e.g. "abcd-2468" — plaintext, per-person, revocable
+    name: v.string(),                      // display name of the family member
+    email: v.optional(v.string()),         // if set, links to existing user by email on first use
+    isActive: v.boolean(),
+    userId: v.optional(v.id("users")),     // resolved on first successful sign-in
+    lastUsedAt: v.optional(v.number()),    // unix ms — stamped by verifyAndResolveUser
+  }).index("by_code", ["code"]),
+
   // Events — analytics / error tracking (per-user, admin-only access)
   events: defineTable({
     userId: v.optional(v.id("users")),
@@ -304,23 +317,47 @@ export default defineSchema({
 
 ## Authentication
 
-### Strategy: Convex Auth with Google OAuth
+### Strategy: Convex Auth with Google OAuth and family codes
 
-**Why Google OAuth:**
-- All family members have Google accounts (assumption — verify with Nic).
-- Single-tap sign-in on mobile, no passwords to remember.
-- Convex Auth has a dedicated Google OAuth setup guide.
+Two providers are active: Google OAuth (primary) and a family-code `ConvexCredentials` provider (secondary). Email OTP via Resend was removed — adding a second sending domain requires a paid Resend plan and email-from-Gmail is not possible.
 
-**Whitelist enforcement:**
-- After OAuth completes, a Convex mutation checks the user's email against an allowed list stored in a Convex environment variable (comma-separated emails).
-- If the email is not whitelisted, the session is rejected and the user sees a friendly Icelandic message: "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic."
-- This keeps the app private without building a full invite system.
+**Why both:**
+- Google OAuth: single-tap on mobile, no passwords — preferred path for daughters who already use Google. Whitelist enforced via `ALLOWED_EMAILS`.
+- Family codes: covers family members without a Google account and avoids the magic-link → external browser break that defeats the standalone PWA. Nic generates a personal code per family member, pastes it into the Messenger group, and the member types it into the login screen. Issuing a code IS the authorization — no `ALLOWED_EMAILS` check at this provider.
+- There is no invite system. A family code must be created by an admin before a member can sign in with it.
+
+**Family code shape:**
+- Format: `abcd-2468` — generated from an unambiguous alphabet (no `0/O/1/l/I`), or a custom code accepted at creation time.
+- Codes are stored in plaintext in the private Convex DB so Nic can re-share a lost code via Messenger. Guessing is bounded by Convex Auth's built-in `signIn.maxFailedAttemptsPerHour` (default 10/hr). Codes are per-person and revocable.
+
+**Whitelist enforcement (Google only):**
+- `convex/auth.ts` `createOrUpdateUser` callback checks `args.profile.email` against `ALLOWED_EMAILS` (comma-separated env var) for the **Google** provider only. Rejected sessions throw `ConvexError("Þetta netfang hefur ekki aðgang. Hafðu samband við Nic.")`.
+- `FamilyCode` bypasses `createOrUpdateUser` — the `authorize` call itself resolves the user and is the authorization check.
 
 **Implementation notes:**
+- `convex/FamilyCode.ts` — `ConvexCredentials` provider, `id: "family-code"`. The export carries an explicit `: ConvexCredentialsConfig` type annotation — required to avoid a TS7022 "referenced in its own initializer" error caused by the module importing `internal` from the generated API while the generated API references this module. Do not remove the annotation. `authorize` calls the internal mutation `accessCodes.verifyAndResolveUser` with the typed code and returns `{ userId }`, or throws `ConvexError(WRONG_CODE_MESSAGE)` on a bad/inactive code.
+- `convex/accessCodes.ts` — functions for the `accessCodes` table:
+  - `verifyAndResolveUser` (internalMutation): looks up the code via `by_code` index, checks `isActive`, find-or-creates the linked `users` record (links by email if the code row has an email matching an existing user, else inserts a new user with the code's name/email), stamps `lastUsedAt`, returns `Id<"users"> | null`. Internal so clients cannot probe codes.
+  - `list`, `add`, `rotate`, `setActive`, `remove` — admin-gated queries/mutations. Admin gating uses a module-local `requireAdmin` that checks `ADMIN_EMAILS` (same pattern as `convex/events.ts`). `add` auto-generates a friendly code or accepts a custom one; returns `{ id, code }`.
+- `convex/whitelist.ts` — unchanged; still used by Google OAuth via `isEmailAllowed` / `NOT_ALLOWED_MESSAGE`.
+- `convex/auth.ts` — `providers: [Google, FamilyCode]`.
+- `src/app/[locale]/login/page.tsx` — two `Mode` states: `"choose"` (Google button + "Nota fjölskyldukóða" button) and `"code"` (one text input for the family code + "Halda áfram" + back). No email/OTP UI.
 - Follow the Convex Auth Google OAuth guide: https://labs.convex.dev/auth/config/oauth/google
-- Set env vars: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `SITE_URL`, `ALLOWED_EMAILS`
-- The `src/proxy.ts` file should check auth state and redirect unauthenticated users to `/login`. Use `convexAuthNextjsMiddleware` adapted for Next.js 16's `proxy` convention and `export default` the result.
-- Important: Convex Auth's Next.js support references `middleware.ts` in docs — rename to `src/proxy.ts` and use `export default` for the function. A named `export const proxy` works only for trivial unwrapped proxy bodies; when the export is produced by a wrapper like `convexAuthNextjsMiddleware` or `createMiddleware` from next-intl, Next.js 16 / Turbopack resolves the server bundle via `middlewareModule.default || middlewareModule` and a named-only export throws `TypeError: adapterFn is not a function` at request time. Always default-export.
+- Proxy: `src/proxy.ts` redirects unauthenticated users to `/login`. Use `convexAuthNextjsMiddleware` adapted for Next.js 16's `proxy` convention and `export default` the result. A named-only export throws `TypeError: adapterFn is not a function` at request time — always `export default`.
+
+**Admin code management UI:**
+- `src/app/[locale]/(app)/nytjun/AccessCodesManager.tsx` — rendered inside the existing `UsageView` on the `/nytjun` admin page (gated by `events.isAdmin`). Nic creates, rotates, pauses, and deletes codes here, then copies a code to paste into the family Messenger group. No new route, no bottom-nav change.
+
+**Env vars:**
+| Var | Description |
+|-----|-------------|
+| `AUTH_GOOGLE_ID` | Google OAuth client ID |
+| `AUTH_GOOGLE_SECRET` | Google OAuth client secret |
+| `SITE_URL` | Vercel production URL |
+| `ALLOWED_EMAILS` | Comma-separated list of permitted Google emails (Google OAuth whitelist) |
+| `ADMIN_EMAILS` | Comma-separated list of admin emails (gates `/nytjun` and code management) |
+
+Set all vars on the Convex deployment: `npx convex env set KEY "value"`. `AUTH_RESEND_KEY` and `AUTH_EMAIL_FROM` are no longer used and should be removed from any existing deployment.
 
 **Google Cloud Console setup:**
 - Create OAuth 2.0 client credentials
@@ -424,7 +461,33 @@ messages/
     "signIn": "Skrá inn",
     "signInWithGoogle": "Skrá inn með Google",
     "signOut": "Skrá út",
-    "notAllowed": "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic."
+    "notAllowed": "Þetta netfang hefur ekki aðgang. Hafðu samband við Nic.",
+    "greetingWithName": "Halló {name}",
+    "notSignedIn": "Ekki innskráður",
+    "signInFailed": "Innskráning tókst ekki. Reyndu aftur.",
+    "signInWithCode": "Nota fjölskyldukóða",
+    "codeFieldLabel": "Fjölskyldukóði",
+    "codePlaceholder": "abcd-2468",
+    "codeHint": "Sláðu inn kóðann sem Nic sendi þér.",
+    "codeRequired": "Sláðu inn fjölskyldukóðann þinn.",
+    "continue": "Halda áfram",
+    "signingIn": "Skrái inn..."
+  },
+  "admin": {
+    "codes": {
+      "heading": "Fjölskyldukóðar",
+      "subtitle": "Búðu til og stjórnaðu kóðum fyrir fjölskyldumeðlimi.",
+      "add": "Bæta við kóða",
+      "rotate": "Endurnýja kóða",
+      "pause": "Gera óvirkan",
+      "activate": "Gera virkan",
+      "remove": "Eyða",
+      "copy": "Afrita",
+      "copied": "Afritað",
+      "lastUsed": "Síðast notað {when}",
+      "neverUsed": "Aldrei notað",
+      "removeConfirm": "Ertu viss um að eyða kóða fyrir {name}? Þetta er ekki hægt að afturkalla."
+    }
   }
 }
 ```
@@ -1131,6 +1194,7 @@ const researchedEntitlements = [
 - `AUTH_GOOGLE_SECRET` — Google OAuth client secret
 - `SITE_URL` — `http://localhost:3000` (dev) or Vercel URL (prod)
 - `ALLOWED_EMAILS` — comma-separated list of whitelisted Google emails
+- `ADMIN_EMAILS` — comma-separated list of admin emails (gates `/nytjun` and family-code management)
 
 ### Next.js (`.env.local`)
 - `CONVEX_DEPLOYMENT` — auto-set by `npx convex dev`
@@ -1198,7 +1262,7 @@ Actual build sequence shipped:
 
 ## Resolved Questions
 
-1. ~~Does everyone have a Google account?~~ → **Yes.** Confirmed. Google OAuth is the auth path.
+1. ~~Does everyone have a Google account?~~ → **Moot.** Family codes cover members without a Google account. Auth is now Google OAuth + family codes; either path works.
 2. ~~Sigga's current medications~~ → **Resolved.** 5 medications fully documented with dosages and schedules from Helga. Includes newly identified anti-hormone injection (name TBD).
 3. ~~Key phone numbers~~ → **Resolved.** Brjóstamiðstöð (543 9560), Ljósið (561-3770), Bati (553-1234), emergency numbers all gathered.
 4. ~~App name~~ → **"Sigga".** Confirmed.
