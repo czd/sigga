@@ -3,6 +3,7 @@ import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
+import { countCommentsFor } from "./comments";
 import { enrichReactions, type ReactionSummary } from "./reactions";
 
 type LogEntryDoc = Doc<"logEntries">;
@@ -20,6 +21,7 @@ type AppointmentSummary = {
 type LogEntryWithAuthor = LogEntryDoc & {
 	author: AuthorSummary | null;
 	appointment: AppointmentSummary | null;
+	commentCount: number;
 } & ReactionSummary;
 
 async function resolveAuthor(
@@ -55,12 +57,13 @@ async function enrich(
 	entry: LogEntryDoc,
 	currentUserId: Id<"users">,
 ): Promise<LogEntryWithAuthor> {
-	const [author, appointment, reactions] = await Promise.all([
+	const [author, appointment, reactions, commentCount] = await Promise.all([
 		resolveAuthor(ctx, entry.authorId),
 		resolveAppointment(ctx, entry.relatedAppointmentId),
 		enrichReactions(ctx, entry._id, currentUserId),
+		countCommentsFor(ctx, "logEntry", entry._id),
 	]);
-	return { ...entry, author, appointment, ...reactions };
+	return { ...entry, author, appointment, commentCount, ...reactions };
 }
 
 async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
