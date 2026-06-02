@@ -131,7 +131,6 @@
 		"linkedAppointment": "Tengdur tími",
 		"seenBy": {
 			"one": "{name} sá",
-			"many": "{count} sáu",
 			"label": "{names} sáu þetta"
 		},
 		"errors": {
@@ -161,6 +160,7 @@
 		},
 		"announce": {
 			"sent": "Athugasemd send.",
+			"updated": "Athugasemd uppfærð.",
 			"deleted": "Athugasemd eytt."
 		},
 		"errors": {

@@ -52,6 +52,7 @@ export function CommentThreadSheet({
 		if (editing) {
 			await update({ id: editing._id, content });
 			setEditing(null);
+			announce(t("announce.updated"));
 		} else {
 			await add({ targetType, targetId, content });
 			announce(t("announce.sent"));

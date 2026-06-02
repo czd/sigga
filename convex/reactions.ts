@@ -35,7 +35,9 @@ export async function enrichReactions(
 	const names = await Promise.all(
 		rows.map(async (row) => {
 			const user = await ctx.db.get(row.userId);
-			return user?.name ?? user?.email ?? "—";
+			// Name only — never expose email here, matching comments.list and
+			// journalReads.receipts (this array is shown to the whole family).
+			return user?.name ?? "—";
 		}),
 	);
 	return {

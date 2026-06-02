@@ -61,16 +61,21 @@ export function LogFeed() {
 
 	const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
 
-	// Read-receipt engine: advance my high-water to the newest entry I can see,
-	// then map every other family member to their "landing entry" (the newest
-	// entry their high-water reaches) for the Messenger-style "seen by" cluster.
+	// Read-receipt engine: opening Dagbók means "caught up" — advance my
+	// high-water to *now* (not just the newest entry's timestamp) so the
+	// care-tab badge, which also counts comments created after the newest
+	// journal entry, actually clears on read. Then map every other family
+	// member to their "landing entry" for the Messenger-style "seen by"
+	// cluster. Using `now` doesn't shift the avatars: no entry exists between
+	// the newest entry's time and now, so each person's landing entry is
+	// unchanged.
 	const markSeen = useMutation(api.journalReads.markSeen);
 	const receipts = useQuery(api.journalReads.receipts);
 	const newestSeen = entries[0]?._creationTime;
 
 	useEffect(() => {
 		if (newestSeen === undefined) return;
-		markSeen({ seenThroughTime: newestSeen }).catch(() => {
+		markSeen({ seenThroughTime: Date.now() }).catch(() => {
 			// Read-receipt advance is best-effort; never blocks reading.
 		});
 	}, [newestSeen, markSeen]);

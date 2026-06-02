@@ -131,7 +131,6 @@
 		"linkedAppointment": "Linked appointment",
 		"seenBy": {
 			"one": "{name} saw",
-			"many": "{count} saw",
 			"label": "{names} saw this"
 		},
 		"errors": {
@@ -161,6 +160,7 @@
 		},
 		"announce": {
 			"sent": "Comment sent.",
+			"updated": "Comment updated.",
 			"deleted": "Comment deleted."
 		},
 		"errors": {
