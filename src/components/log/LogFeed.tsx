@@ -189,7 +189,7 @@ export function LogFeed() {
 								) : (
 									body
 								)}
-								<div className="-mt-2 flex items-center gap-1 px-2">
+								<div className="-mt-2 -mb-2 flex items-center gap-0.5 px-2.5">
 									<ReactionButton
 										logEntryId={entry._id}
 										count={entry.reactionCount}

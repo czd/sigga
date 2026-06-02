@@ -141,7 +141,8 @@
 	"reactions": {
 		"like": "Líka við færslu",
 		"unlike": "Taka líkann til baka",
-		"names": "Hjarta — {names}"
+		"names": "Hjarta — {names}",
+		"likedBy": "Líkað af"
 	},
 	"discussion": {
 		"comments": "Athugasemdir",

@@ -141,7 +141,8 @@
 	"reactions": {
 		"like": "Like entry",
 		"unlike": "Remove like",
-		"names": "Heart — {names}"
+		"names": "Heart — {names}",
+		"likedBy": "Liked by"
 	},
 	"discussion": {
 		"comments": "Comments",
