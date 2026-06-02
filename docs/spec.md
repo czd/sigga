@@ -60,8 +60,11 @@ sigga/
 │   ├── documents.ts
 │   ├── recurringSeries.ts        # Recurring appointment series CRUD + invariant helper
 │   ├── crons.ts                  # Daily cron: ensure next occurrences for active series
-│   ├── backup.ts                 # Scheduled weekly JSON export (Phase 14 — not yet built)
-│   ├── activity.ts               # sinceLastVisit query + unreadLogCount query (cross-table activity feed)
+│   ├── reactions.ts              # toggle mutation + enrichReactions helper (journal entries only)
+│   ├── comments.ts               # list / add / update / remove + countCommentsFor helper (journal + appointments)
+│   ├── journalReads.ts           # markSeen mutation + receipts query (Dagbók "seen by" engine)
+│   ├── backup.ts                 # Scheduled weekly JSON export (Phase 14 — built)
+│   ├── activity.ts               # sinceLastVisit query + unreadCount query (cross-table activity feed + care-badge server-side read high-water)
 │   ├── events.ts                 # Analytics event logging (app_open, page_view, error, …) + isAdmin query
 │   ├── users.ts                  # me + list + attentionCounts queries
 │   └── seed.ts                   # Dev seed data
@@ -122,10 +125,17 @@ sigga/
 │   │   │   ├── SeriesForm.tsx
 │   │   │   └── DayPicker.tsx         # Seven day-chip multi-select
 │   │   ├── timar/
-│   │   │   └── SeriesEntryRow.tsx    # Entry-point row linking to /timar/reglulegir
+│   │   │   ├── SeriesEntryRow.tsx    # Entry-point row linking to /timar/reglulegir
+│   │   │   └── TimarDetail.tsx       # Appointment detail pane (desktop right panel, includes CommentButton)
 │   │   ├── log/
 │   │   │   ├── LogFeed.tsx
-│   │   │   └── LogEntryForm.tsx
+│   │   │   ├── LogEntryForm.tsx
+│   │   │   ├── ReactionButton.tsx        # ❤️ heart toggle pill (journal entries only)
+│   │   │   ├── CommentButton.tsx         # 💬 comment-count pill → opens CommentThreadSheet
+│   │   │   ├── CommentThreadSheet.tsx    # Shared bottom Sheet for journal + appointment comment threads
+│   │   │   ├── CommentRow.tsx            # Single comment row (author, time, edit/delete if mine)
+│   │   │   ├── CommentComposer.tsx       # Pinned textarea + Send button
+│   │   │   └── SeenByCluster.tsx         # Per-entry avatar cluster for "seen by" receipts
 │   │   ├── info/
 │   │   │   ├── MedicationTable.tsx
 │   │   │   ├── MedicationForm.tsx
@@ -222,6 +232,29 @@ export default defineSchema({
     relatedAppointmentId: v.optional(v.id("appointments")),
     editedAt: v.optional(v.number()),  // set on edit, null on creation
   }),
+
+  // Reactions — ❤️ on journal entries only (one row = one person's heart)
+  reactions: defineTable({
+    logEntryId: v.id("logEntries"),
+    userId: v.id("users"),
+  })
+    .index("by_entry", ["logEntryId"])
+    .index("by_entry_and_user", ["logEntryId", "userId"]),
+
+  // Comments — polymorphic: journal entries AND appointments share one table
+  comments: defineTable({
+    targetType: v.union(v.literal("logEntry"), v.literal("appointment")),
+    targetId: v.union(v.id("logEntries"), v.id("appointments")),
+    authorId: v.id("users"),
+    content: v.string(),
+    editedAt: v.optional(v.number()),  // set on edit; shows "Breytt" badge
+  }).index("by_target", ["targetType", "targetId"]),
+
+  // JournalReads — per-user Dagbók read high-water mark (the "seen by" engine)
+  journalReads: defineTable({
+    userId: v.id("users"),
+    lastSeenTime: v.number(), // _creationTime of the newest logEntry this user has seen
+  }).index("by_user", ["userId"]),
 
   // Lyf — medications
   medications: defineTable({
@@ -414,9 +447,23 @@ messages/
     "people": "Fólk",
     "paperwork": "Gögn"
   },
-  "dashboard": { ... },
+  "dashboard": {
+    "sinceLastVisit": {
+      "commentLog": "{name} skrifaði athugasemd við dagbókarfærslu",
+      "commentAppointment": "{name} skrifaði athugasemd við „{title}""
+      // … other sinceLastVisit item templates
+    }
+    // … other dashboard keys
+  },
   "timar": { ... },
-  "dagbok": { ... },
+  "dagbok": {
+    "seenBy": {
+      "one": "{name} sá",
+      "many": "{count} sáu",
+      "label": "{names} sáu þetta"
+    }
+    // … other dagbok keys
+  },
   "umonnun": {
     "title": "Umönnun",
     "hvernig": "Hvernig Siggu líður.",
@@ -472,6 +519,22 @@ messages/
     "codeRequired": "Sláðu inn fjölskyldukóðann þinn.",
     "continue": "Halda áfram",
     "signingIn": "Skrái inn..."
+  },
+  "reactions": {
+    "like": "Líka við færslu",
+    "unlike": "Taka líkann til baka",
+    "names": "Hjarta — {names}"
+  },
+  "discussion": {
+    "comments": "Athugasemdir",
+    "write": "Skrifa athugasemd",
+    "placeholder": "Skrifa athugasemd…",
+    "send": "Senda",
+    "empty": "Engar athugasemdir ennþá.",
+    "edited": "Breytt",
+    "openCount": "Opna athugasemdir ({count})",
+    "deleteConfirm": { "title": "Eyða athugasemd?", "body": "Þetta er ekki hægt að afturkalla." },
+    "announce": { "sent": "Athugasemd send.", "deleted": "Athugasemd eytt." }
   },
   "admin": {
     "codes": {
@@ -616,6 +679,13 @@ A reverse-chronological feed of all care-relevant events.
    - "Breytt" badge if `editedAt` is set
    - Edit button (pencil, `touch-icon` size) — only visible to the original author
    - Linked appointment shown as a small chip (if set)
+   - **Footer action row** (separated by `border-t border-divider`):
+     - `ReactionButton` — ❤️ heart toggle pill (`min-h-12 px-4 rounded-full`). Filled + sage tint when `reactedByMe`; outline otherwise. Shows `reactionCount` when > 0. Calls `reactions.toggle`. No optimistic update. `aria-label` includes reactor names for screen readers.
+     - `CommentButton` — 💬 pill showing `commentCount`. Opens `CommentThreadSheet` for this entry.
+   - **"Seen by" cluster** (`SeenByCluster`): right-aligned avatar cluster for users whose `journalReads.lastSeenTime` lands on this entry. Shows up to 3 avatars + "+N" overflow. The current user's avatar is omitted. `aria-label` lists names. Renders presence only — no "unseen by" callouts.
+   - On feed render, `LogFeed` calls `journalReads.markSeen({ seenThroughTime: newestEntry._creationTime })` so opening the journal advances the caller's high-water mark. Per-entry seen-by landing is computed client-side from `journalReads.receipts`.
+
+   **Known limitation:** the landing-entry computation maps receipts against the currently-loaded page only. A member whose high-water falls on an entry not yet paged in won't show an avatar until "Sýna eldri" loads that page.
 
 3. **Entry form (sheet from bottom):**
    - Multiline text input. Placeholder: "Hvað gerðist? Hvaða upplýsingar eru mikilvægar?"
@@ -655,6 +725,7 @@ All appointments — upcoming and past. Reachable via the bottom nav (second slo
    - Location (if set)
    - Driver section: if assigned, shows avatar + name. If not, shows "Enginn skutlar" + "Ég get!" (I can!) volunteer button. Tapping "Ég get!" assigns the current user as driver immediately (mutation).
    - Notes preview (if any)
+   - `CommentButton` — 💬 pill showing `commentCount`. Opens `CommentThreadSheet` for this appointment. Both past and upcoming appointments get it — coordination comments happen before the appointment; recollection after.
    - Tap card → expand or navigate to detail/edit view
 
 3. **Past list:** Sorted by date descending (most recent first). Same card layout but driver section is static (no volunteer button). Optional: "Skrá í dagbók" shortcut to create a log entry linked to this past appointment.
@@ -670,6 +741,8 @@ All appointments — upcoming and past. Reachable via the bottom nav (second slo
 5. **Edit/delete for series-bound appointments:** Editing an appointment that belongs to a series shows "Hlaupa yfir þennan tíma" instead of "Eyða". Confirming sets `status: "cancelled"` (keeps the slot visible in the list and allows `ensureNextOccurrence` to advance). Standalone appointments are deleted outright. Confirmation text differs: skip uses "Hlaupa yfir þennan tíma?"; delete uses "Ertu viss? Þetta er ekki hægt að afturkalla."
 
 **AppointmentCard aesthetic:** Cards use the borderless Bókasafn style — `bg-paper ring-1 ring-foreground/10 rounded-2xl` shell; `font-serif` title; `text-ink-faint`/`text-ink-soft` for secondary text instead of `text-muted-foreground`. Interior row separators use `border-t border-divider`.
+
+**`TimarDetail` (desktop right-hand pane):** Shows full appointment detail for a materialized (non-virtual) appointment selected in the calendar. Includes `CommentButton` in the footer — the same pill as on `AppointmentCard`. Virtual recurring occurrences do not expose a `TimarDetail` comment button (no comments exist for them yet; `commentCount: 0` is returned by `byRange`).
 
 ---
 
@@ -835,9 +908,11 @@ Label text always visible (not icon-only). Bottom gradient fade + safe-area-inse
 - `get` — query: single appointment by ID.
 - `create` — mutation: create appointment. Auto-set `createdBy`, `updatedBy`, `updatedAt`, `status: "upcoming"`.
 - `update` — mutation: update appointment fields. Set `updatedBy`, `updatedAt`. **Side-effect:** if the updated row has a `seriesId` and transitions out of `"upcoming"` status (to `"completed"` or `"cancelled"`), calls `ensureNextOccurrence(ctx, seriesId)` to spawn the next occurrence immediately.
-- `remove` — mutation: delete appointment. **Side-effect:** if the deleted row had a `seriesId` and was `"upcoming"`, calls `ensureNextOccurrence(ctx, seriesId)`.
+- `remove` — mutation: delete appointment. **Side-effects:** (1) queries `comments.by_target` for this appointment and deletes every comment row (cascade); (2) if the deleted row had a `seriesId` and was `"upcoming"`, calls `ensureNextOccurrence(ctx, seriesId)`. Series-skip (`status: "cancelled"`) does NOT cascade — comments on a cancelled-but-visible slot persist.
 - `volunteerToDrive` — mutation: sets `driverId` to current user. Simple, one-tap.
-- `byRange` — query: `{ startMs: number, endMs: number }`. Returns all appointments (materialized rows + virtual recurring occurrences) whose `startTime` falls in `[startMs, endMs)`. Virtual occurrences are computed from active `recurringSeries` entries rather than stored in the DB. Virtual generation is clamped to `max(startMs, now)` — past slots that were never materialized are never synthesized. Each result row carries a `virtual: boolean` flag; calendar UIs use this to distinguish virtual occurrences (show `Repeat` icon; no driver assignment / edit / cancel) from materialized rows.
+- `byRange` — query: `{ startMs: number, endMs: number }`. Returns all appointments (materialized rows + virtual recurring occurrences) whose `startTime` falls in `[startMs, endMs)`. Virtual occurrences are computed from active `recurringSeries` entries rather than stored in the DB. Virtual generation is clamped to `max(startMs, now)` — past slots that were never materialized are never synthesized. Each result row carries a `virtual: boolean` flag; calendar UIs use this to distinguish virtual occurrences (show `Repeat` icon; no driver assignment / edit / cancel) from materialized rows. Virtual rows carry `commentCount: 0` (no comments exist for them yet).
+
+**Enrichment note:** every appointment query (`list`, `upcoming`, `past`, `get`, `byWeek`, `byRange`) passes rows through the `withDriver` enricher, which now also resolves `commentCount: number` via `countCommentsFor`. This means every appointment card and detail pane shows the comment badge automatically.
 
 **recurringSeries.ts:**
 
@@ -863,11 +938,27 @@ crons.cron(
 ```
 Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guidelines.
 
+**reactions.ts:**
+- `toggle` — mutation: `{ logEntryId }`. Looks up the caller's `by_entry_and_user` row for the entry; if it exists, deletes it (un-heart); otherwise inserts one (heart). Validates that the entry exists (`ConvexError("Færslan fannst ekki.")` if not). Returns nothing — the live `useQuery` subscription on the feed re-renders. Journal entries only; no reaction on appointments.
+- `enrichReactions(ctx, logEntryId, currentUserId)` — **helper** (not a public query): returns `{ reactionCount, reactedByMe, reactorNames }`. Called by the `logEntries` enricher so the feed subscription covers reaction state without a separate subscription.
+
+**comments.ts:**
+- `list` — query: `{ targetType, targetId }`. Returns the thread ordered ascending by `_creationTime` (oldest first, chat reading order). Each row is enriched with `author: { _id, name, image }` and `isMine: boolean`. Requires auth.
+- `add` — mutation: `{ targetType, targetId, content }`. Trims content; throws `ConvexError("Athugasemd má ekki vera tóm.")` if empty after trim. Validates the target exists. Sets `authorId = currentUser`.
+- `update` — mutation: `{ id, content }`. Author-only (`ConvexError("Þú getur aðeins breytt þínum eigin athugasemdum.")`). Trims; sets `editedAt = Date.now()`.
+- `remove` — mutation: `{ id }`. Author-only (`ConvexError("Þú getur aðeins eytt þínum eigin athugasemdum.")`). Deletes the row.
+- `countCommentsFor(ctx, targetType, targetId)` — **helper**: counts comments for a target via the `by_target` index. Used by both `logEntries` and `appointments` enrichers.
+
+**journalReads.ts:**
+- `markSeen` — mutation: `{ seenThroughTime }`. Upserts the caller's `journalReads` row to `lastSeenTime = max(existing, seenThroughTime)`. Monotonic — never moves backward, so a stale tab cannot regress receipts. Called by the Dagbók feed when it renders (client passes the newest entry's `_creationTime`).
+- `receipts` — query: `{}`. Returns `[{ userId, name, image, lastSeenTime }]` for every user that has a `journalReads` row. The feed component maps each user to their "landing entry" (newest entry with `_creationTime <= lastSeenTime`) client-side to render the "seen by" avatar clusters. Requires auth.
+
 **logEntries.ts:**
-- `list` — query: paginated, ordered by `_creationTime` desc. Args: `{ limit: number, cursor?: string }`.
-- `recent` — query: latest N entries (for dashboard). Args: `{ count: number }`.
+- `list` — query: paginated, ordered by `_creationTime` desc. Args: `{ limit: number, cursor?: string }`. Each entry is enriched with `reactionCount: number`, `reactedByMe: boolean`, `reactorNames: string[]`, and `commentCount: number`.
+- `recent` — query: latest N entries (for dashboard). Args: `{ count: number }`. Same enrichment as `list`.
 - `add` — mutation: create log entry. Auto-set `authorId`.
 - `update` — mutation: edit content. Must verify `authorId` matches current user. Sets `editedAt`.
+- **Enrichment note:** `recent`, `list`, and `get` all call `enrichReactions` + `countCommentsFor` internally so every subscription carries the social-feature fields. Read-amplification is acceptable at family scale.
 
 **medications.ts:**
 - `list` — query: all medications. Args: `{ activeOnly?: boolean }`.
@@ -901,16 +992,16 @@ Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guideline
 - `attentionCounts` — query: returns `{ dashboard: number, care: number, paperwork: number }` — badge counts for the nav attention indicator.
 
 **activity.ts:**
-- `sinceLastVisit` — query: `{ cursorMs: number, limit?: number }`. Returns a mixed activity feed (log entries, appointments, documents, entitlements) created/updated after `cursorMs`, sorted newest-first, capped at `limit` (default 20). Each item is tagged by `kind` ("log" | "appointment" | "document" | "entitlement_status"). For `entitlement_status` items, the returned shape includes `updatedByName` (resolved via a `nameOf` helper that looks up the user by ID) and `newStatus`. Icelandic copy for the entitlement item uses curly quotes (e.g. `„{title}"`) — ICU brace syntax requires curly quotes to avoid treating `{title}` as a literal brace escape.
-- `unreadLogCount` — query: `{ cursorMs: number }`. Returns the count of log entries created after `cursorMs`.
+- `sinceLastVisit` — query: `{ cursorMs: number, limit?: number }`. Returns a mixed activity feed (log entries, appointments, documents, entitlements, **comments**) created/updated after `cursorMs`, sorted newest-first, capped at `limit` (default 20). Each item is tagged by `kind` ("log" | "appointment" | "document" | "entitlement_status" | **"comment"**). For `entitlement_status` items, the returned shape includes `updatedByName` (resolved via a `nameOf` helper that looks up the user by ID) and `newStatus`. For `comment` items, the shape includes `authorName`, `preview` (first ~80 chars), `targetType` ("logEntry" | "appointment"), and `targetLabel` (journal snippet or appointment title — for deep linking). Icelandic copy for the entitlement item uses curly quotes (e.g. `„{title}"`) — ICU brace syntax requires curly quotes to avoid treating `{title}` as a literal brace escape. **Reactions are excluded from the feed — only comments are discoverable.**
+- `unreadCount` — query: `{}`. Returns the count of journal entries **and comments** created after the caller's server-side `journalReads.lastSeenTime` (read from the `journalReads` table, not a client cursor). This replaces the previous per-device localStorage cursor for the care-tab badge, making the badge cross-device consistent. Called by `BottomNav` and `Sidebar` without any argument. *(Previously named `unreadLogCount` with a `{ cursorMs }` arg — callers must be updated.)*
 
 **events.ts:**
 - `log` — mutation: `{ type, path?, message?, stack?, userAgent?, metadata? }`. Inserts a row in the `events` table for analytics / error tracking. Requires auth (throws `ConvexError("Ekki innskráður")` if unauthenticated).
 - `isAdmin` — query: returns `boolean` — `true` if the caller's email is in the `ADMIN_EMAILS` env var, `false` otherwise. **Exception to the requireAuth pattern:** returns `false` for unauthenticated callers instead of throwing, so the UI can branch without a try/catch. This is one of two documented exceptions (the other is `users.me`).
 - `usage` — query: `{ sinceDays?: number }`. Returns per-user usage stats (total events, app opens, page views, errors, last active). Requires admin (throws if caller is not in `ADMIN_EMAILS`). Used by the `/nytjun` admin page.
 
-**backup.ts:** (Phase 14 — not yet built)
-- `weeklyExport` — scheduled action (Convex cron): runs weekly. Queries all data, serializes to JSON, stores as a file in Convex storage. Keeps last 4 backups, deletes older ones.
+**backup.ts:** (Phase 14 — built)
+- `weeklyExport` — scheduled action (Convex cron): runs weekly. Queries all data, serializes to JSON, stores as a file in Convex storage. Keeps last 4 backups, deletes older ones. **Note:** the backup snapshot covers `users`, `appointments`, `recurringSeries`, `logEntries`, `medications`, `contacts`, `entitlements`, `documents`, `events` — it does not include the three social tables (`reactions`, `comments`, `journalReads`) or `backups` itself. Update the snapshot to include these if backup coverage of social data is ever required.
 - Register in `convex/crons.ts` using `crons.cron` (the deprecated `crons.weekly` / `crons.daily` helpers must not be used — Convex guidelines require `crons.interval` or `crons.cron`):
   ```typescript
   crons.cron(

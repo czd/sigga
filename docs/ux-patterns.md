@@ -38,6 +38,7 @@ Inputs this file reacts to: `docs/superpowers/audits/2026-04-19-ux-inventory.md`
 | 18 | Accessibility | Cross-link to the a11y audit + core rules | [#pattern-18](#pattern-18--accessibility) |
 | 19 | Commitment confirmation | Dialog-gating any "I take this on" action | [#pattern-19](#pattern-19--commitment-confirmation) |
 | 20 | Gaps needing Nic | Items the rulebook can't decide alone | [#pattern-20](#pattern-20--gaps-the-rulebook-cant-decide-without-nics-input) |
+| 21 | Reactions, comments & receipts | Heart toggles, comment threads, "seen by" clusters | [#pattern-21](#pattern-21--reactions-comments--read-receipts) |
 
 ---
 
@@ -822,6 +823,63 @@ The rulebook has a canonical answer for all 19 interaction patterns. After Nic's
 2. **Whether `DrivingCta` should be the one v1 surface to add optimistic UI** (Pattern 14 default-no) — today's blocking round-trip on LTE is probably tolerable, but it's the highest-frequency commit in the app and a candidate if audience feedback surfaces slowness. Decision deferred to post-Phase-D audience testing. Nic has accepted the default-no for now.
 
 Everything else — edit, destroy, create, sheet vs dialog, headline scale, tap floor, list-detail, date format, actor, loading, error, tel, colour, i18n, a11y, commitment — has a single canonical answer above.
+
+---
+
+## Pattern 21 — Reactions, Comments & Read Receipts
+
+**What it is:** The three social-layer interactions added in Phase 18: ❤️ heart reactions on journal entries, flat comment threads on journal entries and appointments, and Messenger-style "seen by" avatar clusters on the journal feed.
+
+**Canonical answers:**
+
+**Heart button (`ReactionButton`):** Follows Pattern 7 (48px floor: `min-h-12 px-4 rounded-full`). Filled heart + sage tint when `reactedByMe`; outline heart otherwise. Shows `reactionCount` when > 0. Calls `reactions.toggle`. **No optimistic update** (Pattern 14). `aria-label` from `reactions.like` / `reactions.unlike`; appends reactor names when count > 0 so screen-reader users hear "Hjarta — Helga, Anna". Journal entries only — no heart on appointments.
+
+**Comment button (`CommentButton`):** Same pill shape (`min-h-12 px-4 rounded-full`), `MessageCircle` icon + `commentCount`. Opens `<CommentThreadSheet>` via Pattern 4 (Sheet = complete a task). Present on both journal entry cards and appointment cards/detail.
+
+**`CommentThreadSheet`:** Bottom Sheet (`side="bottom"`, `max-h-[92vh]`, `rounded-t-2xl`, `showCloseButton={false}` per Pattern 4). Header = `discussion.comments` title + muted parent summary so the user keeps context. Body = flat comment list, oldest-first (chat order), each row = `Avatar size-9` + name + `<time>` relative + sr-only absolute (Pattern 9) + content. Author's own comments expose "Breyta" (inline edit, Pattern 1) and "Eyða" → `ConfirmDialog` (Pattern 2, `discussion.deleteConfirm.*`). "Breytt" badge when `editedAt` is set. Empty state = Pattern 5 line (`discussion.empty`). Footer = `CommentComposer` (multiline `Textarea` + `size="touch"` "Senda"). Success announces via live-region (`discussion.announce.sent`) not a toast (Pattern 11).
+
+**Read receipts (`SeenByCluster`):** Right-aligned avatar cluster per journal entry, showing users whose `journalReads.lastSeenTime` lands at that entry (their "landing entry"). Up to 3 avatars + "+N" overflow. The current user is omitted (you don't need to be told you saw your own view). `aria-label` lists names (`dagbok.seenBy.label`). Tone rule: **presence, not pressure** — no "unseen by" callouts, no nagging. The absence of an avatar at the top means someone hasn't opened it yet — that fact is quiet, not accusatory. `LogFeed` calls `journalReads.markSeen` on render so opening the journal = you're caught up to the top.
+
+**When these apply:**
+- Heart button: journal entry cards (`LogFeed`) only.
+- Comment button: journal entry cards + `AppointmentCard` + `TimarDetail` (materialized appointments only, not virtual occurrences).
+- Comment thread sheet: shared `CommentThreadSheet` handles both `targetType: "logEntry"` and `targetType: "appointment"`.
+- Seen-by clusters: `LogFeed` only (journal feed, not appointment threads or per-comment).
+
+**What these patterns inherit:**
+- Pattern 2 (ConfirmDialog) for comment delete.
+- Pattern 4 (Sheet = task) for the thread sheet.
+- Pattern 7 (48px floor) for all pill-shaped buttons.
+- Pattern 9 (`<time>` + sr-only absolute) for comment timestamps.
+- Pattern 11 (live-region announce, no toast) for comment send/delete success.
+- Pattern 14 (no optimistic UI) for heart toggle and comment send.
+- Pattern 16 (palette tokens only, no inline hex) for filled-heart sage tint.
+- Pattern 17 (Icelandic-first, feminine forms) for all copy — "send" not "sent", `discussion.send` → "Senda".
+
+**Code recipe (comment delete, combining Patterns 2 + 21):**
+
+```tsx
+<ConfirmDialog
+  open={confirmOpen}
+  onOpenChange={setConfirmOpen}
+  title={t("discussion.deleteConfirm.title")}
+  body={t("discussion.deleteConfirm.body")}
+  confirmLabel={tCommon("delete")}
+  confirmVariant="destructive"
+  onConfirm={async () => {
+    await removeComment({ id: comment._id });
+    announce(t("discussion.announce.deleted"));
+  }}
+/>
+```
+
+**Icelandic copy:** `discussion.*` namespace — `comments` "Athugasemdir", `send` "Senda", `empty` "Engar athugasemdir ennþá.", `edited` "Breytt", `announce.sent` "Athugasemd send.", `announce.deleted` "Athugasemd eytt.". `reactions.like` "Líka við færslu", `reactions.unlike` "Taka líkann til baka", `reactions.names` "Hjarta — {names}". Seen-by: `dagbok.seenBy.one` "{name} sá", `dagbok.seenBy.many` "{count} sáu", `dagbok.seenBy.label` "{names} sáu þetta". Curly Icelandic quotes in ICU strings per existing `activity` convention.
+
+**English mirror:** `discussion.send` "Send", `discussion.empty` "No comments yet.", `discussion.announce.sent` "Comment sent.", `reactions.like` "Like entry", `reactions.unlike` "Unlike entry".
+
+**A11y requirements:** All pill buttons ≥ 48px. `aria-label` on heart button includes reactor names when count > 0 (screen readers hear the names, sighted users see the count). `<time dateTime={iso}>` + `<span className="sr-only">{absolute}</span>` on every comment timestamp. No new soft-return exceptions to `requireAuth` — all new queries/mutations throw for unauthenticated callers.
+
+**Rationale (brief):** Designed to match Messenger muscle memory (the family is migrating from it) while keeping tone calm. The single ❤️ heart avoids emoji-picker complexity and negative reactions that land badly in a cancer-care context. Flat threads keep the surface predictable. Read receipts are "presence" — the design rule is that the interface never says "she hasn't seen it yet."
 
 ---
 

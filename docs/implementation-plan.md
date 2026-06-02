@@ -1063,6 +1063,79 @@ Test files live adjacent to the code they cover — `convex/*.test.ts` for backe
 
 ---
 
+## Phase 18: Reactions, Comments & Read Receipts
+
+### Status (2026-06-02) — Shipped on branch `claude/journal-calendar-reactions-comments-CksC5`
+
+Design spec: `docs/superpowers/specs/2026-06-02-reactions-comments-receipts-design.md`. Build plan: `docs/superpowers/plans/2026-06-02-reactions-comments-receipts.md`.
+
+Adds ❤️ reactions on journal entries, flat comment threads on both journal entries and appointments, and Messenger-style "seen by" read receipts on the Dagbók feed. All new activity is discoverable via the "Síðan síðast" dashboard feed and the care-tab badge; reactions are silent (visible on the item, not in the feed).
+
+### Locked product decisions
+
+| Decision | Choice |
+| --- | --- |
+| Reaction vocabulary | Single ❤️ heart. One tap toggles on/off. No emoji picker, no negative reactions. |
+| Reactions — where | Journal entries only. Reactions on appointments are out of scope (they are facts, not authored posts). |
+| Comments — where | Both journal entries and appointments (coordination comments on appointments are useful). |
+| Discovery | Comments appear in "Síðan síðast" and bump the care badge. Reactions are silent. |
+| Read receipts | Journal only. Messenger-style per-user high-water mark. Always on, family-wide, no opt-out. |
+| Thread style | Flat (no nested replies), oldest-first (chat order). |
+| Comment authors | Can edit AND delete their own comments (looser than journal entries, which are append-only). |
+
+### What shipped
+
+**Schema (additive — no migration needed):**
+- `reactions` table: `{ logEntryId, userId }` — indexes `by_entry`, `by_entry_and_user`.
+- `comments` table: `{ targetType: "logEntry"|"appointment", targetId, authorId, content, editedAt? }` — index `by_target`.
+- `journalReads` table: `{ userId, lastSeenTime }` — index `by_user`.
+
+**New Convex modules:**
+- `convex/reactions.ts` — `toggle` mutation + `enrichReactions` helper.
+- `convex/comments.ts` — `list`, `add`, `update`, `remove` + `countCommentsFor` helper.
+- `convex/journalReads.ts` — `markSeen` mutation + `receipts` query.
+
+**Modified Convex modules:**
+- `convex/logEntries.ts` — `recent`/`list`/`get` enrich each entry with `reactionCount`, `reactedByMe`, `reactorNames`, `commentCount`.
+- `convex/appointments.ts` — `withDriver` enricher gains `commentCount`; `remove` cascades comment deletion for standalone appointments. Virtual rows in `byRange` carry `commentCount: 0`.
+- `convex/activity.ts` — `sinceLastVisit` gains `comment` item kind. `unreadLogCount` renamed to `unreadCount` (args `{}`, reads server-side `journalReads` high-water, counts log entries + comments — previously read a client-supplied `cursorMs`).
+
+**New UI components (under `src/components/log/`):**
+- `ReactionButton.tsx`, `CommentButton.tsx`, `CommentThreadSheet.tsx`, `CommentRow.tsx`, `CommentComposer.tsx`, `SeenByCluster.tsx`.
+
+**Modified UI:**
+- `LogFeed.tsx` — footer action row (ReactionButton + CommentButton) + SeenByCluster + `markSeen` on render.
+- `AppointmentCard.tsx` — CommentButton in card action area.
+- `TimarDetail.tsx` — CommentButton in detail footer.
+- `BottomNav.tsx`, `Sidebar.tsx` — drop localStorage cursor arg; call `api.activity.unreadCount` with no args.
+- `SinceLastVisit.tsx` — renders `comment` item kind.
+
+**i18n:**
+- New `reactions` and `discussion` namespaces in `messages/{is,en}.json`.
+- New `dagbok.seenBy.*` keys.
+- New `dashboard.sinceLastVisit.commentLog` and `commentAppointment` templates.
+
+**Known tradeoff:** the "seen by" landing-entry computation in `LogFeed` maps receipts against the currently-loaded paginated page only. A member whose high-water falls on an entry not yet paged in won't show an avatar until "Sýna eldri" loads that page.
+
+### Exit criteria
+
+- [x] Three new tables in schema with correct indexes; plain deploy (no migration).
+- [x] `reactions.toggle` is idempotent (toggle on → off → on).
+- [x] `comments.update`/`remove` are author-only.
+- [x] `appointments.remove` cascades comment deletion; series skip does not.
+- [x] `journalReads.markSeen` is monotonic (never regresses).
+- [x] Every appointment query (`list`, `upcoming`, `past`, `get`, `byWeek`, `byRange`) carries `commentCount`.
+- [x] `activity.unreadCount` (renamed from `unreadLogCount`) reads the server-side high-water; `BottomNav` + `Sidebar` call it with no args.
+- [x] `sinceLastVisit` includes `comment` kind; reactions are excluded.
+- [x] Heart toggles live across two browser tabs (Convex subscription).
+- [x] Comment thread opens from journal entry and appointment surfaces.
+- [x] Comment edit/delete is author-only; "Breytt" badge shows when `editedAt` is set.
+- [x] Seen-by avatars advance to the newest entry when the journal is opened.
+- [x] `messages/{is,en}.json` key-parity; `reactions`, `discussion`, `dagbok.seenBy.*` namespaces present.
+- [x] All tap targets ≥ 48px; no inline hex; `<time>` + sr-only on comment timestamps.
+
+---
+
 ## Post-Phase-17: Family-Code Login
 
 ### Status (2026-05-28) — Shipped

@@ -382,3 +382,13 @@ Suggested action: After the full feature branch is complete, invoke docs-sync to
 Context: reactions.test.ts:10 unused userId introduces a new warning; 4 pre-existing CSS warnings are grandfathered.
 Observation: No QA rule distinguishes pre-existing warnings from new ones introduced by the diff. New warnings should be FAIL; pre-existing tolerated ones should be an explicit allow-list.
 Suggested action: Add to qa agent rules: baseline the warning count before the diff (git stash, run lint, git stash pop); any count increase is FAIL. Current item: fix unused userId in reactions.test.ts:10.
+
+### 2026-06-02 · docs-sync · backup.ts export omits reactions/comments/journalReads tables
+Context: Phase 18 added three tables. The weekly break-glass backup (backup.ts) snapshots a hardcoded table list that was not extended.
+Observation: Comments are real family-generated content; excluding them from the break-glass JSON export is a latent data-loss risk on restore. reactions/journalReads are lower-stakes but should be included for a complete snapshot.
+Suggested action: Add comments (at minimum) — ideally all three — to the backup snapshot list. Decide whether ephemeral receipts/reactions are worth backing up.
+
+### 2026-06-02 · docs-sync · sinceLastVisit cursor vs unreadCount high-water divergence undocumented
+Context: activity.sinceLastVisit still takes client {cursorMs} (dashboard localStorage) while activity.unreadCount reads the server journalReads high-water.
+Observation: Intentional (Nic confirmed keeping the dashboard feed cursor), but the spec doesn't call it out, so a future agent might "fix" the divergence. The two cursors can produce a badge-vs-feed mismatch.
+Suggested action: Add a one-line note in spec.md activity section documenting the intentional divergence.
