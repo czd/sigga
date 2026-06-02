@@ -153,6 +153,7 @@
 		"edited": "Breytt",
 		"edit": "Breyta",
 		"delete": "Eyða",
+		"actions": "Aðgerðir fyrir athugasemd frá {name}",
 		"linkedLog": "Dagbókarfærsla",
 		"deleteConfirm": {
 			"title": "Eyða athugasemd?",

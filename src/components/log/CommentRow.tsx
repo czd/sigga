@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "convex/react";
-import { Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
@@ -9,6 +9,12 @@ import type { Id } from "@/../convex/_generated/dataModel";
 import { useLiveRegion } from "@/components/shared/LiveRegion";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { classifyRelative, formatAbsoluteWithTime } from "@/lib/formatDate";
 
 export type ThreadComment = {
@@ -86,27 +92,41 @@ export function CommentRow({ comment, onStartEdit }: CommentRowProps) {
 				<p className="mt-0.5 whitespace-pre-wrap text-base text-ink">
 					{comment.content}
 				</p>
-				{comment.isMine ? (
-					<div className="mt-1 flex gap-1">
-						<button
-							type="button"
-							onClick={() => onStartEdit(comment)}
-							className="inline-flex min-h-12 items-center gap-1 rounded-full px-3 text-sm text-ink-soft transition-colors hover:bg-paper-deep/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
-						>
-							<Pencil aria-hidden size={15} />
-							{t("edit")}
-						</button>
-						<button
-							type="button"
-							onClick={() => setConfirmOpen(true)}
-							className="inline-flex min-h-12 items-center gap-1 rounded-full px-3 text-sm text-destructive transition-colors hover:bg-paper-deep/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
-						>
-							<Trash2 aria-hidden size={15} />
-							{t("delete")}
-						</button>
-					</div>
-				) : null}
 			</div>
+			{comment.isMine ? (
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<button
+							type="button"
+							aria-label={t("actions", { name })}
+							className="inline-flex size-12 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-paper-deep/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
+						>
+							<MoreVertical aria-hidden size={18} />
+						</button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="min-w-40">
+						<DropdownMenuItem
+							className="min-h-12 gap-2 px-3 text-base"
+							onSelect={() => onStartEdit(comment)}
+						>
+							<Pencil aria-hidden />
+							{t("edit")}
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							variant="destructive"
+							className="min-h-12 gap-2 px-3 text-base"
+							onSelect={() => {
+								// Defer so the menu's focus-restore finishes before the
+								// confirm dialog traps focus (avoids the Radix race).
+								setTimeout(() => setConfirmOpen(true), 0);
+							}}
+						>
+							<Trash2 aria-hidden />
+							{t("delete")}
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			) : null}
 			<ConfirmDialog
 				open={confirmOpen}
 				onOpenChange={setConfirmOpen}

@@ -71,7 +71,7 @@ export function CommentThreadSheet({
 				side="bottom"
 				className="flex max-h-[92vh] flex-col rounded-t-2xl"
 			>
-				<SheetHeader className="p-0">
+				<SheetHeader className="px-5 pt-5 pb-0 pr-14">
 					<SheetTitle className="font-serif text-[1.4rem] font-normal tracking-tight">
 						{t("comments")}
 					</SheetTitle>
@@ -80,7 +80,7 @@ export function CommentThreadSheet({
 					</SheetDescription>
 				</SheetHeader>
 
-				<div className="-mx-1 flex-1 overflow-y-auto px-1">
+				<div className="flex-1 overflow-y-auto px-5">
 					{comments === undefined ? (
 						<LoadingLine />
 					) : comments.length === 0 ? (
@@ -100,7 +100,7 @@ export function CommentThreadSheet({
 					)}
 				</div>
 
-				<div className="pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+				<div className="px-5 pt-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
 					<CommentComposer
 						key={editing?._id ?? "new"}
 						onSubmit={handleSubmit}

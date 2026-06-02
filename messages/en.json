@@ -153,6 +153,7 @@
 		"edited": "Edited",
 		"edit": "Edit",
 		"delete": "Delete",
+		"actions": "Actions for comment by {name}",
 		"linkedLog": "Log entry",
 		"deleteConfirm": {
 			"title": "Delete comment?",
