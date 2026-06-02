@@ -86,6 +86,16 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 
 ---
 
+### 2026-06-02 · qa · Authorized sub-48 tap-floor exception for journal reaction/comment affordances
+
+**Context:** Phase 18 polish commit — ReactionButton and CommentButton slimmed to `min-h-9` (36px) at the user's explicit, repeated request to make these secondary "ambient" affordances slim on the journal card.
+
+**Observation:** Pattern 7 (and CLAUDE.md's "48px min tap targets") have no documented exemption class for secondary ambient micro-actions on a feed card. The kebab-menu exemption (Pattern 1) is documented; a parallel exemption for feed-card reaction/comment glyphs is not. A future contributor or QA run will flag `min-h-9` here as a violation.
+
+**Suggested action:** Add an explicit exemption to Pattern 7 / Pattern 21 in `docs/ux-patterns.md` and CLAUDE.md: "Exception: secondary ambient affordances on journal feed cards (heart-reaction glyph, comment-count glyph) may use `min-h-9` (36px) — they are not primary CTAs and a larger floor wastes vertical rhythm. This exception is scoped to `ReactionButton` and `CommentButton` only; all other interactive elements retain the 48px floor. Authorized by user in journal-social-row polish commit." Update the QA agent rules to exempt `min-h-9` for `ReactionButton` and `CommentButton` so it does not FAIL future reviews.
+
+---
+
 ## Resolved
 
 ### 2026-04-19 · qa · EntitlementList reset button uses min-h-11 (44px) — violates the explicit CLAUDE.md 48px floor and the CLAUDE.md "not `min-h-11`" carve-out
