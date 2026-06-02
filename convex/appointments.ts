@@ -295,6 +295,7 @@ type RangeRow = {
 	driverId: Id<"users"> | null;
 	driver: UserSummary | null;
 	seriesId: Id<"recurringSeries"> | null;
+	commentCount: number;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -375,6 +376,7 @@ export const byRange = query({
 				driverId: r.driverId ?? null,
 				driver: await resolveUser(ctx, r.driverId),
 				seriesId: r.seriesId ?? null,
+				commentCount: await countCommentsFor(ctx, "appointment", r._id),
 			})),
 		);
 
@@ -414,6 +416,7 @@ export const byRange = query({
 					driverId: null,
 					driver: null,
 					seriesId: series._id,
+					commentCount: 0,
 				});
 			}
 		}

@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
+import { CommentButton } from "@/components/log/CommentButton";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -18,7 +19,10 @@ type UserSummary = {
 	email: string | null;
 	image: string | null;
 };
-type AppointmentWithDriver = AppointmentDoc & { driver: UserSummary | null };
+type AppointmentWithDriver = AppointmentDoc & {
+	driver: UserSummary | null;
+	commentCount: number;
+};
 
 type AppointmentCardProps = {
 	appointment: AppointmentWithDriver;
@@ -111,6 +115,13 @@ export function AppointmentCard({
 						<span>{t("logEntry")}</span>
 					</Button>
 				) : null}
+
+				<CommentButton
+					targetType="appointment"
+					targetId={appointment._id}
+					count={appointment.commentCount}
+					summary={appointment.title}
+				/>
 			</div>
 			<ConfirmDialog
 				open={confirmOpen}

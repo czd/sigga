@@ -67,7 +67,9 @@
 			"log": "{name} wrote a log entry",
 			"appointment": "{name} added an appointment: {title}",
 			"document": "{name} added a document: {fileName}",
-			"entitlementStatus": "{name} updated benefit “{title}” to {newStatus}"
+			"entitlementStatus": "{name} updated benefit “{title}” to {newStatus}",
+			"commentLog": "{name} commented on a log entry",
+			"commentAppointment": "{name} commented on “{title}”"
 		},
 		"attentionColumn": {
 			"title": "Needs attention",
@@ -127,9 +129,43 @@
 		"linkAppointment": "Link to appointment (optional)",
 		"noAppointment": "No appointment",
 		"linkedAppointment": "Linked appointment",
+		"seenBy": {
+			"one": "{name} saw",
+			"many": "{count} saw",
+			"label": "{names} saw this"
+		},
 		"errors": {
 			"empty": "Entry cannot be empty.",
 			"generic": "Could not save the entry."
+		}
+	},
+	"reactions": {
+		"like": "Like entry",
+		"unlike": "Remove like",
+		"names": "Heart — {names}"
+	},
+	"discussion": {
+		"comments": "Comments",
+		"openCount": "Open comments ({count})",
+		"write": "Write a comment",
+		"placeholder": "Write a comment…",
+		"send": "Send",
+		"empty": "No comments yet.",
+		"edited": "Edited",
+		"edit": "Edit",
+		"delete": "Delete",
+		"linkedLog": "Log entry",
+		"deleteConfirm": {
+			"title": "Delete comment?",
+			"body": "This cannot be undone."
+		},
+		"announce": {
+			"sent": "Comment sent.",
+			"deleted": "Comment deleted."
+		},
+		"errors": {
+			"empty": "Comment cannot be empty.",
+			"generic": "Could not save the comment."
 		}
 	},
 	"timar": {

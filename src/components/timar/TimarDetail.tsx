@@ -8,6 +8,7 @@ import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from "@/../convex/_generated/dataModel";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 import { DriverPicker } from "@/components/appointments/DriverPicker";
+import { CommentButton } from "@/components/log/CommentButton";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatAbsoluteWithTime } from "@/lib/formatDate";
@@ -203,6 +204,14 @@ export function TimarDetail({ appointment, onMaterialized }: Props) {
 						<Trash2 aria-hidden />
 						<span>{t("detail.cancel")}</span>
 					</Button>
+				) : null}
+				{!isVirtual ? (
+					<CommentButton
+						targetType="appointment"
+						targetId={appointment._id as Id<"appointments">}
+						count={appointment.commentCount}
+						summary={appointment.title}
+					/>
 				) : null}
 			</div>
 

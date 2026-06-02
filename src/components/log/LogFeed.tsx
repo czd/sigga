@@ -1,9 +1,9 @@
 "use client";
 
-import { usePaginatedQuery, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { BookOpen, CalendarClock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -17,7 +17,10 @@ import {
 	formatAbsolute,
 	formatAbsoluteWithTime,
 } from "@/lib/formatDate";
+import { CommentButton } from "./CommentButton";
 import { LogEntryForm } from "./LogEntryForm";
+import { ReactionButton } from "./ReactionButton";
+import { SeenByCluster, type SeenByUser } from "./SeenByCluster";
 
 type EditTarget = {
 	id: Id<"logEntries">;
@@ -57,6 +60,42 @@ export function LogFeed() {
 	} = usePaginatedQuery(api.logEntries.list, {}, { initialNumItems: 20 });
 
 	const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+
+	// Read-receipt engine: advance my high-water to the newest entry I can see,
+	// then map every other family member to their "landing entry" (the newest
+	// entry their high-water reaches) for the Messenger-style "seen by" cluster.
+	const markSeen = useMutation(api.journalReads.markSeen);
+	const receipts = useQuery(api.journalReads.receipts);
+	const newestSeen = entries[0]?._creationTime;
+
+	useEffect(() => {
+		if (newestSeen === undefined) return;
+		markSeen({ seenThroughTime: newestSeen }).catch(() => {
+			// Read-receipt advance is best-effort; never blocks reading.
+		});
+	}, [newestSeen, markSeen]);
+
+	const landingByEntry = useMemo(() => {
+		const map = new Map<Id<"logEntries">, SeenByUser[]>();
+		if (!receipts || !me?._id) return map;
+		for (const receipt of receipts) {
+			if (receipt.userId === me._id) continue;
+			// entries are newest-first → the first entry at or below the
+			// high-water is this person's landing entry.
+			const landing = entries.find(
+				(entry) => entry._creationTime <= receipt.lastSeenTime,
+			);
+			if (!landing) continue;
+			const list = map.get(landing._id) ?? [];
+			list.push({
+				id: receipt.userId,
+				name: receipt.name,
+				image: receipt.image,
+			});
+			map.set(landing._id, list);
+		}
+		return map;
+	}, [receipts, entries, me?._id]);
 
 	if (status === "LoadingFirstPage") {
 		return <LoadingLine />;
@@ -121,30 +160,46 @@ export function LogFeed() {
 							) : null}
 						</CardContent>
 					);
+					const seenBy = landingByEntry.get(entry._id) ?? [];
 					return (
 						<li key={entry._id}>
-							{isAuthor ? (
-								<button
-									type="button"
-									aria-label={tCommon("editItem", {
-										title: entry.content.slice(0, 60),
-									})}
-									className="block w-full text-left rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"
-									onClick={() =>
-										setEditTarget({
-											id: entry._id,
-											content: entry.content,
-											relatedAppointmentId: entry.relatedAppointmentId,
-										})
-									}
-								>
-									<Card className="transition-colors hover:bg-paper-deep/40">
+							<Card>
+								{isAuthor ? (
+									<button
+										type="button"
+										aria-label={tCommon("editItem", {
+											title: entry.content.slice(0, 60),
+										})}
+										className="block w-full rounded-lg text-left outline-none transition-colors hover:bg-paper-deep/40 focus-visible:ring-3 focus-visible:ring-ring"
+										onClick={() =>
+											setEditTarget({
+												id: entry._id,
+												content: entry.content,
+												relatedAppointmentId: entry.relatedAppointmentId,
+											})
+										}
+									>
 										{body}
-									</Card>
-								</button>
-							) : (
-								<Card>{body}</Card>
-							)}
+									</button>
+								) : (
+									body
+								)}
+								<div className="flex flex-wrap items-center gap-1 border-t border-divider px-4 pt-3">
+									<ReactionButton
+										logEntryId={entry._id}
+										count={entry.reactionCount}
+										reactedByMe={entry.reactedByMe}
+										reactorNames={entry.reactorNames}
+									/>
+									<CommentButton
+										targetType="logEntry"
+										targetId={entry._id}
+										count={entry.commentCount}
+										summary={entry.content.slice(0, 80)}
+									/>
+									<SeenByCluster users={seenBy} />
+								</div>
+							</Card>
 						</li>
 					);
 				})}
