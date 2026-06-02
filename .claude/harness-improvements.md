@@ -372,3 +372,13 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 **Context:** Phase 16A ships tests colocated at `convex/*.test.ts` and `src/lib/*.test.ts`.
 **Observation:** `docs/spec.md` lines 145–149 show a `tests/` directory at the project root with `tests/unit/convex/` and `tests/e2e/` subdirectories. Lines 897–919 list example test file paths under that structure (e.g. `tests/unit/convex/appointments.test.ts`). Neither the directory nor those files exist; tests are colocated instead. The spec's "Test file naming" block is now stale and misleading.
 **Suggested action:** Invoke `docs-sync` to update `docs/spec.md`: (1) remove the `tests/` subtree from the file-tree diagram at lines 145–149, (2) replace the "Test file naming" block at lines 917–919 with the colocated pattern (`convex/*.test.ts`, `src/lib/*.test.ts`, `src/components/**/*.test.tsx` for future 16B), and (3) note that `convex/testHelpers.test.ts` (the helper) lives in `convex/` but is skipped by `convex deploy` due to the two-dot naming rule.
+
+### 2026-06-02 · qa · New feature tables (reactions/comments/journalReads) landed in schema without updating docs/spec.md
+Context: First commit of reactions/comments/read-receipts feature.
+Observation: docs/spec.md and docs/implementation-plan.md have no mention of the new tables. docs/superpowers/ is not the canonical spec for future contributors.
+Suggested action: After the full feature branch is complete, invoke docs-sync to propagate schema, function contracts, and UX patterns from the design spec into docs/spec.md. Do not defer past merge to main.
+
+### 2026-06-02 · qa · New-to-diff Biome warnings should be treated as FAIL, not tolerated alongside pre-existing warnings
+Context: reactions.test.ts:10 unused userId introduces a new warning; 4 pre-existing CSS warnings are grandfathered.
+Observation: No QA rule distinguishes pre-existing warnings from new ones introduced by the diff. New warnings should be FAIL; pre-existing tolerated ones should be an explicit allow-list.
+Suggested action: Add to qa agent rules: baseline the warning count before the diff (git stash, run lint, git stash pop); any count increase is FAIL. Current item: fix unused userId in reactions.test.ts:10.

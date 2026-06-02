@@ -46,6 +46,26 @@ export default defineSchema({
 		editedAt: v.optional(v.number()),
 	}),
 
+	reactions: defineTable({
+		logEntryId: v.id("logEntries"),
+		userId: v.id("users"),
+	})
+		.index("by_entry", ["logEntryId"])
+		.index("by_entry_and_user", ["logEntryId", "userId"]),
+
+	comments: defineTable({
+		targetType: v.union(v.literal("logEntry"), v.literal("appointment")),
+		targetId: v.union(v.id("logEntries"), v.id("appointments")),
+		authorId: v.id("users"),
+		content: v.string(),
+		editedAt: v.optional(v.number()),
+	}).index("by_target", ["targetType", "targetId"]),
+
+	journalReads: defineTable({
+		userId: v.id("users"),
+		lastSeenTime: v.number(),
+	}).index("by_user", ["userId"]),
+
 	medications: defineTable({
 		name: v.string(),
 		dose: v.string(),

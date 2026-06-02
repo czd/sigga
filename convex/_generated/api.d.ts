@@ -22,6 +22,7 @@ import type * as events from "../events.js";
 import type * as http from "../http.js";
 import type * as logEntries from "../logEntries.js";
 import type * as medications from "../medications.js";
+import type * as reactions from "../reactions.js";
 import type * as recurringSeries from "../recurringSeries.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   logEntries: typeof logEntries;
   medications: typeof medications;
+  reactions: typeof reactions;
   recurringSeries: typeof recurringSeries;
   seed: typeof seed;
   users: typeof users;

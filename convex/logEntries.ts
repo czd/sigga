@@ -3,6 +3,7 @@ import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
+import { enrichReactions, type ReactionSummary } from "./reactions";
 
 type LogEntryDoc = Doc<"logEntries">;
 type AuthorSummary = {
@@ -19,7 +20,7 @@ type AppointmentSummary = {
 type LogEntryWithAuthor = LogEntryDoc & {
 	author: AuthorSummary | null;
 	appointment: AppointmentSummary | null;
-};
+} & ReactionSummary;
 
 async function resolveAuthor(
 	ctx: QueryCtx,
@@ -52,12 +53,14 @@ async function resolveAppointment(
 async function enrich(
 	ctx: QueryCtx,
 	entry: LogEntryDoc,
+	currentUserId: Id<"users">,
 ): Promise<LogEntryWithAuthor> {
-	const [author, appointment] = await Promise.all([
+	const [author, appointment, reactions] = await Promise.all([
 		resolveAuthor(ctx, entry.authorId),
 		resolveAppointment(ctx, entry.relatedAppointmentId),
+		enrichReactions(ctx, entry._id, currentUserId),
 	]);
-	return { ...entry, author, appointment };
+	return { ...entry, author, appointment, ...reactions };
 }
 
 async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
@@ -71,24 +74,26 @@ async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
 export const recent = query({
 	args: { count: v.optional(v.number()) },
 	handler: async (ctx, args) => {
-		await requireAuth(ctx);
+		const userId = await requireAuth(ctx);
 		const rows = await ctx.db
 			.query("logEntries")
 			.order("desc")
 			.take(args.count ?? 3);
-		return Promise.all(rows.map((row) => enrich(ctx, row)));
+		return Promise.all(rows.map((row) => enrich(ctx, row, userId)));
 	},
 });
 
 export const list = query({
 	args: { paginationOpts: paginationOptsValidator },
 	handler: async (ctx, args) => {
-		await requireAuth(ctx);
+		const userId = await requireAuth(ctx);
 		const result = await ctx.db
 			.query("logEntries")
 			.order("desc")
 			.paginate(args.paginationOpts);
-		const page = await Promise.all(result.page.map((row) => enrich(ctx, row)));
+		const page = await Promise.all(
+			result.page.map((row) => enrich(ctx, row, userId)),
+		);
 		return { ...result, page };
 	},
 });
@@ -145,9 +150,9 @@ export const update = mutation({
 export const get = query({
 	args: { id: v.id("logEntries") },
 	handler: async (ctx, args): Promise<LogEntryWithAuthor | null> => {
-		await requireAuth(ctx);
+		const userId = await requireAuth(ctx);
 		const entry = await ctx.db.get(args.id);
 		if (!entry) return null;
-		return enrich(ctx, entry);
+		return enrich(ctx, entry, userId);
 	},
 });
