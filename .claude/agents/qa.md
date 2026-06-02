@@ -68,7 +68,7 @@ Run these and report each as PASS / FAIL / SKIP with evidence.
 
 ### Date/time conventions (for UI code touching `src/`)
 - **`Intl.DateTimeFormat` must pass `timeZone: APP_TIME_ZONE`**: run `rg "new Intl\.DateTimeFormat" src/` on any new file. If any match lacks a `timeZone` option (check the surrounding context), that is a FAIL. `APP_TIME_ZONE` is exported from `src/lib/formatDate.ts`; import it rather than hardcoding `"Atlantic/Reykjavik"`.
-- **`tCommon` declaration cleanup**: if the diff removes a `tCommon = useTranslations("common")` declaration, grep the post-diff file for remaining `tCommon` usages. A leftover declaration with zero remaining usages is an orphan — FAIL. A removed declaration where usages survive (e.g. in an inner component scope) is also a bug — FAIL. TypeScript catches missing declarations; this check catches orphan ones.
+- **`tCommon` declaration cleanup**: when the diff removes a `tCommon = useTranslations("common")` declaration, grep the post-diff file for remaining `tCommon(` usages. If `tCommon(` no longer appears anywhere, there must be no surviving `tCommon = useTranslations("common")` declaration — a declaration with zero usages is an orphan (FAIL). If `tCommon(` still appears, there must still be at least one in-scope `tCommon = useTranslations("common")` declaration, and every surviving declaration must have a usage. Removing one declaration while other components in the same file legitimately keep their own is fine — do **not** FAIL that case. TypeScript catches missing declarations; this check catches orphan ones.
 
 ### UX (for UI code)
 - Phone numbers use `<a href="tel:...">`. Emails use `<a href="mailto:...">`.
