@@ -73,7 +73,7 @@ export const attentionCounts = query({
 
 		return {
 			dashboard: unownedEntitlements + unassignedDrivers,
-			care: 0, // filled by activity.unreadLogCount in the Sidebar
+			care: 0, // filled by activity.unreadCount in the Sidebar / BottomNav
 			paperwork: unownedEntitlements,
 		};
 	},

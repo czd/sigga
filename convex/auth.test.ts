@@ -94,8 +94,12 @@ const THROWING_QUERIES: Case[] = [
 		run: (t) => t.query(api.users.attentionCounts, {}),
 	},
 	{
-		label: "activity.unreadLogCount",
-		run: (t) => t.query(api.activity.unreadLogCount, { cursorMs: 0 }),
+		label: "activity.unreadCount",
+		run: (t) => t.query(api.activity.unreadCount, {}),
+	},
+	{
+		label: "journalReads.receipts",
+		run: (t) => t.query(api.journalReads.receipts, {}),
 	},
 	{
 		label: "events.usage",
@@ -155,6 +159,10 @@ const THROWING_MUTATIONS: Case[] = [
 	{
 		label: "events.log",
 		run: (t) => t.mutation(api.events.log, { type: "app_open" }),
+	},
+	{
+		label: "journalReads.markSeen",
+		run: (t) => t.mutation(api.journalReads.markSeen, { seenThroughTime: 0 }),
 	},
 ];
 
