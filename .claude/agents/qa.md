@@ -36,7 +36,7 @@ If the staged diff only touches `.claude/**`, `CLAUDE.md`, `AGENTS.md`, `.gitign
 Run these and report each as PASS / FAIL / SKIP with evidence.
 
 ### Always
-- **Lint**: `bun run lint`
+- **Lint**: `bun run lint`. New warnings introduced by the diff are FAIL — they must be fixed before commit. Pre-existing warnings that existed before the diff are tolerated only if they were already documented or grandfathered. The practical check: run lint, note any warning referencing a file in the staged diff. A warning in a file you touched is your responsibility.
 - **Typecheck**: `bunx tsc --noEmit`
 - **Tests** if any exist: look for `tests/`, `*.test.ts(x)`, `*.spec.ts`. If none, mark SKIP.
 - **Build**: run `bun run build` only if the diff touches build-critical config (`next.config.ts`, route files, Convex schema). Otherwise SKIP — builds are slow.
@@ -56,6 +56,7 @@ Run these and report each as PASS / FAIL / SKIP with evidence.
 - Document-delete mutations must delete both the row and the blob (`ctx.storage.delete`).
 - Function naming is `[table].[action]`.
 - **Deprecated cron helpers**: run `rg "crons\.(daily|hourly|weekly)\(" convex/` — any match is a FAIL. The Convex guidelines require only `crons.interval` or `crons.cron`; the deprecated helpers compile but behave differently at runtime.
+- **Convex test file naming**: for any new file added under `convex/` that imports `vitest` or `convex-test`, verify its basename has more than one dot (e.g. `foo.test.ts`, `foo.spec.ts`). A single-dot name (e.g. `fooTest.ts`, `testHelpers.ts`) is picked up as a Convex entrypoint, will fail to bundle (devDependencies unavailable in the Convex runtime), and will break `convex deploy` on Vercel CI. Run: `rg "from ['\"]vitest['\"]|from ['\"]convex-test['\"]" convex/ --include="*.ts" -l` and verify every file listed matches `*.*.ts` (at least two dots).
 
 ### i18n
 - No hardcoded user-facing strings (English *or* Icelandic) in production UI. Strings should route through `next-intl` (`useTranslations` or `getTranslations`).
@@ -65,11 +66,19 @@ Run these and report each as PASS / FAIL / SKIP with evidence.
 - For any diff touching `src/components/ui/`, run: `rg 'className="sr-only">(Close|Submit|Cancel|OK|Open)<' src/components/ui/` — any English sr-only label in the primitives folder is a FAIL (these are shared by all locales).
 - **Exemption — domain-specific `<datalist>` suggestions in Icelandic**: native `<datalist>` `<option value="...">` elements whose values are a fixed, spec-defined list of Icelandic domain terms (e.g., document category suggestions "Lyfseðill", "Blóðprufa", "Bréf frá lækni", "Umsókn", "Vottorð") do **not** need to route through `next-intl`. The category field is free-text; the suggestions are a convenience hint. Do not FAIL a commit for this pattern.
 
+### Date/time conventions (for UI code touching `src/`)
+- **`Intl.DateTimeFormat` must pass `timeZone: APP_TIME_ZONE`**: run `rg "new Intl\.DateTimeFormat" src/` on any new file. If any match lacks a `timeZone` option (check the surrounding context), that is a FAIL. `APP_TIME_ZONE` is exported from `src/lib/formatDate.ts`; import it rather than hardcoding `"Atlantic/Reykjavik"`.
+- **`tCommon` declaration cleanup**: if the diff removes a `tCommon = useTranslations("common")` declaration, grep the post-diff file for remaining `tCommon` usages. A leftover declaration with zero remaining usages is an orphan — FAIL. A removed declaration where usages survive (e.g. in an inner component scope) is also a bug — FAIL. TypeScript catches missing declarations; this check catches orphan ones.
+
 ### UX (for UI code)
 - Phone numbers use `<a href="tel:...">`. Emails use `<a href="mailto:...">`.
 - Primary tap targets look ≥ 48px (prefer 56px+) — check classes like `h-12`, `h-14`, `min-h-[48px]`.
+  - **Authorized sub-48 exceptions**: `ReactionButton` and `CommentButton` use `min-h-9` (36 px) by explicit user authorization (Pattern 7 exemption, 2026-06-02). Do NOT flag `min-h-9` in those two components as a tap-target violation.
 - Body text ≥ 18px on mobile (`text-lg` or larger, or explicit 18px).
 - Icelandic special characters (ð, þ, æ, ö) should render in any strings introduced.
+- **Button variant guard**: after any diff touching `src/components/ui/button.tsx`, run `rg 'size:\s*(xs|sm|lg|icon-xs|icon-sm|icon-lg)' src/components/ui/button.tsx` — any match in the variant map is a FAIL (the deprecated sub-48 px variants have been removed and must not return). Also run `rg '<Button[^>]*size="(sm|xs|lg|icon-sm|icon-xs|icon-lg)"' src/` — any consumer of a removed variant is a FAIL.
+- **ConfirmDialog callers must handle errors**: when a `handleDelete` (or similar destructive handler) is passed as `onConfirm` to `<ConfirmDialog>` and the calling component has no error banner / `setError` state, flag it as a potential silent-failure UX hole. `ConfirmDialog` keeps the dialog open on failure but the parent has no way to surface the error message to the user. Recommend adding a `<p role="alert">` banner or a `ConfirmDialog` `errorMessage` prop.
+- **`--input` token side-effects**: if the diff changes the value of `--input` in `src/app/globals.css`, check all usages of `bg-input`, `disabled:bg-input/*`, and `data-unchecked:bg-input` in `src/components/ui/` — especially the `<Switch>` primitive. The token now resolves to a dark ink colour; any context that expected a light tint will render incorrectly. Flag any `data-unchecked:bg-input` on a switch component as a candidate regression.
 
 #### Visual verification of authenticated routes
 
