@@ -68,6 +68,14 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 
 ---
 
+### 2026-06-02 · qa · docs/spec.md build script reference is stale after --preview-run addition
+
+**Context:** The `package.json` build script now includes `--preview-run seed:seedPreview` on the `convex deploy` invocation for preview environments.
+**Observation:** `docs/spec.md` line 33 still says "Vercel CI also runs `npx convex deploy`" — it does not reflect the current build script shape (`convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build' --preview-run seed:seedPreview`), nor does any spec section document the per-branch preview deployment strategy now introduced.
+**Suggested action:** Invoke `docs-sync` to update `docs/spec.md` hosting row (and relevant phase 17 section) to reflect (1) the correct build script form, (2) the existence of per-branch preview Convex backends, and (3) a forward reference to `docs/preview-deployments.md` for the runbook.
+
+---
+
 ## Resolved
 
 ### 2026-04-19 · qa · EntitlementList reset button uses min-h-11 (44px) — violates the explicit CLAUDE.md 48px floor and the CLAUDE.md "not `min-h-11`" carve-out
