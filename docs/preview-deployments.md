@@ -33,17 +33,26 @@ and preview re-deploys don't duplicate data.
 2. **Vercel → Project → Settings → Environment Variables:** set
    `CONVEX_DEPLOY_KEY` for the **Preview** environment to that preview key. Keep
    the **production** deploy key scoped to the **Production** environment only.
-3. **Convex → Project Settings → Preview deployments → default environment
-   variables:** set the Convex Auth vars that preview backends need at runtime:
-   - `JWT_PRIVATE_KEY` and `JWKS` — required to mint session tokens. **Family-code
-     login needs these too**, not just Google. Easiest: copy them from your dev
-     deployment, or run `npx @convex-dev/auth` once and reuse the generated pair.
-   - `SITE_URL` — used by Google OAuth redirects; not required for family-code
-     login (credentials don't redirect). Set it to the preview URL if you care.
-   - `ALLOWED_EMAILS` / `ADMIN_EMAILS` — only relevant for Google / admin views.
+3. **Convex → Project Settings → "Default Environment Variables":** these are the
+   values applied to **new** deployments, including each preview. Set only what
+   family-code login needs at runtime:
+   - `JWT_PRIVATE_KEY` and `JWKS` — **required.** Convex Auth signs every session
+     token with `JWT_PRIVATE_KEY` and serves `JWKS` for verification, on *every*
+     sign-in including family codes (see `@convex-dev/auth` `tokens.js` /
+     `implementation/index.js`). Copy the pair from your production deployment's
+     env vars (safe to reuse: tokens are bound to each deployment's issuer via the
+     auto-set `CONVEX_SITE_URL`, so a preview token won't validate on prod or
+     vice-versa).
+   - **Do NOT set `SITE_URL` for previews.** The family-code (credentials) path
+     never reads it — only Google OAuth does, to build its post-login redirect.
+     A single static `SITE_URL` can't match each preview's unique URL anyway, so
+     setting it would just recreate the redirect-to-prod problem. Omit it.
+   - `ALLOWED_EMAILS` / `AUTH_GOOGLE_*` / `ADMIN_EMAILS` — Google/admin only; not
+     needed for the family-code preview flow.
 
    Without `JWT_PRIVATE_KEY` + `JWKS`, login fails on previews even though the
-   deploy succeeds (auth env is read at runtime, not deploy time).
+   deploy succeeds (auth env is read at runtime, not deploy time). `CONVEX_SITE_URL`
+   is set automatically by Convex per deployment — you never set it.
 
 ## Using a preview
 
