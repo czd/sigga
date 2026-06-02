@@ -21,7 +21,7 @@ Two long-form docs in `docs/` are the canonical spec — always read them before
 
 ## Current Repo State
 
-**Built out through Phase 12 + Phase 8.5 + Phase 13A + Phase 14 + Phase 15 + Phase 16A + Post-Phase-17 family-code login + Phase 18 reactions/comments/receipts.** The scaffold, auth, i18n, schema/seed, app shell, dashboard, Dagbók, Tímar (incl. recurring series), all four Upplýsingar sub-pages (Lyf, Símaskrá, Réttindi, Skjöl), PWA installability (manifest + brand mark + iOS meta), weekly backup export, a11y / Pattern-13 polish, Vitest-based Convex + utility tests + CI workflow, family-code login (Google OAuth + admin-issued per-person codes), and ❤️ reactions + comment threads + "seen by" read receipts (Phase 18) are shipped. Remaining phases: **13B** (service worker — deferred until a Next-16-vetted library lands), **16B** (Playwright e2e + component render tests — deferred until OAuth bypass is wired), **17** (deploy & onboard). Consult `docs/implementation-plan.md` for the authoritative phase-by-phase status.
+**Built out through Phase 12 + Phase 8.5 + Phase 13A + Phase 14 + Phase 15 + Phase 16A + Post-Phase-17 family-code login + Phase 18 reactions/comments/receipts + Phase 18 polish.** The scaffold, auth, i18n, schema/seed, app shell, dashboard, Dagbók, Tímar (incl. recurring series), all four Upplýsingar sub-pages (Lyf, Símaskrá, Réttindi, Skjöl), PWA installability (manifest + brand mark + iOS meta), weekly backup export (now includes reactions/comments/journalReads), a11y / Pattern-13 polish, Vitest-based Convex + utility tests + CI workflow, family-code login (Google OAuth + admin-issued per-person codes), ❤️ reactions + comment threads + "seen by" read receipts (Phase 18), per-branch preview deployments with `seed.seedPreview`, and post-review UI polish (who-liked Popover, kebab comment actions, slimmer feed affordances) are shipped. Remaining phases: **13B** (service worker — deferred until a Next-16-vetted library lands), **16B** (Playwright e2e + component render tests — deferred until OAuth bypass is wired), **17** (deploy & onboard). Consult `docs/implementation-plan.md` for the authoritative phase-by-phase status.
 
 What's in the tree now (high level):
 
@@ -29,7 +29,7 @@ What's in the tree now (high level):
 - `src/app/[locale]/(app)/timar/reglulegir/` — recurring-series management (Phase 8.5).
 - `src/app/[locale]/login/` — public sign-in.
 - `convex/` — `schema.ts`, `auth.ts`, `auth.config.ts`, `FamilyCode.ts`, `accessCodes.ts`, `http.ts`, plus per-table modules: `appointments.ts`, `contacts.ts`, `documents.ts`, `entitlements.ts`, `logEntries.ts`, `medications.ts`, `reactions.ts`, `comments.ts`, `journalReads.ts`, `recurringSeries.ts`, `activity.ts`, `users.ts`, `seed.ts`, `crons.ts`, `backup.ts`.
-- `src/components/{appointments,dashboard,info,log,nav,recurringSeries,shared,timar,ui}/` — feature folders plus shadcn primitives under `ui/`.
+- `src/components/{appointments,dashboard,info,log,nav,recurringSeries,shared,timar,ui}/` — feature folders plus shadcn primitives under `ui/` (includes `popover.tsx` — Radix UI Popover wrapper used by the who-liked reaction popover).
 - `messages/{is,en}.json`, `src/i18n/`, `src/proxy.ts` — i18n + auth middleware wired together.
 - `src/app/globals.css` — Bókasafn palette tokens (paper/ink/sage/wheat/amber) declared inline via Tailwind v4 `@theme`. There is no `tailwind.config.ts`.
 - `biome.json` — Biome is the linter/formatter; ESLint was removed in Phase 0.
@@ -49,7 +49,7 @@ What's in the tree now (high level):
 ```bash
 bun install
 bun dev            # next dev (Turbopack)
-bun run build      # next build (Vercel CI also runs `convex deploy` when CONVEX_DEPLOY_KEY is set)
+bun run build      # next build (Vercel CI runs `convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build' --preview-run seed:seedPreview` when CONVEX_DEPLOY_KEY is set)
 bun start          # next start
 bun run lint       # biome check
 bun run lint:fix   # biome check --write
@@ -70,13 +70,14 @@ npx convex env set <KEY> "<value>"
 - **Real-time by default**: all reads are Convex `useQuery` subscriptions. Two tabs open → mutation in one appears in the other without refresh. E2E tests explicitly cover this.
 - **`useSearchParams` in a client component** is sufficient to opt a route into dynamic rendering (ƒ) — no `export const dynamic = 'force-dynamic'` or `<Suspense>` wrapper is required in this project's routing setup. Do not add either unless there is a specific reason beyond "useSearchParams is present".
 - **File uploads**: `generateUploadUrl` mutation → client POSTs file → client gets `storageId` → `save` mutation records metadata. Deletes must remove both the row and the underlying blob.
-- **Break-glass backup**: weekly Convex cron (`backup.weeklyExport`, Sunday 03:00 UTC) serializes all tables to JSON into Convex file storage; keeps last 4.
+- **Break-glass backup**: weekly Convex cron (`backup.weeklyExport`, Sunday 03:00 UTC) serializes all tables to JSON into Convex file storage; keeps last 4. Snapshot includes `reactions`, `comments`, and `journalReads` tables added in Phase 18.
+- **Preview deployments**: every non-`main` branch gets a per-branch Convex backend automatically seeded via `seed.seedPreview` (demo code `demo-2468`). See `docs/preview-deployments.md`.
 - **PWA**: installable via `public/manifest.json` (`display: standalone`, `lang: is`). Service worker caches app shell; data areas show "Hleð..." while reconnecting.
 
 ## Conventions
 
 - **All user-facing text in Icelandic**, sourced from `messages/is.json`. Nothing hardcoded. "Vista" not "Submit", "Bæta við" not "Create". Icelandic characters (ð, þ, æ, ö) must render correctly — pick fonts accordingly. **Default to feminine forms** — all current users are women; use `skráð`, not `skráð(ur)` or `skráður`. See `docs/ux-patterns.md` Pattern 17 for the full Icelandic copy convention.
-- **Canonical UX patterns live in `docs/ux-patterns.md`** (20 rules, one per interaction — edit affordance, destroy/commitment confirmation, sheet vs dialog, tap-target floor, headline scale, date format, etc.). When adding or touching any interactive surface, consult the relevant pattern and follow its code recipe. Rules override ad-hoc invention; if a rule feels wrong for a specific surface, raise it before diverging.
+- **Canonical UX patterns live in `docs/ux-patterns.md`** (21 rules, one per interaction — edit affordance, destroy/commitment confirmation, sheet vs dialog, tap-target floor, headline scale, date format, reactions/comments/receipts, etc.). When adding or touching any interactive surface, consult the relevant pattern and follow its code recipe. Rules override ad-hoc invention; if a rule feels wrong for a specific surface, raise it before diverging. Two user-authorized exemptions are documented there: (1) Pattern 1 kebab exemption for per-comment micro-actions inside a thread; (2) Pattern 7 sub-48 exemption for `ReactionButton`/`CommentButton` ambient feed glyphs (`min-h-9`).
 - **Phone numbers are tappable** (`tel:` links). This is the single most-used feature — zero extra taps between "I need a number" and the call starting.
 - **Seed data is real**, not placeholder. The medications, contacts, and entitlements in `docs/spec.md` came from the family Messenger chat and Helga's confirmation. Don't fabricate or genericize any of it.
 - **Do NOT build** (deferred to v2): medication check-off, push notifications, Google Calendar sync, AI log summaries, multi-patient support, full offline CRUD.

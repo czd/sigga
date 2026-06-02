@@ -50,7 +50,9 @@ Inputs this file reacts to: `docs/superpowers/audits/2026-04-19-ux-inventory.md`
 
 **When it applies:** Every list of editable records in the app — Dagbók, Tímar mobile/desktop, Tímar/Reglulegir, Fólk, Réttindi (list + kanban), Lyf, Skjöl (including metadata, which this pattern requires us to expose).
 
-**Counter-examples (when NOT to use):** No exemptions. Pencil-in-corner, kebab menus, hover-reveals, expand-in-place, and "absolute inset-0 invisible edit button" are all retired. The Dashboard RecentLog preview is read-only and exposes no edit (tap the entry in Dagbók); that's consistent with the rule — you're not editing *from* the dashboard, you're navigating *to* Dagbók and editing there.
+**Counter-examples (when NOT to use):** No exemptions for top-level record editing. Pencil-in-corner, kebab menus, hover-reveals, expand-in-place, and "absolute inset-0 invisible edit button" are all retired. The Dashboard RecentLog preview is read-only and exposes no edit (tap the entry in Dagbók); that's consistent with the rule — you're not editing *from* the dashboard, you're navigating *to* Dagbók and editing there.
+
+**Authorized exemption — per-comment micro-actions inside a thread (user-authorized, 2026-06-02):** Within `CommentThreadSheet`, each comment row exposes a kebab (⋮) `DropdownMenu` for author-only edit and delete. This is a deliberate exception to the "kebab menus retired" stance, scoped only to per-item micro-actions inside a detail/thread context where the alternative (inline text buttons) consumes unreasonable row space. The exemption does not extend to any top-level list or card. Future surfaces seeking a kebab must obtain explicit authorization and document it here.
 
 **Code recipe:**
 
@@ -335,6 +337,8 @@ const buttonVariants = cva(/* base */, {
 **English mirror:** n/a.
 
 **A11y requirements:** 48 px satisfies WCAG 2.2 AA target-size (24 × 24) comfortably. The *project* 48 px floor is the one developers code to. The `MedicationForm` native checkbox at 20 px is a WCAG **blocker** (a11y audit Blocker #1) — it must be replaced by a shadcn `<Checkbox>` primitive sized to fit inside a 48 px tap area (label row). Focus rings must be `focus-visible:ring-ring` full alpha (the `/50` variant is 2.25:1 and fails 1.4.11 — a11y finding #8).
+
+**Authorized exemption — journal feed ambient affordances (user-authorized, 2026-06-02):** `ReactionButton` and `CommentButton` on journal feed cards use `min-h-9` (36 px). These are secondary ambient glyphs on a feed card — not primary CTAs — and a 48 px floor wastes vertical rhythm in the journal feed. This exemption is scoped strictly to those two components; all other interactive elements retain the 48 px floor. The QA agent exempts `min-h-9` for `ReactionButton` and `CommentButton` only.
 
 **Rationale (brief):** Inventory Pattern 7 surfaced six concrete sub-floor violations plus a 20 px checkbox that fails WCAG. Removing sub-48 variants at the primitive level eliminates the whole class of future regressions — nobody can type `size="sm"` and compile.
 
@@ -832,11 +836,13 @@ Everything else — edit, destroy, create, sheet vs dialog, headline scale, tap 
 
 **Canonical answers:**
 
-**Heart button (`ReactionButton`):** Follows Pattern 7 (48px floor: `min-h-12 px-4 rounded-full`). Filled heart + sage tint when `reactedByMe`; outline heart otherwise. Shows `reactionCount` when > 0. Calls `reactions.toggle`. **No optimistic update** (Pattern 14). `aria-label` from `reactions.like` / `reactions.unlike`; appends reactor names when count > 0 so screen-reader users hear "Hjarta — Helga, Anna". Journal entries only — no heart on appointments.
+**Heart button (`ReactionButton`):** `min-h-9 px-1.5 rounded-md` — a user-authorized sub-48 px exception scoped to this ambient feed affordance (see Pattern 7 exemption). Filled heart + sage tint when `reactedByMe`; outline heart otherwise. Calls `reactions.toggle`. **No optimistic update** (Pattern 14). `aria-label` from `reactions.like` / `reactions.unlike`. When `reactionCount > 0`, the count appears beside the glyph; tapping the count opens a Popover (Radix UI, `src/components/ui/popover.tsx`) listing reactor names under a `reactions.likedBy` heading. Reactor names are display-name only — no email fallback. Journal entries only — no heart on appointments.
 
-**Comment button (`CommentButton`):** Same pill shape (`min-h-12 px-4 rounded-full`), `MessageCircle` icon + `commentCount`. Opens `<CommentThreadSheet>` via Pattern 4 (Sheet = complete a task). Present on both journal entry cards and appointment cards/detail.
+**Comment button (`CommentButton`):** Same ambient glyph shape (`min-h-9` — same scoped exception as `ReactionButton`), `MessageCircle` icon + `commentCount`. Opens `<CommentThreadSheet>` via Pattern 4 (Sheet = complete a task). Present on both journal entry cards and appointment cards/detail.
 
-**`CommentThreadSheet`:** Bottom Sheet (`side="bottom"`, `max-h-[92vh]`, `rounded-t-2xl`, `showCloseButton={false}` per Pattern 4). Header = `discussion.comments` title + muted parent summary so the user keeps context. Body = flat comment list, oldest-first (chat order), each row = `Avatar size-9` + name + `<time>` relative + sr-only absolute (Pattern 9) + content. Author's own comments expose "Breyta" (inline edit, Pattern 1) and "Eyða" → `ConfirmDialog` (Pattern 2, `discussion.deleteConfirm.*`). "Breytt" badge when `editedAt` is set. Empty state = Pattern 5 line (`discussion.empty`). Footer = `CommentComposer` (multiline `Textarea` + `size="touch"` "Senda"). Success announces via live-region (`discussion.announce.sent`) not a toast (Pattern 11).
+**Appointment card footer:** `CommentButton` is placed on the far left of the footer row; driver assignment / "Enginn skutlar" + volunteer button are right-aligned (volunteer button rightmost). This keeps the social affordance visually separate from the coordination action.
+
+**`CommentThreadSheet`:** Bottom Sheet (`side="bottom"`, `max-h-[92vh]`, `rounded-t-2xl`, `px-5` content padding, `pr-14` header clearance for the close button). Header = `discussion.comments` title + muted parent summary. Body = flat comment list, oldest-first (chat order), each row = `Avatar size-9` + name + `<time>` relative + sr-only absolute (Pattern 9) + content. Author's own comments expose a kebab (⋮) `DropdownMenu` on the right with "Breyta" and "Eyða" actions — a user-authorized Pattern 1 exemption scoped to per-comment micro-actions inside a thread (see Pattern 1 exemption note). "Eyða" → `ConfirmDialog` (Pattern 2, `discussion.deleteConfirm.*`). "Breytt" badge when `editedAt` is set. Empty state = Pattern 5 line (`discussion.empty`). Footer = `CommentComposer` (multiline `Textarea` + `size="touch"` "Senda"). Success announces via live-region (`discussion.announce.sent` or `discussion.announce.updated`) not a toast (Pattern 11).
 
 **Read receipts (`SeenByCluster`):** Right-aligned avatar cluster per journal entry, showing users whose `journalReads.lastSeenTime` lands at that entry (their "landing entry"). Up to 3 avatars + "+N" overflow. The current user is omitted (you don't need to be told you saw your own view). `aria-label` lists names (`dagbok.seenBy.label`). Tone rule: **presence, not pressure** — no "unseen by" callouts, no nagging. The absence of an avatar at the top means someone hasn't opened it yet — that fact is quiet, not accusatory. `LogFeed` calls `journalReads.markSeen` on render so opening the journal = you're caught up to the top.
 
@@ -847,11 +853,12 @@ Everything else — edit, destroy, create, sheet vs dialog, headline scale, tap 
 - Seen-by clusters: `LogFeed` only (journal feed, not appointment threads or per-comment).
 
 **What these patterns inherit:**
+- Pattern 1 (edit affordance) — with the kebab exemption for per-comment micro-actions inside the thread sheet.
 - Pattern 2 (ConfirmDialog) for comment delete.
 - Pattern 4 (Sheet = task) for the thread sheet.
-- Pattern 7 (48px floor) for all pill-shaped buttons.
+- Pattern 7 (48px floor) — with the scoped sub-48 exemption for `ReactionButton` and `CommentButton` ambient feed glyphs.
 - Pattern 9 (`<time>` + sr-only absolute) for comment timestamps.
-- Pattern 11 (live-region announce, no toast) for comment send/delete success.
+- Pattern 11 (live-region announce, no toast) for comment send/edit/delete success.
 - Pattern 14 (no optimistic UI) for heart toggle and comment send.
 - Pattern 16 (palette tokens only, no inline hex) for filled-heart sage tint.
 - Pattern 17 (Icelandic-first, feminine forms) for all copy — "send" not "sent", `discussion.send` → "Senda".
@@ -877,7 +884,7 @@ Everything else — edit, destroy, create, sheet vs dialog, headline scale, tap 
 
 **English mirror:** `discussion.send` "Send", `discussion.empty` "No comments yet.", `discussion.announce.sent` "Comment sent.", `reactions.like` "Like entry", `reactions.unlike` "Unlike entry".
 
-**A11y requirements:** All pill buttons ≥ 48px. `aria-label` on heart button includes reactor names when count > 0 (screen readers hear the names, sighted users see the count). `<time dateTime={iso}>` + `<span className="sr-only">{absolute}</span>` on every comment timestamp. No new soft-return exceptions to `requireAuth` — all new queries/mutations throw for unauthenticated callers.
+**A11y requirements:** `ReactionButton` and `CommentButton` use the scoped sub-48 `min-h-9` exception; all other interactive surfaces in the thread retain ≥ 48 px. `aria-label` on heart button uses `reactions.like`/`reactions.unlike`; the who-liked Popover is supplementary (sighted-users convenience) and not the sole name-disclosure path — `aria-label` can reference names when count > 0. `<time dateTime={iso}>` + `<span className="sr-only">{absolute}</span>` on every comment timestamp. No new soft-return exceptions to `requireAuth` — all new queries/mutations throw for unauthenticated callers.
 
 **Rationale (brief):** Designed to match Messenger muscle memory (the family is migrating from it) while keeping tone calm. The single ❤️ heart avoids emoji-picker complexity and negative reactions that land badly in a cancer-care context. Flat threads keep the surface predictable. Read receipts are "presence" — the design rule is that the interface never says "she hasn't seen it yet."
 

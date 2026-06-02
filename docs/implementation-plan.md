@@ -1134,6 +1134,28 @@ Adds ❤️ reactions on journal entries, flat comment threads on both journal e
 - [x] `messages/{is,en}.json` key-parity; `reactions`, `discussion`, `dagbok.seenBy.*` namespaces present.
 - [x] All tap targets ≥ 48px; no inline hex; `<time>` + sr-only on comment timestamps.
 
+### Post-Phase-18: polish + backend fixes (PR #9 review pass, 2026-06-02)
+
+After the initial Phase 18 commit, a Copilot review pass and UI polish round landed the following:
+
+**Backend fixes:**
+- `LogFeed.markSeen` now passes `Date.now()` (was `newestEntry._creationTime`) so the care-tab badge clears for comments posted after the newest journal entry.
+- `reactions.enrichReactions` reactor names use `name ?? "—"` — no email fallback exposed to the UI.
+- Comment EDIT announces success via `discussion.announce.updated` (new key).
+- Removed unused `dagbok.seenBy.many` i18n key.
+
+**Preview deployment support:**
+- `package.json` build script updated to `convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build' --preview-run seed:seedPreview`.
+- `convex/seed.ts` gained `seedPreview` (internalMutation): bootstraps a demo login code (`demo-2468`), 2 sample members, a journal entry, and an appointment on a fresh per-branch Convex preview backend. Guards with "empty backend only" check so it no-ops on production.
+- `docs/preview-deployments.md` runbook added.
+- `convex/backup.ts` extended to include `reactions`, `comments`, `journalReads` in the weekly snapshot.
+
+**UI polish:**
+- `CommentThreadSheet`: `px-5` padding + `pr-14` header clearance for close button.
+- `CommentRow`: per-comment author edit/delete moved from inline text buttons to a kebab (⋮) `DropdownMenu` — a deliberate user-authorized Pattern 1 exemption scoped to per-comment micro-actions inside a thread (see Pattern 21).
+- `ReactionButton`/`CommentButton`: slimmed to `min-h-9` (36 px) — a deliberate user-authorized Pattern 7 exemption scoped to these ambient journal affordances (see Pattern 7 exemption note and Pattern 21). Heart count now opens a "who liked" Popover (`src/components/ui/popover.tsx`) listing reactor names.
+- Appointment card footer reordered: `CommentButton` far left; driver + volunteer button right-aligned.
+
 ---
 
 ## Post-Phase-17: Family-Code Login

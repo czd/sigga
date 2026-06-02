@@ -30,7 +30,7 @@
 | i18n | `next-intl` | Confirmed Next.js 16 compatible. Uses `src/proxy.ts` for locale routing. Default locale `is` (Icelandic), secondary `en`. No locale prefix for default. |
 | UI | shadcn/ui + Tailwind CSS 4 | Mobile-first. Large tap targets. High contrast. |
 | Package manager | Bun | |
-| Hosting | Vercel | Auto-domain for v1. Default `.vercel.app` URL. Production deploys via `git push` to `main` — Vercel CI also runs `npx convex deploy`. |
+| Hosting | Vercel | Auto-domain for v1. Default `.vercel.app` URL. Production deploys via `git push` to `main`. Vercel CI runs `convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build' --preview-run seed:seedPreview` when `CONVEX_DEPLOY_KEY` is set (the `--preview-run` flag is a no-op on production; it seeds fresh per-branch preview backends only). See `docs/preview-deployments.md` for the preview runbook. |
 | Analytics | `@vercel/analytics` | Page-view tracking only; no PII per Vercel's data policy. `<Analytics />` component added to root locale layout. |
 | Error tracking | `@sentry/nextjs` | Client-side error and unhandled-rejection capture. Events are also mirrored to the Convex `events` table via `events.log` mutation for admin review at `/nytjun`. |
 | Testing | Vitest (unit/integration) + Playwright (e2e) | |
@@ -67,7 +67,7 @@ sigga/
 │   ├── activity.ts               # sinceLastVisit query + unreadCount query (cross-table activity feed + care-badge server-side read high-water)
 │   ├── events.ts                 # Analytics event logging (app_open, page_view, error, …) + isAdmin query
 │   ├── users.ts                  # me + list + attentionCounts queries
-│   └── seed.ts                   # Dev seed data
+│   └── seed.ts                   # Dev seed data (`seed.run` — full real data) + preview bootstrap (`seed.seedPreview` — demo code + sample entries, guards against non-empty backends)
 ├── messages/
 │   ├── is.json                   # Icelandic translations (primary)
 │   └── en.json                   # English translations (secondary)
@@ -104,7 +104,7 @@ sigga/
 │   │   │       └── page.tsx      # Login page (Google OAuth + family code; two modes: choose / code)
 │   │   └── layout.tsx            # Bare html/body with fonts + analytics
 │   ├── components/
-│   │   ├── ui/                   # shadcn components (button, card, sheet, dialog, tabs, switch, …)
+│   │   ├── ui/                   # shadcn components (button, card, sheet, dialog, tabs, switch, popover, …)
 │   │   ├── nav/
 │   │   │   ├── BottomNav.tsx     # Mobile bottom nav (5 items: Umönnun / Tímar / Í dag / Fólk / Gögn — Í dag in centre slot)
 │   │   │   ├── navItems.ts       # PRIMARY_ITEMS (desktop order) + MOBILE_ITEMS (mobile, Í dag centred)
@@ -459,7 +459,6 @@ messages/
   "dagbok": {
     "seenBy": {
       "one": "{name} sá",
-      "many": "{count} sáu",
       "label": "{names} sáu þetta"
     }
     // … other dagbok keys
@@ -523,7 +522,8 @@ messages/
   "reactions": {
     "like": "Líka við færslu",
     "unlike": "Taka líkann til baka",
-    "names": "Hjarta — {names}"
+    "names": "Hjarta — {names}",
+    "likedBy": "Líkað af"
   },
   "discussion": {
     "comments": "Athugasemdir",
@@ -534,7 +534,7 @@ messages/
     "edited": "Breytt",
     "openCount": "Opna athugasemdir ({count})",
     "deleteConfirm": { "title": "Eyða athugasemd?", "body": "Þetta er ekki hægt að afturkalla." },
-    "announce": { "sent": "Athugasemd send.", "deleted": "Athugasemd eytt." }
+    "announce": { "sent": "Athugasemd send.", "updated": "Athugasemd uppfærð.", "deleted": "Athugasemd eytt." }
   },
   "admin": {
     "codes": {
@@ -680,10 +680,10 @@ A reverse-chronological feed of all care-relevant events.
    - Edit button (pencil, `touch-icon` size) — only visible to the original author
    - Linked appointment shown as a small chip (if set)
    - **Footer action row** (separated by `border-t border-divider`):
-     - `ReactionButton` — ❤️ heart toggle pill (`min-h-12 px-4 rounded-full`). Filled + sage tint when `reactedByMe`; outline otherwise. Shows `reactionCount` when > 0. Calls `reactions.toggle`. No optimistic update. `aria-label` includes reactor names for screen readers.
-     - `CommentButton` — 💬 pill showing `commentCount`. Opens `CommentThreadSheet` for this entry.
+     - `ReactionButton` — ❤️ heart toggle glyph (`min-h-9 px-3 rounded-full` — a deliberate user-authorized exception below the 48 px Pattern 7 floor, scoped to this ambient feed affordance). Filled heart + sage tint when `reactedByMe`; outline otherwise. Calls `reactions.toggle`. No optimistic update. `aria-label` from `reactions.like`/`reactions.unlike`. When `reactionCount > 0`, the count is shown; tapping the count opens a Popover (implemented via `src/components/ui/popover.tsx`, a Radix UI Popover wrapper) listing reactor names (`reactions.likedBy` heading). Reactor names are display-name only — no email fallback exposed.
+     - `CommentButton` — 💬 comment-count glyph (`min-h-9` — same scoped exception). Opens `CommentThreadSheet` for this entry.
    - **"Seen by" cluster** (`SeenByCluster`): right-aligned avatar cluster for users whose `journalReads.lastSeenTime` lands on this entry. Shows up to 3 avatars + "+N" overflow. The current user's avatar is omitted. `aria-label` lists names. Renders presence only — no "unseen by" callouts.
-   - On feed render, `LogFeed` calls `journalReads.markSeen({ seenThroughTime: newestEntry._creationTime })` so opening the journal advances the caller's high-water mark. Per-entry seen-by landing is computed client-side from `journalReads.receipts`.
+   - On feed render, `LogFeed` calls `journalReads.markSeen({ seenThroughTime: Date.now() })` so opening the journal advances the caller's high-water mark past any comments that arrived after the newest journal entry. Per-entry seen-by landing is computed client-side from `journalReads.receipts`.
 
    **Known limitation:** the landing-entry computation maps receipts against the currently-loaded page only. A member whose high-water falls on an entry not yet paged in won't show an avatar until "Sýna eldri" loads that page.
 
@@ -725,7 +725,7 @@ All appointments — upcoming and past. Reachable via the bottom nav (second slo
    - Location (if set)
    - Driver section: if assigned, shows avatar + name. If not, shows "Enginn skutlar" + "Ég get!" (I can!) volunteer button. Tapping "Ég get!" assigns the current user as driver immediately (mutation).
    - Notes preview (if any)
-   - `CommentButton` — 💬 pill showing `commentCount`. Opens `CommentThreadSheet` for this appointment. Both past and upcoming appointments get it — coordination comments happen before the appointment; recollection after.
+   - **Card footer row:** `CommentButton` (💬 comment-count pill) on the far left; driver assignment / "Enginn skutlar" + volunteer button right-aligned (volunteer button rightmost). This keeps the social affordance visually separate from the coordination action.
    - Tap card → expand or navigate to detail/edit view
 
 3. **Past list:** Sorted by date descending (most recent first). Same card layout but driver section is static (no volunteer button). Optional: "Skrá í dagbók" shortcut to create a log entry linked to this past appointment.
@@ -940,7 +940,7 @@ Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guideline
 
 **reactions.ts:**
 - `toggle` — mutation: `{ logEntryId }`. Looks up the caller's `by_entry_and_user` row for the entry; if it exists, deletes it (un-heart); otherwise inserts one (heart). Validates that the entry exists (`ConvexError("Færslan fannst ekki.")` if not). Returns nothing — the live `useQuery` subscription on the feed re-renders. Journal entries only; no reaction on appointments.
-- `enrichReactions(ctx, logEntryId, currentUserId)` — **helper** (not a public query): returns `{ reactionCount, reactedByMe, reactorNames }`. Called by the `logEntries` enricher so the feed subscription covers reaction state without a separate subscription.
+- `enrichReactions(ctx, logEntryId, currentUserId)` — **helper** (not a public query): returns `{ reactionCount, reactedByMe, reactorNames }`. Called by the `logEntries` enricher so the feed subscription covers reaction state without a separate subscription. `reactorNames` contains display names only (`user.name ?? "—"`) — no email fallback is exposed.
 
 **comments.ts:**
 - `list` — query: `{ targetType, targetId }`. Returns the thread ordered ascending by `_creationTime` (oldest first, chat reading order). Each row is enriched with `author: { _id, name, image }` and `isMine: boolean`. Requires auth.
@@ -950,7 +950,7 @@ Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guideline
 - `countCommentsFor(ctx, targetType, targetId)` — **helper**: counts comments for a target via the `by_target` index. Used by both `logEntries` and `appointments` enrichers.
 
 **journalReads.ts:**
-- `markSeen` — mutation: `{ seenThroughTime }`. Upserts the caller's `journalReads` row to `lastSeenTime = max(existing, seenThroughTime)`. Monotonic — never moves backward, so a stale tab cannot regress receipts. Called by the Dagbók feed when it renders (client passes the newest entry's `_creationTime`).
+- `markSeen` — mutation: `{ seenThroughTime }`. Upserts the caller's `journalReads` row to `lastSeenTime = max(existing, seenThroughTime)`. Monotonic — never moves backward, so a stale tab cannot regress receipts. Called by the Dagbók feed when it renders; the client passes `Date.now()` (not the newest entry's `_creationTime`) so the high-water mark also clears comments posted after the newest journal entry.
 - `receipts` — query: `{}`. Returns `[{ userId, name, image, lastSeenTime }]` for every user that has a `journalReads` row. The feed component maps each user to their "landing entry" (newest entry with `_creationTime <= lastSeenTime`) client-side to render the "seen by" avatar clusters. Requires auth.
 
 **logEntries.ts:**
@@ -1001,7 +1001,7 @@ Uses `crons.cron` (not the deprecated `crons.daily` helper) per Convex guideline
 - `usage` — query: `{ sinceDays?: number }`. Returns per-user usage stats (total events, app opens, page views, errors, last active). Requires admin (throws if caller is not in `ADMIN_EMAILS`). Used by the `/nytjun` admin page.
 
 **backup.ts:** (Phase 14 — built)
-- `weeklyExport` — scheduled action (Convex cron): runs weekly. Queries all data, serializes to JSON, stores as a file in Convex storage. Keeps last 4 backups, deletes older ones. **Note:** the backup snapshot covers `users`, `appointments`, `recurringSeries`, `logEntries`, `medications`, `contacts`, `entitlements`, `documents`, `events` — it does not include the three social tables (`reactions`, `comments`, `journalReads`) or `backups` itself. Update the snapshot to include these if backup coverage of social data is ever required.
+- `weeklyExport` — scheduled action (Convex cron): runs weekly. Queries all data, serializes to JSON, stores as a file in Convex storage. Keeps last 4 backups, deletes older ones. The backup snapshot covers `users`, `appointments`, `recurringSeries`, `logEntries`, `medications`, `contacts`, `entitlements`, `documents`, `events`, `reactions`, `comments`, and `journalReads`. The `backups` table itself is not snapshotted (it's the container for the backups).
 - Register in `convex/crons.ts` using `crons.cron` (the deprecated `crons.weekly` / `crons.daily` helpers must not be used — Convex guidelines require `crons.interval` or `crons.cron`):
   ```typescript
   crons.cron(
@@ -1032,7 +1032,7 @@ No roles in v1 — every authenticated family member can do everything, except l
 **Purpose:** If the app goes down, the family doesn't lose their data.
 
 **Mechanism:** A Convex scheduled function runs every Sunday at 03:00 UTC. It:
-1. Queries all tables (appointments, logEntries, medications, contacts, entitlements, documents metadata)
+1. Queries all tables (appointments, logEntries, medications, contacts, entitlements, documents metadata, reactions, comments, journalReads)
 2. Serializes to a single JSON object with ISO timestamps
 3. Stores the JSON as a file in Convex file storage
 4. Deletes backups older than 4 weeks
@@ -1306,9 +1306,12 @@ bun dev           # starts Next.js dev server
 1. Push to GitHub
 2. Connect repo to Vercel
 3. Set environment variables in Vercel dashboard
-4. Deploy Convex production: `npx convex deploy`
+4. Vercel CI runs `convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build' --preview-run seed:seedPreview` automatically when `CONVEX_DEPLOY_KEY` is set. The `--preview-run` flag is silently ignored on production branches.
 5. Update `SITE_URL` env var in Convex to the Vercel production URL
 6. Update Google OAuth redirect URIs to include production URL
+
+### Preview deployments
+Every non-`main` branch pushed to GitHub gets a per-branch Vercel preview with its own isolated Convex backend. The `--preview-run seed:seedPreview` flag seeds a demo login code (`demo-2468`) and sample data automatically on the first deploy of a fresh backend. See `docs/preview-deployments.md` for the full runbook (required env vars, JWT key setup, limitations).
 
 ---
 
