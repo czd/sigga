@@ -18,7 +18,10 @@ type SnapshotTable =
 	| "contacts"
 	| "entitlements"
 	| "documents"
-	| "events";
+	| "events"
+	| "reactions"
+	| "comments"
+	| "journalReads";
 
 type Snapshot = {
 	exportedAt: string;
@@ -34,6 +37,9 @@ type Snapshot = {
 		entitlements: Doc<"entitlements">[];
 		documents: Doc<"documents">[];
 		events: Doc<"events">[];
+		reactions: Doc<"reactions">[];
+		comments: Doc<"comments">[];
+		journalReads: Doc<"journalReads">[];
 	};
 };
 
@@ -50,6 +56,9 @@ export const snapshotTables = internalQuery({
 			entitlements,
 			documents,
 			events,
+			reactions,
+			comments,
+			journalReads,
 		] = await Promise.all([
 			ctx.db.query("users").collect(),
 			ctx.db.query("appointments").collect(),
@@ -60,6 +69,9 @@ export const snapshotTables = internalQuery({
 			ctx.db.query("entitlements").collect(),
 			ctx.db.query("documents").collect(),
 			ctx.db.query("events").collect(),
+			ctx.db.query("reactions").collect(),
+			ctx.db.query("comments").collect(),
+			ctx.db.query("journalReads").collect(),
 		]);
 		return {
 			users,
@@ -71,6 +83,9 @@ export const snapshotTables = internalQuery({
 			entitlements,
 			documents,
 			events,
+			reactions,
+			comments,
+			journalReads,
 		};
 	},
 });
