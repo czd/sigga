@@ -506,3 +506,66 @@ export const runApril2026Additions = internalMutation({
 		};
 	},
 });
+
+// Preview deployments only — invoked automatically by
+// `convex deploy --preview-run seed:seedPreview` (the flag is ignored on
+// production deploys). Bootstraps a fresh, empty per-branch preview backend so
+// the PR preview is immediately testable: a known family code to log in, two
+// sample family members, a few journal entries + an appointment to react to and
+// comment on, and read-receipt state so the "seen by" avatars render.
+//
+// Prod-safety without an env flag: it refuses on any non-empty backend, and
+// production always has users — so a stray `convex run seed:seedPreview --prod`
+// is a no-op. Idempotent: once a preview has data, re-deploys skip re-seeding.
+export const seedPreview = internalMutation({
+	args: {},
+	handler: async (ctx) => {
+		const anyUser = await ctx.db.query("users").first();
+		if (anyUser) {
+			return { seeded: false as const, reason: "backend not empty" };
+		}
+
+		const helga = await ctx.db.insert("users", { name: "Helga" });
+		const anna = await ctx.db.insert("users", { name: "Anna" });
+
+		// Known login code, left unlinked so the tester signs in as a distinct
+		// user and sees Helga's & Anna's content (and their "seen by" avatars).
+		await ctx.db.insert("accessCodes", {
+			code: "demo-2468",
+			name: "Prufuaðgangur",
+			isActive: true,
+		});
+
+		const apptId = await ctx.db.insert("appointments", {
+			title: "Tími hjá Brjóstamiðstöð",
+			startTime: Date.now() + 2 * 24 * 60 * 60 * 1000,
+			location: "Landspítali",
+			status: "upcoming",
+			createdBy: helga,
+			updatedAt: Date.now(),
+			updatedBy: helga,
+		});
+
+		await ctx.db.insert("logEntries", {
+			content: "Sigga svaf vel í nótt og borðaði góðan morgunmat.",
+			authorId: helga,
+		});
+		await ctx.db.insert("logEntries", {
+			content: "Hjúkrunarfræðingur kom í heimsókn, allt í góðu.",
+			authorId: anna,
+		});
+		await ctx.db.insert("logEntries", {
+			content: "Munum eftir tímanum hjá Brjóstamiðstöð á miðvikudaginn.",
+			authorId: helga,
+			relatedAppointmentId: apptId,
+		});
+
+		// Both sample members are "caught up" → their avatars land on the newest
+		// entry, demonstrating the "seen by" cluster to a solo preview tester.
+		const now = Date.now();
+		await ctx.db.insert("journalReads", { userId: helga, lastSeenTime: now });
+		await ctx.db.insert("journalReads", { userId: anna, lastSeenTime: now });
+
+		return { seeded: true as const, code: "demo-2468" };
+	},
+});
