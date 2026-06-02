@@ -68,6 +68,34 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 
 ---
 
+### 2026-06-02 · qa · docs/spec.md build script reference is stale after --preview-run addition
+
+**Context:** The `package.json` build script now includes `--preview-run seed:seedPreview` on the `convex deploy` invocation for preview environments.
+**Observation:** `docs/spec.md` line 33 still says "Vercel CI also runs `npx convex deploy`" — it does not reflect the current build script shape (`convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build' --preview-run seed:seedPreview`), nor does any spec section document the per-branch preview deployment strategy now introduced.
+**Suggested action:** Invoke `docs-sync` to update `docs/spec.md` hosting row (and relevant phase 17 section) to reflect (1) the correct build script form, (2) the existence of per-branch preview Convex backends, and (3) a forward reference to `docs/preview-deployments.md` for the runbook.
+
+---
+
+### 2026-06-02 · qa · Pattern 1 kebab-menu exemption for per-comment micro-actions not documented
+
+**Context:** Phase 18 comment thread polish (CommentRow.tsx). Pattern 1 ("retired kebab menus") governs the row → detail EDIT affordance for top-level records. A per-comment edit/delete kebab inside a comment thread (which is itself the detail view) was explicitly requested by the user and authorized as a deliberate exception.
+
+**Observation:** CLAUDE.md and `docs/ux-patterns.md` Pattern 1 only describe the prohibition; there is no documented exemption class for micro-action menus inside a detail/thread context. A future contributor reading Pattern 1 would conclude kebab menus are always forbidden and might reverse this design.
+
+**Suggested action:** Add a note to Pattern 1 in `docs/ux-patterns.md`: "Exception: per-item micro-action menus inside a thread/detail context (e.g., edit/delete on a comment row inside a comment sheet) may use a kebab trigger when the alternative would consume unreasonable row space — but only when explicitly authorized. Document the authorization in the commit message and here." Also add a brief exemption note to CLAUDE.md Conventions referencing Pattern 1.
+
+---
+
+### 2026-06-02 · qa · Authorized sub-48 tap-floor exception for journal reaction/comment affordances
+
+**Context:** Phase 18 polish commit — ReactionButton and CommentButton slimmed to `min-h-9` (36px) at the user's explicit, repeated request to make these secondary "ambient" affordances slim on the journal card.
+
+**Observation:** Pattern 7 (and CLAUDE.md's "48px min tap targets") have no documented exemption class for secondary ambient micro-actions on a feed card. The kebab-menu exemption (Pattern 1) is documented; a parallel exemption for feed-card reaction/comment glyphs is not. A future contributor or QA run will flag `min-h-9` here as a violation.
+
+**Suggested action:** Add an explicit exemption to Pattern 7 / Pattern 21 in `docs/ux-patterns.md` and CLAUDE.md: "Exception: secondary ambient affordances on journal feed cards (heart-reaction glyph, comment-count glyph) may use `min-h-9` (36px) — they are not primary CTAs and a larger floor wastes vertical rhythm. This exception is scoped to `ReactionButton` and `CommentButton` only; all other interactive elements retain the 48px floor. Authorized by user in journal-social-row polish commit." Update the QA agent rules to exempt `min-h-9` for `ReactionButton` and `CommentButton` so it does not FAIL future reviews.
+
+---
+
 ## Resolved
 
 ### 2026-04-19 · qa · EntitlementList reset button uses min-h-11 (44px) — violates the explicit CLAUDE.md 48px floor and the CLAUDE.md "not `min-h-11`" carve-out
@@ -372,3 +400,23 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 **Context:** Phase 16A ships tests colocated at `convex/*.test.ts` and `src/lib/*.test.ts`.
 **Observation:** `docs/spec.md` lines 145–149 show a `tests/` directory at the project root with `tests/unit/convex/` and `tests/e2e/` subdirectories. Lines 897–919 list example test file paths under that structure (e.g. `tests/unit/convex/appointments.test.ts`). Neither the directory nor those files exist; tests are colocated instead. The spec's "Test file naming" block is now stale and misleading.
 **Suggested action:** Invoke `docs-sync` to update `docs/spec.md`: (1) remove the `tests/` subtree from the file-tree diagram at lines 145–149, (2) replace the "Test file naming" block at lines 917–919 with the colocated pattern (`convex/*.test.ts`, `src/lib/*.test.ts`, `src/components/**/*.test.tsx` for future 16B), and (3) note that `convex/testHelpers.test.ts` (the helper) lives in `convex/` but is skipped by `convex deploy` due to the two-dot naming rule.
+
+### 2026-06-02 · qa · New feature tables (reactions/comments/journalReads) landed in schema without updating docs/spec.md
+Context: First commit of reactions/comments/read-receipts feature.
+Observation: docs/spec.md and docs/implementation-plan.md have no mention of the new tables. docs/superpowers/ is not the canonical spec for future contributors.
+Suggested action: After the full feature branch is complete, invoke docs-sync to propagate schema, function contracts, and UX patterns from the design spec into docs/spec.md. Do not defer past merge to main.
+
+### 2026-06-02 · qa · New-to-diff Biome warnings should be treated as FAIL, not tolerated alongside pre-existing warnings
+Context: reactions.test.ts:10 unused userId introduces a new warning; 4 pre-existing CSS warnings are grandfathered.
+Observation: No QA rule distinguishes pre-existing warnings from new ones introduced by the diff. New warnings should be FAIL; pre-existing tolerated ones should be an explicit allow-list.
+Suggested action: Add to qa agent rules: baseline the warning count before the diff (git stash, run lint, git stash pop); any count increase is FAIL. Current item: fix unused userId in reactions.test.ts:10.
+
+### 2026-06-02 · docs-sync · backup.ts export omits reactions/comments/journalReads tables
+Context: Phase 18 added three tables. The weekly break-glass backup (backup.ts) snapshots a hardcoded table list that was not extended.
+Observation: Comments are real family-generated content; excluding them from the break-glass JSON export is a latent data-loss risk on restore. reactions/journalReads are lower-stakes but should be included for a complete snapshot.
+Suggested action: Add comments (at minimum) — ideally all three — to the backup snapshot list. Decide whether ephemeral receipts/reactions are worth backing up.
+
+### 2026-06-02 · docs-sync · sinceLastVisit cursor vs unreadCount high-water divergence undocumented
+Context: activity.sinceLastVisit still takes client {cursorMs} (dashboard localStorage) while activity.unreadCount reads the server journalReads high-water.
+Observation: Intentional (Nic confirmed keeping the dashboard feed cursor), but the spec doesn't call it out, so a future agent might "fix" the divergence. The two cursors can produce a badge-vs-feed mismatch.
+Suggested action: Add a one-line note in spec.md activity section documenting the intentional divergence.

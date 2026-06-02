@@ -4,7 +4,6 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { ChevronUp, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
 import { api } from "@/../convex/_generated/api";
 import { BookIcon } from "@/components/shared/BookIcon";
 import { Logo } from "@/components/shared/Logo";
@@ -35,18 +34,6 @@ const LABEL_TO_COUNT_KEY: Record<
 	appointments: null,
 };
 
-function lastVisitCursor(userId: string | undefined): number {
-	if (!userId || typeof window === "undefined") {
-		return Date.now() - 3 * 24 * 60 * 60 * 1000;
-	}
-	const stored = window.localStorage.getItem(`sigga.lastVisit.${userId}`);
-	if (!stored) return Date.now() - 3 * 24 * 60 * 60 * 1000;
-	const parsed = Number.parseInt(stored, 10);
-	return Number.isFinite(parsed)
-		? parsed
-		: Date.now() - 3 * 24 * 60 * 60 * 1000;
-}
-
 export function Sidebar() {
 	const t = useTranslations();
 	const navT = useTranslations("nav");
@@ -56,8 +43,7 @@ export function Sidebar() {
 
 	const displayName = me?.name?.trim() || me?.email || "";
 	const counts = useQuery(api.users.attentionCounts);
-	const cursorMs = useMemo(() => lastVisitCursor(me?._id), [me?._id]);
-	const careCount = useQuery(api.activity.unreadLogCount, { cursorMs });
+	const careCount = useQuery(api.activity.unreadCount);
 
 	return (
 		<aside

@@ -67,7 +67,9 @@
 			"log": "{name} skrifaði færslu",
 			"appointment": "{name} bætti tíma: {title}",
 			"document": "{name} bætti við skjali: {fileName}",
-			"entitlementStatus": "{name} uppfærði réttindi „{title}“ í {newStatus}"
+			"entitlementStatus": "{name} uppfærði réttindi „{title}“ í {newStatus}",
+			"commentLog": "{name} skrifaði athugasemd við dagbókarfærslu",
+			"commentAppointment": "{name} skrifaði athugasemd við „{title}“"
 		},
 		"attentionColumn": {
 			"title": "Þarf athygli",
@@ -127,9 +129,45 @@
 		"linkAppointment": "Tengja tíma (valfrjálst)",
 		"noAppointment": "Enginn tími",
 		"linkedAppointment": "Tengdur tími",
+		"seenBy": {
+			"one": "{name} sá",
+			"label": "{names} sáu þetta"
+		},
 		"errors": {
 			"empty": "Færslan má ekki vera tóm.",
 			"generic": "Ekki tókst að vista færsluna."
+		}
+	},
+	"reactions": {
+		"like": "Líka við færslu",
+		"unlike": "Taka líkann til baka",
+		"names": "Hjarta — {names}",
+		"likedBy": "Líkað af"
+	},
+	"discussion": {
+		"comments": "Athugasemdir",
+		"openCount": "Opna athugasemdir ({count})",
+		"write": "Skrifa athugasemd",
+		"placeholder": "Skrifa athugasemd…",
+		"send": "Senda",
+		"empty": "Engar athugasemdir ennþá.",
+		"edited": "Breytt",
+		"edit": "Breyta",
+		"delete": "Eyða",
+		"actions": "Aðgerðir fyrir athugasemd frá {name}",
+		"linkedLog": "Dagbókarfærsla",
+		"deleteConfirm": {
+			"title": "Eyða athugasemd?",
+			"body": "Þetta er ekki hægt að afturkalla."
+		},
+		"announce": {
+			"sent": "Athugasemd send.",
+			"updated": "Athugasemd uppfærð.",
+			"deleted": "Athugasemd eytt."
+		},
+		"errors": {
+			"empty": "Athugasemd má ekki vera tóm.",
+			"generic": "Ekki tókst að vista athugasemdina."
 		}
 	},
 	"timar": {

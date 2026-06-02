@@ -1,7 +1,13 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { BookOpen, CalendarPlus, FileCheck, FileText } from "lucide-react";
+import {
+	BookOpen,
+	CalendarPlus,
+	FileCheck,
+	FileText,
+	MessageCircle,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { api } from "@/../convex/_generated/api";
@@ -90,6 +96,8 @@ export function SinceLastVisit() {
 									<CalendarPlus size={16} aria-hidden />
 								) : item.kind === "document" ? (
 									<FileText size={16} aria-hidden />
+								) : item.kind === "comment" ? (
+									<MessageCircle size={16} aria-hidden />
 								) : (
 									<FileCheck size={16} aria-hidden />
 								)}
@@ -108,19 +116,29 @@ export function SinceLastVisit() {
 														name: item.addedByName,
 														fileName: item.fileName,
 													})
-												: t("entitlementStatus", {
-														name: item.updatedByName,
-														title: item.title,
-														newStatus: tStatuses(
-															item.newStatus as
-																| "in_progress"
-																| "not_applied"
-																| "approved"
-																| "denied",
-														),
-													})}
+												: item.kind === "comment"
+													? item.targetType === "appointment"
+														? t("commentAppointment", {
+																name: item.authorName,
+																title: item.targetLabel,
+															})
+														: t("commentLog", {
+																name: item.authorName,
+															})
+													: t("entitlementStatus", {
+															name: item.updatedByName,
+															title: item.title,
+															newStatus: tStatuses(
+																item.newStatus as
+																	| "in_progress"
+																	| "not_applied"
+																	| "approved"
+																	| "denied",
+															),
+														})}
 								</div>
-								{item.kind === "log" && item.preview ? (
+								{(item.kind === "log" || item.kind === "comment") &&
+								item.preview ? (
 									<div className="text-ink-soft mt-0.5 line-clamp-1 italic">
 										{item.preview}
 									</div>

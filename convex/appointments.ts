@@ -2,6 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
+import { countCommentsFor } from "./comments";
 import { ensureNextOccurrence } from "./recurringSeries";
 
 const statusValidator = v.union(
@@ -17,7 +18,10 @@ type UserSummary = {
 	email: string | null;
 	image: string | null;
 };
-type AppointmentWithDriver = AppointmentDoc & { driver: UserSummary | null };
+type AppointmentWithDriver = AppointmentDoc & {
+	driver: UserSummary | null;
+	commentCount: number;
+};
 
 async function resolveUser(
 	ctx: QueryCtx,
@@ -38,10 +42,11 @@ async function withDriver(
 	ctx: QueryCtx,
 	appointment: AppointmentDoc,
 ): Promise<AppointmentWithDriver> {
-	return {
-		...appointment,
-		driver: await resolveUser(ctx, appointment.driverId),
-	};
+	const [driver, commentCount] = await Promise.all([
+		resolveUser(ctx, appointment.driverId),
+		countCommentsFor(ctx, "appointment", appointment._id),
+	]);
+	return { ...appointment, driver, commentCount };
 }
 
 async function requireAuth(ctx: QueryCtx): Promise<Id<"users">> {
@@ -220,6 +225,16 @@ export const remove = mutation({
 		if (!existing) return;
 		const seriesId = existing.seriesId;
 		const wasUpcoming = existing.status === "upcoming";
+		// Cascade: a deleted appointment takes its comment thread with it.
+		const comments = await ctx.db
+			.query("comments")
+			.withIndex("by_target", (q) =>
+				q.eq("targetType", "appointment").eq("targetId", args.id),
+			)
+			.collect();
+		for (const comment of comments) {
+			await ctx.db.delete(comment._id);
+		}
 		await ctx.db.delete(args.id);
 		if (seriesId && wasUpcoming) {
 			await ensureNextOccurrence(ctx, seriesId);
@@ -280,6 +295,7 @@ type RangeRow = {
 	driverId: Id<"users"> | null;
 	driver: UserSummary | null;
 	seriesId: Id<"recurringSeries"> | null;
+	commentCount: number;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -360,6 +376,7 @@ export const byRange = query({
 				driverId: r.driverId ?? null,
 				driver: await resolveUser(ctx, r.driverId),
 				seriesId: r.seriesId ?? null,
+				commentCount: await countCommentsFor(ctx, "appointment", r._id),
 			})),
 		);
 
@@ -399,6 +416,7 @@ export const byRange = query({
 					driverId: null,
 					driver: null,
 					seriesId: series._id,
+					commentCount: 0,
 				});
 			}
 		}
