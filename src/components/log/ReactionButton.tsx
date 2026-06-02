@@ -53,9 +53,9 @@ export function ReactionButton({
 			aria-pressed={reactedByMe}
 			aria-label={label}
 			className={cn(
-				"inline-flex min-h-12 items-center gap-1.5 rounded-full px-4 text-base transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring",
+				"inline-flex min-h-12 items-center gap-1 rounded-md px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring",
 				reactedByMe
-					? "bg-sage/30 text-sage-shadow"
+					? "text-sage-shadow"
 					: "text-ink-soft hover:bg-paper-deep/40",
 			)}
 		>

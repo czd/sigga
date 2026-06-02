@@ -34,7 +34,7 @@ export function CommentButton({
 				onClick={() => setOpen(true)}
 				aria-label={t("openCount", { count })}
 				aria-haspopup="dialog"
-				className="inline-flex min-h-12 items-center gap-1.5 rounded-full px-4 text-base text-ink-soft transition-colors hover:bg-paper-deep/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
+				className="inline-flex min-h-12 items-center gap-1 rounded-md px-2 text-sm text-ink-soft transition-colors hover:bg-paper-deep/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring"
 			>
 				<MessageCircle aria-hidden size={18} />
 				{count > 0 ? <span className="tabular-nums">{count}</span> : null}

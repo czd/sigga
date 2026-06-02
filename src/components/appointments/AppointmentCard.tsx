@@ -75,53 +75,55 @@ export function AppointmentCard({
 				) : null}
 			</button>
 
-			<div className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-t border-divider pt-4">
-				{appointment.driver ? (
-					<div className="flex items-center gap-2 min-w-0">
-						<UserAvatar
-							name={appointment.driver.name}
-							email={appointment.driver.email}
-							imageUrl={appointment.driver.image}
-							className="size-8"
-						/>
-						<span className="text-base text-ink-soft truncate">
-							{appointment.driver.name ??
-								appointment.driver.email ??
-								t("fields.driver")}
-						</span>
-					</div>
-				) : variant === "upcoming" ? (
-					<>
-						<span className="text-base text-ink-soft">
-							{t("fields.noDriverAssigned")}
-						</span>
-						<Button size="touch" onClick={() => setConfirmOpen(true)}>
-							{t("volunteer")}
-						</Button>
-					</>
-				) : (
-					<span className="text-base text-ink-soft">
-						{t("fields.noDriverAssigned")}
-					</span>
-				)}
-
-				{variant === "past" && onLogEntry ? (
-					<Button
-						variant="outline"
-						size="touch"
-						onClick={() => onLogEntry(appointment._id)}
-					>
-						<BookOpen aria-hidden />
-						<span>{t("logEntry")}</span>
-					</Button>
-				) : null}
-
+			<div className="flex min-h-12 items-center gap-3 border-t border-divider pt-4">
 				<CommentButton
 					targetType="appointment"
 					targetId={appointment._id}
 					count={appointment.commentCount}
 					summary={appointment.title}
 				/>
+
+				<div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+					{appointment.driver ? (
+						<div className="flex items-center gap-2 min-w-0">
+							<UserAvatar
+								name={appointment.driver.name}
+								email={appointment.driver.email}
+								imageUrl={appointment.driver.image}
+								className="size-8"
+							/>
+							<span className="text-base text-ink-soft truncate">
+								{appointment.driver.name ??
+									appointment.driver.email ??
+									t("fields.driver")}
+							</span>
+						</div>
+					) : variant === "upcoming" ? (
+						<>
+							<span className="text-base text-ink-soft">
+								{t("fields.noDriverAssigned")}
+							</span>
+							<Button size="touch" onClick={() => setConfirmOpen(true)}>
+								{t("volunteer")}
+							</Button>
+						</>
+					) : (
+						<span className="text-base text-ink-soft">
+							{t("fields.noDriverAssigned")}
+						</span>
+					)}
+
+					{variant === "past" && onLogEntry ? (
+						<Button
+							variant="outline"
+							size="touch"
+							onClick={() => onLogEntry(appointment._id)}
+						>
+							<BookOpen aria-hidden />
+							<span>{t("logEntry")}</span>
+						</Button>
+					) : null}
+				</div>
 			</div>
 			<ConfirmDialog
 				open={confirmOpen}
