@@ -76,6 +76,16 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 
 ---
 
+### 2026-06-02 · qa · Pattern 1 kebab-menu exemption for per-comment micro-actions not documented
+
+**Context:** Phase 18 comment thread polish (CommentRow.tsx). Pattern 1 ("retired kebab menus") governs the row → detail EDIT affordance for top-level records. A per-comment edit/delete kebab inside a comment thread (which is itself the detail view) was explicitly requested by the user and authorized as a deliberate exception.
+
+**Observation:** CLAUDE.md and `docs/ux-patterns.md` Pattern 1 only describe the prohibition; there is no documented exemption class for micro-action menus inside a detail/thread context. A future contributor reading Pattern 1 would conclude kebab menus are always forbidden and might reverse this design.
+
+**Suggested action:** Add a note to Pattern 1 in `docs/ux-patterns.md`: "Exception: per-item micro-action menus inside a thread/detail context (e.g., edit/delete on a comment row inside a comment sheet) may use a kebab trigger when the alternative would consume unreasonable row space — but only when explicitly authorized. Document the authorization in the commit message and here." Also add a brief exemption note to CLAUDE.md Conventions referencing Pattern 1.
+
+---
+
 ## Resolved
 
 ### 2026-04-19 · qa · EntitlementList reset button uses min-h-11 (44px) — violates the explicit CLAUDE.md 48px floor and the CLAUDE.md "not `min-h-11`" carve-out
