@@ -29,14 +29,6 @@ When the auditor processes an item, it moves the entry from `## Open Items` to `
 
 ## Open Items
 
-### 2026-04-21 · qa · APP_TIME_ZONE convention not documented — future Intl.DateTimeFormat sites may omit it
-
-**Context:** Timezone-pinning fix (`claude/fix-timezone-storage-thXLq`). `src/lib/formatDate.ts` exports `APP_TIME_ZONE = "Atlantic/Reykjavik"` and every `Intl.DateTimeFormat` in `src/` now passes `timeZone: APP_TIME_ZONE`. Appointment-form date-string helpers (`toDatetimeLocal`/`fromDatetimeLocal`) use `getUTC*` + `Date.UTC` accessors to treat the input as Reykjavík wall-clock.
-
-**Observation:** The convention is enforced in code but not in CLAUDE.md or any automated check. A future contributor adding a date display component will not be warned, and lint/typecheck will not catch the omission.
-
-**Suggested action:** (1) Add a `qa` grep: any diff introducing `new Intl.DateTimeFormat(` without `timeZone` in the options → FAIL. (2) Add a CLAUDE.md Conventions bullet: "All `Intl.DateTimeFormat` calls in `src/` must pass `timeZone: APP_TIME_ZONE`; date-input parsing must use `Date.UTC` / `getUTC*` accessors so the wall-clock string is treated as Reykjavík time." (3) Optionally add a biome lint rule or a unit test that fails if the rule is broken.
-
 ### 2026-04-19 · manual · Known Next.js 16.2.x dev-cache bug: 'Expected RSC response, got text/html' log noise
 
 **Context:** On every authenticated route load in `bun dev`, the terminal logs a 500 followed by a 200 for each path, with `Error [InvariantError]: Expected RSC response, got text/html; charset=utf-8. This is a bug in Next.js.` The user never sees a broken page — Turbopack auto-recovers and serves the 200.
@@ -52,53 +44,139 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 - [Next.js PR #91503](https://github.com/vercel/next.js/pull/91503)
 - [next-intl#2226 — composing middlewares](https://github.com/amannn/next-intl/issues/2226)
 
-### 2026-04-19 · qa · QA tCommon-cleanup check should warn when a declaration removal is the only diff hunk in a file with other tCommon usages
-
-**Context:** Reviewing the LoadingLine refactor. Several files had `tCommon = useTranslations("common")` removed because the loading call site was replaced. Three of those files (`ContactList.tsx`, `ContactDetail.tsx`, `LogEntryReader.tsx`) retain `tCommon` declarations for *other* call sites in the same or inner components — the removal was correct in each case, but the QA check currently requires manually reading each file to confirm.
-**Observation:** There is no automated check that flags "a `tCommon` declaration was removed but the identifier still appears elsewhere in the file" vs "the declaration was removed because no more usages remain." TypeScript would catch a leftover usage with no declaration, but it would not catch a *missing cleanup* (orphan declaration after all usages were replaced).
-**Suggested action:** Add to the QA checklist: after `tCommon` declaration removals, grep the post-diff file for remaining `tCommon` and confirm each surviving reference is in a *different* component scope. Alternatively, document in CLAUDE.md that shared-namespace hooks (`tCommon`, `tShared`) may appear in inner components — don't remove the outer declaration without scanning for inner scopes.
-
-### 2026-05-28 · qa · Convex bundler test-file exclusion rule (multi-dot filenames) not documented
-
-**Context:** First test suite landed (`convex/accessCodes.test.ts`, Vitest + convex-test) on the family-code auth branch. The `.test.ts` file lives in `convex/` alongside real function modules. Convex would try to bundle and deploy it — except the bundler skips any file whose basename contains more than one dot (`node_modules/convex/dist/esm/bundler/index.js`: `(base.match(/\./g) || []).length > 1`). `accessCodes.test.ts` has two dots, so it's correctly excluded. A future contributor naming a test `accessCodesTest.ts` or `accessCodes-test.ts` (single dot) would have it bundled, breaking `convex deploy` because it imports vitest/convex-test.
-
-**Observation:** The naming convention is load-bearing for deploy safety but is documented nowhere in CLAUDE.md or the QA agent. The failure mode (broken Vercel deploy) is non-obvious and would only surface on `main`.
-
-**Suggested action:** (1) Add a CLAUDE.md Convex-conventions bullet: "Convex test files MUST use the `*.test.ts` naming convention — the bundler skips files whose basename has >1 dot, so single-dot names like `fooTest.ts` would be deployed and break `convex deploy` (they import vitest)." (2) Add a QA check: for any new `convex/**/*.ts` that imports `vitest` or `convex-test`, FAIL unless the basename matches `*.test.ts` (or `*.spec.ts`).
-
----
-
-### 2026-06-02 · qa · docs/spec.md build script reference is stale after --preview-run addition
-
-**Context:** The `package.json` build script now includes `--preview-run seed:seedPreview` on the `convex deploy` invocation for preview environments.
-**Observation:** `docs/spec.md` line 33 still says "Vercel CI also runs `npx convex deploy`" — it does not reflect the current build script shape (`convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build' --preview-run seed:seedPreview`), nor does any spec section document the per-branch preview deployment strategy now introduced.
-**Suggested action:** Invoke `docs-sync` to update `docs/spec.md` hosting row (and relevant phase 17 section) to reflect (1) the correct build script form, (2) the existence of per-branch preview Convex backends, and (3) a forward reference to `docs/preview-deployments.md` for the runbook.
-
----
-
-### 2026-06-02 · qa · Pattern 1 kebab-menu exemption for per-comment micro-actions not documented
-
-**Context:** Phase 18 comment thread polish (CommentRow.tsx). Pattern 1 ("retired kebab menus") governs the row → detail EDIT affordance for top-level records. A per-comment edit/delete kebab inside a comment thread (which is itself the detail view) was explicitly requested by the user and authorized as a deliberate exception.
-
-**Observation:** CLAUDE.md and `docs/ux-patterns.md` Pattern 1 only describe the prohibition; there is no documented exemption class for micro-action menus inside a detail/thread context. A future contributor reading Pattern 1 would conclude kebab menus are always forbidden and might reverse this design.
-
-**Suggested action:** Add a note to Pattern 1 in `docs/ux-patterns.md`: "Exception: per-item micro-action menus inside a thread/detail context (e.g., edit/delete on a comment row inside a comment sheet) may use a kebab trigger when the alternative would consume unreasonable row space — but only when explicitly authorized. Document the authorization in the commit message and here." Also add a brief exemption note to CLAUDE.md Conventions referencing Pattern 1.
-
----
-
-### 2026-06-02 · qa · Authorized sub-48 tap-floor exception for journal reaction/comment affordances
-
-**Context:** Phase 18 polish commit — ReactionButton and CommentButton slimmed to `min-h-9` (36px) at the user's explicit, repeated request to make these secondary "ambient" affordances slim on the journal card.
-
-**Observation:** Pattern 7 (and CLAUDE.md's "48px min tap targets") have no documented exemption class for secondary ambient micro-actions on a feed card. The kebab-menu exemption (Pattern 1) is documented; a parallel exemption for feed-card reaction/comment glyphs is not. A future contributor or QA run will flag `min-h-9` here as a violation.
-
-**Suggested action:** Add an explicit exemption to Pattern 7 / Pattern 21 in `docs/ux-patterns.md` and CLAUDE.md: "Exception: secondary ambient affordances on journal feed cards (heart-reaction glyph, comment-count glyph) may use `min-h-9` (36px) — they are not primary CTAs and a larger floor wastes vertical rhythm. This exception is scoped to `ReactionButton` and `CommentButton` only; all other interactive elements retain the 48px floor. Authorized by user in journal-social-row polish commit." Update the QA agent rules to exempt `min-h-9` for `ReactionButton` and `CommentButton` so it does not FAIL future reviews.
+**Status:** Open — watch item, no action until a newer Next.js ships. Kept open deliberately so the next agent recognizes the log noise and does not chase it.
 
 ---
 
 ## Resolved
 
-### 2026-04-19 · qa · EntitlementList reset button uses min-h-11 (44px) — violates the explicit CLAUDE.md 48px floor and the CLAUDE.md "not `min-h-11`" carve-out
+### 2026-06-02 · qa · APP_TIME_ZONE convention not documented — future Intl.DateTimeFormat sites may omit it
+
+**Context:** Timezone-pinning fix (`claude/fix-timezone-storage-thXLq`). `src/lib/formatDate.ts` exports `APP_TIME_ZONE = "Atlantic/Reykjavik"` and every `Intl.DateTimeFormat` in `src/` now passes `timeZone: APP_TIME_ZONE`. Appointment-form date-string helpers (`toDatetimeLocal`/`fromDatetimeLocal`) use `getUTC*` + `Date.UTC` accessors to treat the input as Reykjavík wall-clock.
+**Observation:** The convention is enforced in code but not in CLAUDE.md or any automated check. A future contributor adding a date display component will not be warned, and lint/typecheck will not catch the omission.
+**Suggested action:** (1) Add a `qa` grep: any diff introducing `new Intl.DateTimeFormat(` without `timeZone` in the options → FAIL. (2) Add a CLAUDE.md Conventions bullet. (3) Optionally add a biome lint rule or a unit test.
+**Resolution:** 2026-06-02 · rule + agent · Added a CLAUDE.md Conventions bullet requiring `timeZone: APP_TIME_ZONE` on every `Intl.DateTimeFormat` in `src/` (and `Date.UTC`/`getUTC*` accessors for date-input parsing). Added a matching grep to the new "Date/time conventions" section of `.claude/agents/qa.md` (`rg "new Intl\.DateTimeFormat" src/` → FAIL if any new match lacks a `timeZone` option, import `APP_TIME_ZONE` rather than hardcoding). No biome rule exists for this, so QA is the enforcement point.
+
+### 2026-06-02 · qa · QA tCommon-cleanup check should warn on orphan declaration after all usages replaced
+
+**Context:** Reviewing the LoadingLine refactor. Several files had `tCommon = useTranslations("common")` removed because the loading call site was replaced. Three files (`ContactList.tsx`, `ContactDetail.tsx`, `LogEntryReader.tsx`) retain `tCommon` declarations for *other* call sites in the same or inner components — the removal was correct in each case, but confirming it requires manually reading each file.
+**Observation:** There is no automated check that flags "a `tCommon` declaration was removed but the identifier still appears elsewhere in the file" vs "the declaration was removed because no more usages remain." TypeScript catches a leftover usage with no declaration, but not a *missing cleanup* (orphan declaration after all usages were replaced).
+**Suggested action:** Add to the QA checklist: after `tCommon` declaration removals, grep the post-diff file for remaining `tCommon` and confirm each surviving reference is in a *different* component scope.
+**Resolution:** 2026-06-02 · agent · Added a `tCommon` declaration-cleanup check to the new "Date/time conventions" section of `.claude/agents/qa.md`: when a diff removes a `tCommon = useTranslations("common")` declaration, grep the post-diff file — an orphan declaration (zero remaining usages) is a FAIL, and a removed declaration with surviving inner-scope usages is also a FAIL.
+
+### 2026-05-28 · qa · Convex bundler test-file exclusion rule (multi-dot filenames) not documented
+
+**Context:** First test suite landed (`convex/accessCodes.test.ts`, Vitest + convex-test) on the family-code auth branch. The `.test.ts` file lives in `convex/` alongside real function modules. Convex would try to bundle and deploy it — except the bundler skips any file whose basename contains more than one dot (`node_modules/convex/dist/esm/bundler/index.js`: `(base.match(/\./g) || []).length > 1`). `accessCodes.test.ts` has two dots, so it's correctly excluded. A future contributor naming a test `accessCodesTest.ts` or `accessCodes-test.ts` (single dot) would have it bundled, breaking `convex deploy` because it imports vitest/convex-test.
+**Observation:** The naming convention is load-bearing for deploy safety but is documented nowhere in CLAUDE.md or the QA agent. The failure mode (broken Vercel deploy) is non-obvious and would only surface on `main`.
+**Suggested action:** (1) Add a CLAUDE.md Convex-conventions bullet. (2) Add a QA check: for any new `convex/**/*.ts` that imports `vitest` or `convex-test`, FAIL unless the basename matches `*.test.ts` (or `*.spec.ts`).
+**Resolution:** 2026-06-02 · rule + agent · Added a CLAUDE.md Convex-conventions bullet ("Convex test files must use the `*.test.ts` naming convention …") and a "Convex test file naming" check to the Convex section of `.claude/agents/qa.md` (`rg "from ['\"]vitest['\"]|from ['\"]convex-test['\"]" convex/ -l` → every listed file must have ≥2 dots in its basename). Verified `convex/testHelpers.test.ts` already follows the convention.
+
+### 2026-06-02 · qa · docs/spec.md build script reference is stale after --preview-run addition
+
+**Context:** The `package.json` build script now includes `--preview-run seed:seedPreview` on the `convex deploy` invocation for preview environments.
+**Observation:** `docs/spec.md` line 33 still said "Vercel CI also runs `npx convex deploy`" — it did not reflect the current build script shape, nor did any spec section document the per-branch preview deployment strategy.
+**Suggested action:** Invoke `docs-sync` to update `docs/spec.md` hosting row (and Phase 17 section).
+**Resolution:** 2026-06-02 · docs (PR #9) · Verified resolved by the PR #9 docs-sync. `docs/spec.md` Hosting row (line 33) and the Phase 17 section both show the full `convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'next build' --preview-run seed:seedPreview` form and reference `docs/preview-deployments.md`. No rework needed.
+
+### 2026-06-02 · qa · Pattern 1 kebab-menu exemption for per-comment micro-actions not documented
+
+**Context:** Phase 18 comment thread polish (CommentRow.tsx). Pattern 1 ("retired kebab menus") governs the row → detail EDIT affordance for top-level records. A per-comment edit/delete kebab inside a comment thread was explicitly requested by the user and authorized as a deliberate exception.
+**Observation:** CLAUDE.md and `docs/ux-patterns.md` Pattern 1 only described the prohibition; there was no documented exemption class for micro-action menus inside a detail/thread context.
+**Suggested action:** Add an exemption note to Pattern 1 in `docs/ux-patterns.md` and a brief reference in CLAUDE.md Conventions.
+**Resolution:** 2026-06-02 · docs (PR #9) · Verified resolved by the PR #9 docs-sync. `docs/ux-patterns.md` Pattern 1 now carries the "Authorized exemption — per-comment micro-actions inside a thread" note, Pattern 21 cross-references it, and the CLAUDE.md Conventions bullet lists it. No rework needed.
+
+### 2026-06-02 · qa · Authorized sub-48 tap-floor exception for journal reaction/comment affordances
+
+**Context:** Phase 18 polish commit — ReactionButton and CommentButton slimmed to `min-h-9` (36px) at the user's explicit, repeated request to make these secondary "ambient" affordances slim on the journal card.
+**Observation:** Pattern 7 (and CLAUDE.md's "48px min tap targets") had no documented exemption class for secondary ambient micro-actions on a feed card. A future contributor or QA run would flag `min-h-9` here as a violation.
+**Suggested action:** Add an explicit exemption to Pattern 7 / Pattern 21 and CLAUDE.md, and exempt `min-h-9` for `ReactionButton`/`CommentButton` in the QA agent.
+**Resolution:** 2026-06-02 · docs (PR #9) + agent · Verified resolved by the PR #9 docs-sync: `docs/ux-patterns.md` Pattern 7 + Pattern 21 and CLAUDE.md document the `ReactionButton`/`CommentButton` `min-h-9` exemption (scoped to those two components only). Additionally hardened the UX section of `.claude/agents/qa.md` so it will not FAIL `min-h-9` on those two components.
+
+### 2026-06-02 · qa · New feature tables (reactions/comments/journalReads) landed in schema without updating docs/spec.md
+
+**Context:** First commit of reactions/comments/read-receipts feature.
+**Observation:** `docs/spec.md` and `docs/implementation-plan.md` had no mention of the new tables. `docs/superpowers/` is not the canonical spec for future contributors.
+**Suggested action:** After the full feature branch is complete, invoke `docs-sync` to propagate schema, function contracts, and UX patterns from the design spec into `docs/spec.md`. Do not defer past merge to main.
+**Resolution:** 2026-06-02 · docs (PR #9) · Verified resolved by the PR #9 docs-sync. `docs/spec.md` now documents the `reactions`/`comments`/`journalReads` schema, enriched query shapes, and `reactions.ts`/`comments.ts`/`journalReads.ts` function contracts; `docs/ux-patterns.md` Pattern 21 covers the UX. No rework needed. (Entry was mis-filed in the Resolved section as a loose open note; normalized and properly closed here.)
+
+### 2026-06-02 · qa · New-to-diff Biome warnings should be treated as FAIL, not tolerated alongside pre-existing warnings
+
+**Context:** `reactions.test.ts:10` unused `userId` introduced a new warning; 4 pre-existing CSS warnings are grandfathered.
+**Observation:** No QA rule distinguished pre-existing warnings from new ones introduced by the diff. New warnings should be FAIL; pre-existing tolerated ones should be an explicit allow-list.
+**Suggested action:** Add to qa agent rules: any warning referencing a file in the staged diff is FAIL. Fix the specific unused `userId` in `reactions.test.ts:10`.
+**Resolution:** 2026-06-02 · agent · Amended the "Always / Lint" check in `.claude/agents/qa.md`: warnings introduced by the diff are FAIL; only pre-existing/grandfathered warnings are tolerated, and a warning in a file you touched is your responsibility. The specific trigger is already gone — verified no `userId` reference remains in `convex/reactions.test.ts`. (Entry was mis-filed in the Resolved section as a loose open note; normalized and properly closed here.)
+
+### 2026-06-02 · docs-sync · backup.ts export omits reactions/comments/journalReads tables
+
+**Context:** Phase 18 added three tables. The weekly break-glass backup (`backup.ts`) snapshots a hardcoded table list that was not extended.
+**Observation:** Comments are real family-generated content; excluding them from the break-glass JSON export is a latent data-loss risk on restore. reactions/journalReads are lower-stakes but should be included for a complete snapshot.
+**Suggested action:** Add comments (at minimum) — ideally all three — to the backup snapshot list.
+**Resolution:** 2026-06-02 · code (PR #9) · Verified resolved by PR #9. `convex/backup.ts` `TABLES` union (lines 22–24) and the `weeklyExport` `ctx.db.query(...)` calls (lines 72–74) now snapshot `reactions`, `comments`, and `journalReads`. No rework needed. (Entry was appended at the end of the file inside the Resolved section as a loose open note; relocated and normalized here.)
+
+### 2026-06-02 · docs-sync · sinceLastVisit cursor vs unreadCount high-water divergence undocumented
+
+**Context:** `activity.sinceLastVisit` still takes a client `{cursorMs}` (dashboard localStorage) while `activity.unreadCount` reads the server `journalReads` high-water mark.
+**Observation:** Intentional (Nic confirmed keeping the dashboard feed cursor), but the spec didn't call it out, so a future agent might "fix" the divergence. The two cursors can produce a badge-vs-feed mismatch.
+**Suggested action:** Add a one-line note in `spec.md` activity section documenting the intentional divergence.
+**Resolution:** 2026-06-02 · docs · Added an "Intentional cursor divergence" note to `docs/spec.md` (line 998, after the `unreadCount` contract) documenting that `sinceLastVisit` uses the localStorage `cursorMs` (per-device) while `unreadCount` reads the server-side `journalReads.lastSeenTime` high-water mark, by confirmed design (Nic), with an explicit "do not fix this divergence" instruction. A one-line spec note is within auditor scope, so it was applied directly. (Entry was appended at the end of the file inside the Resolved section as a loose open note; relocated and normalized here.)
+
+### 2026-04-17 · qa · docs/spec.md authorization pattern section is stale after requireAuth-on-queries hardening
+
+**Context:** Security hardening commit that adds `requireAuth` to all data-returning Convex queries. CLAUDE.md was updated to say "Every mutation AND every data-returning query calls the module-local `requireAuth(ctx)` helper". `docs/spec.md` §Authorization pattern still said "Every mutation should: 1. Get the current user via `ctx.auth.getUserIdentity()`" — which (a) omits queries and (b) uses the deprecated `ctx.auth.getUserIdentity()` API instead of `getAuthUserId`.
+**Observation:** This created risk that future contributors reading only `docs/spec.md` would add unguarded queries or use the wrong API.
+**Suggested action:** `docs-sync` should update §Authorization pattern: scope to queries too, swap to `getAuthUserId`, note the `users.me` exception, and mention the public-URL threat model.
+**Resolution:** 2026-06-02 · docs (PR #9) · Verified: `docs/spec.md` Authorization section now uses `getAuthUserId`, names **both** soft-returning exceptions (`users.me` and `events.isAdmin`), and states the `NEXT_PUBLIC_CONVEX_URL` threat model — corrected by the PR #9 docs-sync. Closed.
+
+### 2026-04-19 · qa · spec.md still describes volunteerToDrive as "one-tap" after C7 adds confirmation gate
+
+**Context:** C7 UX alignment — adds `<ConfirmDialog>` gate before all driver-volunteer and driver-assign mutations.
+**Observation:** `docs/spec.md` still contains "one-tap" language (DrivingCta description, the `volunteerToDrive` contract, and the View 3 section). These contradict the shipped Pattern 19 confirmation gate. `docs/implementation-plan.md` has no mention of C7's confirmation step.
+**Suggested action:** Invoke `docs-sync` to update the `volunteerToDrive`/DrivingCta descriptions, document the Pattern 19 WeekGrid drag-to-assign exemption, and add a C7 entry to the plan.
+**Resolution:** 2026-06-02 · docs-sync (routed) · Verified the stale "one-tap" language persists in `docs/spec.md`. Routed to `docs-sync` — editing `spec.md`/`implementation-plan.md` is outside the auditor's scope per CLAUDE.md, so this is handed off rather than applied directly. Classification recorded; docs edit pending the next `docs-sync` run.
+
+### 2026-04-19 · qa · Sitewide token sweep left one redundant hover state unfixed in ReglulegirView
+
+**Context:** Reviewing Phase D / task C2 a11y token-repointing commit. Two of three identical-rest/hover links were fixed (`NextAppointments.tsx`, `CalendarView.tsx`); the Tímar back-link in `ReglulegirView.tsx` was reported as still `hover:text-ink-soft`.
+**Observation:** Hover affordance reportedly lost on the Tímar back-link. The fix is one line.
+**Suggested action:** Fix `ReglulegirView.tsx` hover class; consider a qa grep for identical rest/hover colour.
+**Resolution:** 2026-06-02 · won't-fix (already done) · Verified `src/app/[locale]/(app)/timar/reglulegir/ReglulegirView.tsx` line 15 already reads `hover:text-ink` — the fix landed before this audit run. The suggested grep (`rg 'text-ink-soft[^"]*hover:text-ink-soft' src/`) is a reasonable future check but no current violation exists, so it was not added as a standing rule.
+
+### 2026-04-19 · qa · Button variant table shrunk to 4 floor-safe sizes — qa.md should have an automated grep guard
+
+**Context:** C4 UX alignment — `button.tsx` collapsed from 10 variants to 4 that all meet 48 px. The removed variants (`xs`, `sm`, `lg`, `icon-xs`, `icon-sm`, `icon-lg`) were the most commonly misused sub-floor controls.
+**Observation:** No automated qa check would catch a future re-introduction of a removed variant in `button.tsx`, or (after a shadcn upgrade resetting the file) the silent return of sub-floor variants.
+**Suggested action:** Add grep guards for both the `button.tsx` variant map and consumer sites.
+**Resolution:** 2026-06-02 · agent · Added a "Button variant guard" to the UX section of `.claude/agents/qa.md`: after any diff touching `src/components/ui/button.tsx`, `rg 'size:\s*(xs|sm|lg|icon-xs|icon-sm|icon-lg)' src/components/ui/button.tsx` (variant-map re-introduction) and `rg '<Button[^>]*size="(sm|xs|lg|icon-sm|icon-xs|icon-lg)"' src/` (consumer of a removed variant) are both FAIL.
+
+### 2026-04-19 · qa · ConfirmDialog consumers that have no error banner silently swallow errors post-success teardown
+
+**Context:** Reviewing C9 — DocumentDetail and DocumentList `handleDelete` simplified to bare `await remove(...)` with no try/catch, relying on ConfirmDialog's internal pending/error lifecycle. ConfirmDialog calls `onOpenChange(false)` only on success and re-throws on failure.
+**Observation:** When `remove()` fails, ConfirmDialog keeps the dialog open — but DocumentList/DocumentDetail have no `setError` / error banner, so the failure is invisible. This differs from ContactForm / EntitlementForm / AppointmentForm / SeriesCard which all surface the error.
+**Suggested action:** Add a qa rule to flag ConfirmDialog consumers with no error state; consider a `ConfirmDialog` `errorMessage` prop.
+**Resolution:** 2026-06-02 · agent + open code-debt · Added a "ConfirmDialog callers must handle errors" rule to the UX section of `.claude/agents/qa.md` (flag any destructive `onConfirm` handler whose parent has no error banner / `setError`). The harness gap is closed; the residual code fix — inline error banners on `DocumentDetail`/`DocumentList` `handleDelete`, or a `ConfirmDialog` `errorMessage` prop — remains a code task for a future polish commit, now guarded by QA so it cannot regress silently.
+
+### 2026-04-19 · qa · --input token repoint changes disabled-input background in light mode
+
+**Context:** C3 a11y fix repoints `--input` from `var(--divider-strong)` (near-transparent alpha) to `var(--ink-soft)` (#5a6158) to meet WCAG 1.4.11. Several shadcn primitives use `--input` as a background tint (`disabled:bg-input/50` on input/textarea, `data-unchecked:bg-input` on switch).
+**Observation:** Disabled inputs now render a darker tint; the switch unchecked track would render a solid dark-green at full opacity (`data-unchecked:bg-input`). No switches are rendered yet, but this is a lurking regression.
+**Suggested action:** Before any toggle controls land, decouple the switch track from `--input`; add a qa cross-check when `--input` changes value.
+**Resolution:** 2026-06-02 · agent + open code-debt · Added a "`--input` token side-effects" rule to the UX section of `.claude/agents/qa.md` (when `--input` changes value, cross-check `bg-input` / `disabled:bg-input/*` / `data-unchecked:bg-input` in `src/components/ui/`, especially `<Switch>`). Harness gap closed; the Switch `data-unchecked:bg-input` decoupling (e.g. a `--switch-track` token) remains a code task for when toggle controls are added.
+
+### 2026-04-19 · qa · convex/testHelpers.ts will be bundled by convex deploy — test helpers need renaming convention
+
+**Context:** Phase 16A — a plain TS helper (no Convex function exports) used only by `convex/*.test.ts`, importing from `convex-test`.
+**Observation:** The Convex bundler skips basenames with >1 dot. A single-dot `testHelpers.ts` would be picked up as an entrypoint, fail to bundle (`convex-test` is a devDependency unavailable in the runtime), and break `convex deploy` on Vercel CI.
+**Suggested action:** Rename to a two-dot basename; add a qa rule for `convex/` files importing `convex-test`.
+**Resolution:** 2026-06-02 · won't-fix (already done) + agent · Verified `convex/testHelpers.test.ts` already uses the two-dot name, so the bundler skips it — the rename landed before this audit. The general convention is now enforced going forward via the CLAUDE.md Convex-conventions bullet and the qa.md "Convex test file naming" check (see the 2026-05-28 multi-dot item resolution above).
+
+### 2026-04-19 · qa · docs/spec.md test section describes a tests/ directory layout that was never implemented
+
+**Context:** Phase 16A ships tests colocated at `convex/*.test.ts` and `src/lib/*.test.ts`.
+**Observation:** `docs/spec.md` still shows a `tests/` root subtree (`tests/unit/convex/`, `tests/e2e/`) and lists example test file paths under that structure. Neither the directory nor those files exist; the "Test file naming" block is stale and misleading.
+**Suggested action:** `docs-sync` should replace the `tests/` subtree with the colocated pattern and note the two-dot bundler rule.
+**Resolution:** 2026-06-02 · docs-sync (routed) · Verified `docs/spec.md` still shows the never-implemented `tests/unit/convex/` + `tests/e2e/` subtree and stale test-file paths. Routed to `docs-sync` to replace with the colocated pattern (`convex/*.test.ts`, `src/lib/*.test.ts`, `src/components/**/*.test.tsx` for future 16B) and note the two-dot bundler rule for `convex/testHelpers.test.ts`. `spec.md` is docs-sync's exclusive territory, so handed off rather than applied directly.
+
+### 2026-04-21 · qa · EntitlementList reset button uses min-h-11 (44px) — violates the explicit CLAUDE.md 48px floor and the CLAUDE.md "not `min-h-11`" carve-out
 
 **Context:** Phase 15 closing-slice commit, Finding 36 (reset-filter button chrome). The fix initially applied `min-h-11` (44px) to the reset button, contradicting the CLAUDE.md rule that explicitly names `min-h-11` as forbidden and sets the floor at `min-h-12` (48px).
 **Resolution:** 2026-04-19 · code · Fixed in the same slice before commit. `src/components/info/EntitlementList.tsx:213` now uses `min-h-12`; the Phase 15 plan note updated from "44 px" to "48 px (`min-h-12`)". QA's suggested grep check (`rg 'min-h-11' src/`) still applies going forward — any future hit outside a comment is a tap-target violation.
@@ -218,7 +296,7 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 ### 2026-04-17 · qa · shadcn Dialog close button "Close" sr-only string now reachable via AppointmentForm
 
 **Context:** `AppointmentForm.tsx` confirmation dialog exposed the hardcoded "Close" sr-only string.
-**Resolution:** 2026-04-17 · code (already done) + open (medium-term) · Short-term: `AppointmentForm.tsx` already has `showCloseButton={false}` on the confirmation dialog (verified at line 298). Longer-term fix — making `dialog.tsx` locale-safe at the source — moved to Open Items as a scoped code task for the next applicable phase.
+**Resolution:** 2026-04-17 · code (already done) + open (medium-term) · Short-term: `AppointmentForm.tsx` already has `showCloseButton={false}` on the confirmation dialog (verified at line 298). Longer-term fix — making `dialog.tsx` locale-safe at the source — is tracked by the 2026-04-17 `dialog.tsx` sr-only item above (routed to the UX-alignment plan).
 
 ### 2026-04-17 · qa · `bg-emerald-100 text-emerald-800` uses bare Tailwind palette, not a project CSS token
 
@@ -352,71 +430,3 @@ Our `src/proxy.ts` already has the correct RSC/prefetch guard (commits `7ebc2e2`
 **Observation:** `docs/spec.md` lines 76, 473, 564 and `docs/implementation-plan.md` lines 284, 325, 560, 617, 671, 729, 746, 755 all still reference the old `/upplysingr` path. This is a known-divergence between code and docs, not a QA failure, but it is a docs-sync task that should be completed promptly to prevent future confusion.
 **Suggested action:** Invoke `docs-sync` agent after this commit lands to replace all occurrences of `upplysingr` with `upplysingar` in `docs/spec.md` and `docs/implementation-plan.md`. Also verify the route tree diagram in spec.md line 76 matches the actual directory structure.
 **Resolution:** 2026-04-17 · docs-sync · All occurrences of `upplysingr` replaced with `upplysingar` in both `docs/spec.md` (route tree, View 4 header, bottom nav table) and `docs/implementation-plan.md` (Phase 4 nav table, Phase 4 files list, Phase 8/9/10/11 status blocks, Phase 12 "What to do" and files list).
-
-### 2026-04-17 · qa · docs/spec.md authorization pattern section is stale after requireAuth-on-queries hardening
-
-**Context:** Security hardening commit that adds `requireAuth` to all data-returning Convex queries. CLAUDE.md was updated to say "Every mutation AND every data-returning query calls the module-local `requireAuth(ctx)` helper (which uses `getAuthUserId`)". `docs/spec.md` line 643–648 still says "Every mutation should: 1. Get the current user via `ctx.auth.getUserIdentity()`" — which (a) omits queries and (b) uses the deprecated `ctx.auth.getUserIdentity()` API instead of `getAuthUserId`.
-**Observation:** CLAUDE.md (the active agent instruction file) is now accurate. `docs/spec.md` Authorization pattern section diverges in two ways: scope (mutation-only) and API (`ctx.auth.getUserIdentity()` vs `getAuthUserId` from `@convex-dev/auth/server`). This creates risk that future contributors reading only `docs/spec.md` will add unguarded queries or use the wrong API.
-**Suggested action:** `docs-sync` should update `docs/spec.md` §Authorization pattern to: (1) change "Every mutation should" to "Every mutation and every data-returning query should", (2) replace `ctx.auth.getUserIdentity()` with `getAuthUserId(ctx)` from `@convex-dev/auth/server`, (3) add a note that `users.me` is the one documented exception (returns null for unauthenticated callers by design), and (4) mention the public-URL threat model (`NEXT_PUBLIC_CONVEX_URL` ships in the client bundle).
-
-### 2026-04-19 · qa · spec.md still describes volunteerToDrive as "one-tap" after C7 adds confirmation gate
-
-**Context:** C7 UX alignment — adds `<ConfirmDialog>` gate before all driver-volunteer and driver-assign mutations.
-**Observation:** `docs/spec.md` still contains "one-tap" language in at least two places: line 593 ("Tapping 'Ég get!' assigns the current user as driver immediately (mutation)") and line 776 ("volunteerToDrive — mutation: sets driverId to current user. Simple, one-tap."). The DrivingCta description at line 525 also calls it a "one-tap volunteer button". These now contradict the shipped Pattern 19 confirmation gate. `docs/implementation-plan.md` similarly has no mention of C7's confirmation step.
-**Suggested action:** Invoke `docs-sync` after C7 lands to (a) update the spec's `volunteerToDrive` description and DrivingCta description to note the ConfirmDialog gate, (b) document the Pattern 19 exemption for WeekGrid drag-to-assign, and (c) add a brief C7 entry to the implementation plan's Phase 15 / UX alignment section.
-
-### 2026-04-19 · qa · Sitewide token sweep left one redundant hover state unfixed in ReglulegirView
-
-**Context:** Reviewing Phase D / task C2 a11y token-repointing commit (91 occurrences across 34 files). The task description said three `hover:text-ink-soft` on elements whose rest state was also `text-ink-soft` after the sweep were swapped to `hover:text-ink`. Two were fixed (`NextAppointments.tsx` link and `CalendarView.tsx` links). The third — the back-link in `src/app/[locale]/(app)/timar/reglulegir/ReglulegirView.tsx` line 15 — was not fixed: rest state is `text-ink-soft` and hover remains `hover:text-ink-soft`.
-**Observation:** Hover affordance on the Tímar back-link is lost (visually indistinguishable from rest state). The fix is one-line: `hover:text-ink-soft` → `hover:text-ink` to match the other two corrected links. Not a blocking FAIL (contrast still passes) but reduces pointer/keyboard interactivity signal.
-**Suggested action:** Fix `ReglulegirView.tsx` line 15 hover class in the next polish pass. Also consider adding a qa grep: `rg 'text-ink-soft[^"]*hover:text-ink-soft' src/` — any element with identical rest and hover color is a candidate redundant-hover to flag.
-
-### 2026-04-19 · qa · Button variant table shrunk to 4 floor-safe sizes — qa.md should have an automated grep guard
-
-**Context:** C4 UX alignment — `button.tsx` collapsed from 10 variants to 4 that all meet 48 px. The removed variants (`xs`, `sm`, `lg`, `icon-xs`, `icon-sm`, `icon-lg`) were previously the most commonly misused controls (sub-floor heights).
-**Observation:** There is no automated qa check that would catch a future `size="sm"` or `size="icon-sm"` prop on a `<Button>` — TypeScript catches it at compile time because the type is narrowed, but only if the consumer explicitly types the prop. A direct JSX string `size="sm"` on a `<Button>` will produce a TypeScript error, but a future contributor might re-add one of the old variants to `button.tsx` and the QA agent would not notice unless it actively greps. Additionally, after any future shadcn upgrade that resets `button.tsx` to stock, the sub-floor variants would silently return.
-**Suggested action:** Add to `.claude/agents/qa.md` UX section: after any diff touching `src/components/ui/button.tsx`, run `rg 'size=.*(xs|sm|lg|icon-xs|icon-sm|icon-lg)' src/components/ui/button.tsx` — any match in the `size:` variant map is a FAIL (floor violation). Additionally, add to the general UX grep for the full `src/`: `rg '<Button[^>]*size="(sm|xs|lg|icon-sm|icon-xs|icon-lg)"' src/` — any Button consumer of a removed variant is a FAIL.
-
-### 2026-04-19 · qa · ConfirmDialog consumers that have no error banner silently swallow errors post-success teardown
-
-**Context:** Reviewing C9 — DocumentDetail and DocumentList `handleDelete` functions. Both were simplified to bare `await remove(...)` with no try/catch, relying on ConfirmDialog's internal pending/error lifecycle. ConfirmDialog calls `onOpenChange(false)` only on success and re-throws on failure.
-**Observation:** When `remove()` fails in DocumentList, ConfirmDialog catches it and keeps the dialog open — but there is no `setError` / error banner in DocumentList to surface the failure message to the user. The dialog silently un-pends with no visible feedback. This is different from the pattern in ContactForm / EntitlementForm / AppointmentForm / SeriesCard which all have an error banner and call `setError` before re-throwing. DocumentDetail has the same gap (no error banner after the simplification).
-**Suggested action:** Add to qa agent rules: when a `handleDelete` in a ConfirmDialog consumer has no try/catch and no error state, flag it as a potential silent-failure UX hole and recommend adding an inline error banner (Pattern 13). Alternatively, document in ConfirmDialog's JSDoc that callers without an error banner should handle this at the ConfirmDialog level via an `errorMessage` prop — and add that prop in a future polish pass.
-
-### 2026-04-19 · qa · --input token repoint changes disabled-input background in light mode
-
-**Context:** C3 a11y fix repoints `--input` from `var(--divider-strong)` (a near-transparent alpha) to `var(--ink-soft)` (#5a6158, a dark muted green) to meet WCAG 1.4.11. Several shadcn primitives use `--input` as a background tint: `disabled:bg-input/50` on input and textarea, `data-unchecked:bg-input` on switch.
-**Observation:** In light mode, `disabled:bg-input/50` now resolves to 50% opacity of a dark ink colour rather than 50% of a near-white divider, so disabled text inputs will render with a noticeably darker tinted background. Functionally this may improve disabled-state legibility (darker = more explicitly disabled), but it's a side-effect not called out in the WCAG fix scope. The switch unchecked track uses `data-unchecked:bg-input` at full opacity — this will now render as a solid dark-green track when unchecked, which is likely wrong. No switches are currently rendered in the UI (Phase 15), but this is a lurking visual regression.
-**Suggested action:** Before Phase 15 adds any toggle controls: audit whether `data-unchecked:bg-input` on switch should be replaced with a dedicated `--switch-track` token (e.g. `var(--divider-strong)` or a new `--muted-surface` token), decoupled from `--input`. Add a qa rule: when `--input` token value changes, cross-check `bg-input/*` and `data-unchecked:bg-input` usages in `src/components/ui/`.
-
-### 2026-04-19 · qa · convex/testHelpers.ts will be bundled by convex deploy — test helpers need renaming convention
-
-**Context:** Phase 16A — `convex/testHelpers.ts` is a plain TS helper (no Convex function exports) used only by `convex/*.test.ts` files.
-**Observation:** The Convex bundler's `entryPoints` function skips any file whose basename has more than one dot (e.g. `auth.test.ts`, `domain.test.ts` are skipped). `testHelpers.ts` has only one dot and exports `createAuthedTest` — it WILL be picked up as a Convex entrypoint. It imports from `convex-test`, a devDependency unavailable in the Convex runtime, so `convex deploy` (run by Vercel CI on push to `main`) will fail to bundle it. Renaming to `testHelpers.test.ts` (two dots) would cause the bundler to skip it automatically — but vitest `include` globs would also need to cover it (`convex/**/*.test.ts` already does). Alternatively, a `convex/_testHelpers.ts` (leading underscore is not skipped by the bundler, so this won't help). The safest fix is to rename to `testHelpers.test-util.ts` or use the double-dot pattern. Note: the current naming works fine for local `bun run test` — the failure only manifests on `convex deploy`.
-**Suggested action:** Rename `convex/testHelpers.ts` → `convex/testHelpers.test.ts` so the bundler's two-dot rule skips it. Update the import in `convex/domain.test.ts` accordingly. Add a qa rule: any file in `convex/` that imports from `convex-test` or is only used by `*.test.ts` files must have at least two dots in its basename to guarantee it is excluded from `convex deploy`.
-
-### 2026-04-19 · qa · docs/spec.md test section describes a tests/ directory layout that was never implemented
-
-**Context:** Phase 16A ships tests colocated at `convex/*.test.ts` and `src/lib/*.test.ts`.
-**Observation:** `docs/spec.md` lines 145–149 show a `tests/` directory at the project root with `tests/unit/convex/` and `tests/e2e/` subdirectories. Lines 897–919 list example test file paths under that structure (e.g. `tests/unit/convex/appointments.test.ts`). Neither the directory nor those files exist; tests are colocated instead. The spec's "Test file naming" block is now stale and misleading.
-**Suggested action:** Invoke `docs-sync` to update `docs/spec.md`: (1) remove the `tests/` subtree from the file-tree diagram at lines 145–149, (2) replace the "Test file naming" block at lines 917–919 with the colocated pattern (`convex/*.test.ts`, `src/lib/*.test.ts`, `src/components/**/*.test.tsx` for future 16B), and (3) note that `convex/testHelpers.test.ts` (the helper) lives in `convex/` but is skipped by `convex deploy` due to the two-dot naming rule.
-
-### 2026-06-02 · qa · New feature tables (reactions/comments/journalReads) landed in schema without updating docs/spec.md
-Context: First commit of reactions/comments/read-receipts feature.
-Observation: docs/spec.md and docs/implementation-plan.md have no mention of the new tables. docs/superpowers/ is not the canonical spec for future contributors.
-Suggested action: After the full feature branch is complete, invoke docs-sync to propagate schema, function contracts, and UX patterns from the design spec into docs/spec.md. Do not defer past merge to main.
-
-### 2026-06-02 · qa · New-to-diff Biome warnings should be treated as FAIL, not tolerated alongside pre-existing warnings
-Context: reactions.test.ts:10 unused userId introduces a new warning; 4 pre-existing CSS warnings are grandfathered.
-Observation: No QA rule distinguishes pre-existing warnings from new ones introduced by the diff. New warnings should be FAIL; pre-existing tolerated ones should be an explicit allow-list.
-Suggested action: Add to qa agent rules: baseline the warning count before the diff (git stash, run lint, git stash pop); any count increase is FAIL. Current item: fix unused userId in reactions.test.ts:10.
-
-### 2026-06-02 · docs-sync · backup.ts export omits reactions/comments/journalReads tables
-Context: Phase 18 added three tables. The weekly break-glass backup (backup.ts) snapshots a hardcoded table list that was not extended.
-Observation: Comments are real family-generated content; excluding them from the break-glass JSON export is a latent data-loss risk on restore. reactions/journalReads are lower-stakes but should be included for a complete snapshot.
-Suggested action: Add comments (at minimum) — ideally all three — to the backup snapshot list. Decide whether ephemeral receipts/reactions are worth backing up.
-
-### 2026-06-02 · docs-sync · sinceLastVisit cursor vs unreadCount high-water divergence undocumented
-Context: activity.sinceLastVisit still takes client {cursorMs} (dashboard localStorage) while activity.unreadCount reads the server journalReads high-water.
-Observation: Intentional (Nic confirmed keeping the dashboard feed cursor), but the spec doesn't call it out, so a future agent might "fix" the divergence. The two cursors can produce a badge-vs-feed mismatch.
-Suggested action: Add a one-line note in spec.md activity section documenting the intentional divergence.
